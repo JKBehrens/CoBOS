@@ -70,7 +70,7 @@ positional arguments: <br />
 
 `sim/config.json`
 
-Simuletion has 3 paramters. Two of them use the random function, so to be able to repeat the result, use the seed.
+Simulation has 3 paramters. Two of them use the random function, so to be able to repeat the result, use the seed.
 
 * *Seed* - ramdom seed
 * *Allocation weights* - Weights determining with what probability there will be a task only for a person P(human), only for a robot P(robot), for both P(both).
