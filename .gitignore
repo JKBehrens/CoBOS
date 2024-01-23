@@ -177,4 +177,6 @@ pyrightconfig.json
 
 *.mp4
 
+
 visualization/data_for_visualization/*
+img/
