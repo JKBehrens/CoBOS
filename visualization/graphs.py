@@ -149,7 +149,6 @@ class Vis:
             title = ['Gantt Chart']
             positions = [[211], [212]]
             index_offset = 0
-
         local_data = self.data if self.from_file and file_name == 'simulation.png' else [self.data]
         for i, position in enumerate(positions[0]):
             self.set_plot_param(position, title[i])  # [0]
@@ -158,7 +157,7 @@ class Vis:
                     position_y, task_name_y, action_y = self.y_pos_and_text[task["Universal"]][agent]
 
                     if isinstance(task['Finish'], int):
-                        actions = set_task_time(task)
+                        actions = set_task_time(task, seed=0)
                         duration = task['Finish'] - task['Start']
                         preps_end = task['Start'] + actions[1]
                         execution_end = task['Start'] + actions[1] + actions[2]

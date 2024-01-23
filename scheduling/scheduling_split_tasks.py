@@ -54,8 +54,8 @@ class Schedule:
 
         for i, task in enumerate(self.job.task_sequence):
             self.human_task_bool[i] = self.model.NewBoolVar(f"task_{task.id}_4_human")
-            self.task_duration["Human"].append(set_task_time(task, 'Human'))
-            self.task_duration["Robot"].append(set_task_time(task, 'Robot'))
+            self.task_duration["Human"].append(set_task_time(task, 'Human', seed=0))
+            self.task_duration["Robot"].append(set_task_time(task, 'Robot', seed=0))
             suffix = f'_{task.id}'
 
             # condition for different agent
@@ -308,8 +308,8 @@ class Schedule:
         Set durations of all tasks by each agent
         """
         for task in self.job.task_sequence:
-            self.task_duration["Human"].append(set_task_time(task, 'Human'))
-            self.task_duration["Robot"].append(set_task_time(task, 'Robot'))
+            self.task_duration["Human"].append(set_task_time(task, 'Human', seed=0))
+            self.task_duration["Robot"].append(set_task_time(task, 'Robot', seed=0))
 
     def set_schedule(self):
         """

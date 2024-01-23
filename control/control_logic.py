@@ -164,37 +164,44 @@ class ControlLogic:
         if self.plot:
             self.plot.update_info(agent)
 
-    def schedule_as_dict(self):
+    def schedule_as_dict(self, hierarchy=False):
         """
         Returns the current schedule as a dictionary.
         """
-        output = {
-            "Status": [],
-            "Start": [],
-            "End": [],
-            "Agent": [],
-            "ID": [],
-            "Conditions": [],
-            "Object": [],
-            "Place": []
-        }
-        for agent in self.agents:
-            for task in agent.tasks_as_dict():
-                output['Status'].append(task['Status'])
-                output['Start'].append(task['Start'])
-                output['ID'].append(task['ID'])
-                output['Conditions'].append(task['Conditions'])
-                output['Object'].append(task['Action']['Object'])
-                output['Place'].append(task['Action']['Place'])
+        if hierarchy:
+            output = {}
+            for agent in self.agents:
+                output[agent.name] = []
+                for task in agent.tasks_as_dict():
+                    output[agent.name].append(task)
+        else:
+            output = {
+                "Status": [],
+                "Start": [],
+                "End": [],
+                "Agent": [],
+                "ID": [],
+                "Conditions": [],
+                "Object": [],
+                "Place": []
+            }
+            for agent in self.agents:
+                for task in agent.tasks_as_dict():
+                    output['Status'].append(task['Status'])
+                    output['Start'].append(task['Start'])
+                    output['ID'].append(task['ID'])
+                    output['Conditions'].append(task['Conditions'])
+                    output['Object'].append(task['Action']['Object'])
+                    output['Place'].append(task['Action']['Place'])
 
-                if task['Universal']:
-                    output['Agent'].append(f'Assigned\n to {task["Agent"]}')
-                else:
-                    output['Agent'].append(task['Agent'])
-                if isinstance(task['Finish'], int):
-                    output['End'].append(task['Finish'])
-                else:
-                    output['End'].append(task['Finish'][0])
+                    if task['Universal']:
+                        output['Agent'].append(f'Assigned\n to {task["Agent"]}')
+                    else:
+                        output['Agent'].append(task['Agent'])
+                    if isinstance(task['Finish'], int):
+                        output['End'].append(task['Finish'])
+                    else:
+                        output['End'].append(task['Finish'][0])
 
         return output
 
@@ -202,7 +209,7 @@ class ControlLogic:
         """
         Run the scheduling simulation.
         """
-        schedule_data = [self.schedule_as_dict()]
+        schedule_data = [self.schedule_as_dict(hierarchy=True)]
         if animation:
             self.plot.delete_existing_file()
         if online_plot:
@@ -248,7 +255,7 @@ class ControlLogic:
             agent.print_tasks()
         logging.info('___________________________________')
         logging.info(f'SIMULATION TOTAL TIME: {time.time() - self.start_time}')
-        schedule_data.append(self.schedule_as_dict())
+        schedule_data.append(self.schedule_as_dict(hierarchy=True))
         with open(initial_and_final_schedule, 'w') as f:
             json.dump(schedule_data, f, indent=4)
 
