@@ -49,8 +49,10 @@ class ControlLogic:
         schedule = self.schedule_model.set_schedule()
         if not schedule:
             self.FAIL = True
+            logging.error('Scheduling failed')
         else:
             self.agents = [Agent(agent_name, schedule[agent_name]) for agent_name in self.agent_list]
+            self.job.predicted_makespan = self.job.get_current_makespan()
         self.set_task_status()
 
     def set_task_status(self):
@@ -161,8 +163,8 @@ class ControlLogic:
         self.job.refresh_completed_task_list(agent.current_task.id)
         logging.info(
             f'TIME {self.current_time}. {agent.name} completed the task {agent.current_task.id}. Progress {self.job.progress()}.')
-        if self.plot:
-            self.plot.update_info(agent)
+        # if self.plot:
+        #     self.plot.update_info(agent)
 
     def schedule_as_dict(self, hierarchy=False):
         """
@@ -205,12 +207,14 @@ class ControlLogic:
 
         return output
 
-    def run(self, animation=False, online_plot=False):
+    def run(self, animation=False, online_plot=False, experiments=False):
         """
         Run the scheduling simulation.
         """
         schedule_data = [self.schedule_as_dict(hierarchy=True)]
+
         if animation:
+            self.plot = Vis(horizon=self.schedule_model.horizon)
             self.plot.delete_existing_file()
         if online_plot:
             self.plot = Web_vis(data=self.schedule_as_dict())
@@ -228,7 +232,7 @@ class ControlLogic:
                     else:
                         agent.execute_task(task, self.job, self.current_time)
                         self.update_tasks_status()
-                        if self.plot:
+                        if online_plot:
                             self.plot.update_info(agent, start=True)
 
             self.current_time += 1
@@ -245,7 +249,7 @@ class ControlLogic:
                 # save current state
                 if self.plot.current_time + 2 == self.current_time:
                     self.plot.current_time = self.current_time
-                    self.plot.data = self.schedule_as_dict()
+                    self.plot.data = self.schedule_as_dict(hierarchy=True)
                     self.plot.save_data()
 
 
@@ -258,4 +262,11 @@ class ControlLogic:
         schedule_data.append(self.schedule_as_dict(hierarchy=True))
         with open(initial_and_final_schedule, 'w') as f:
             json.dump(schedule_data, f, indent=4)
+
+        if experiments:
+            statistics = {}
+            statistics['makespan'] = [self.job.predicted_makespan, self.job.get_current_makespan()]
+            statistics['rejection number'] = len(self.agents[1].rejection_tasks)
+            statistics['runtime'] = [self.schedule_model.rescheduling_run_time, self.schedule_model.evaluation_run_time]
+            return schedule_data, statistics
 

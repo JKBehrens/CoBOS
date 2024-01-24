@@ -40,7 +40,7 @@ if __name__ == '__main__':
     if not args.only_schedule:
         execute_job = ControlLogic(case)
         if args.offline:
-            execute_job.run()
+            execute_job.run(animation=True)
         else:
             execute_job.run(online_plot=True)
 

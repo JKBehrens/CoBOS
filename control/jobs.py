@@ -24,6 +24,7 @@ class Job:
         self.completed_tasks = []
         self.agents = ["Human", "Robot"]
         self.task_number = len(self.task_sequence)
+        self.predicted_makespan = None
 
     def __str__(self):
         """
