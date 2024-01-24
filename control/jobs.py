@@ -17,7 +17,7 @@ class Job:
     :type case: str
     """
     def __init__(self, case):
-        self.case = case
+        self.case = str(case)
         self.job_description = case_generator.set_input(self.case)
         self.task_sequence = [Task(task) for task in self.job_description]
         self.in_progress_tasks = []
