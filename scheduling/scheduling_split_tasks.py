@@ -313,7 +313,7 @@ class Schedule:
 
     def set_schedule(self):
         """
-        Creates variables, theis domains and constraints in model, then solves it.
+        Creates variables, their domains and constraints in model, then solves it.
         """
         self.set_variables()
         self.set_constraints()

@@ -24,7 +24,7 @@ You can choose one of these cases:
 ### Run simulation
 Run online visualisation of simulation in web browser:
 ```
-simstreamlit run main.py [case]
+streamlit run main.py [case]
 ```
 positional arguments: <br />
   case - 1, 2, 3, 4, 5, 6
