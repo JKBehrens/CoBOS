@@ -17,8 +17,8 @@ class Agent(Sim):
     :param tasks: List of tasks assigned to the agent.
     :type tasks: list
     """
-    def __init__(self, name, tasks=None):
-        super().__init__()
+    def __init__(self, name, tasks=None, job=None, **kwargs):
+        super().__init__(name, job, **kwargs)
         self.name = name
         self.tasks = tasks
         self.availability = True

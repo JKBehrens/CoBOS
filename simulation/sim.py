@@ -18,7 +18,10 @@ class Sim:
     distribution of their duration, as well as the choice of a person
     who is offered to him by the control logic.
     """
-    def __init__(self):
+    def __init__(self, agent_name, job, **kwargs):
+        self.agent_name = agent_name
+        self.job = job
+        self.task_duration = {}
         self.weights = None
         self.prob = None
         self.seed = None
@@ -26,7 +29,8 @@ class Sim:
         self.task_execution = {'Human': {'Start': 0, 'Duration': []}, 'Robot': {'Start': 0, 'Duration': []}}
         self.start_time = time.time()
 
-        self.set_param()
+        # self.set_param()
+        self.set_tasks_duration(**kwargs)
 
     def set_param(self):
         """
@@ -37,6 +41,10 @@ class Sim:
         self.seed = param['Seed']
         self.weights = param['Allocation weights']
         self.fail_probability = param['Fail probability']
+
+    def set_tasks_duration(self, **kwargs):
+        for task in self.job.task_sequence:
+            self.task_duration[task.id] = set_task_time(task, self.agent_name, **kwargs)
 
     def set_task_end(self, agent, job, current_time):
         """
@@ -53,8 +61,7 @@ class Sim:
         :rtype: int
         """
         self.task_execution[agent.name]['Start'] = current_time
-        self.task_execution[agent.name]['Duration'] = set_task_time(agent.current_task, seed=self.seed,
-                                                                    fail_prob=self.fail_probability)
+        self.task_execution[agent.name]['Duration'] = self.task_duration[agent.current_task.id]
         dependent_task = check_dependencies(job, agent.current_task)
         if dependent_task:
             overlapping = dependent_task.start + sum(
@@ -166,19 +173,13 @@ class Sim:
                 return 'Completed', time_info
 
 
-def get_param(param_name):
-    with open('./simulation/config.json', 'r') as f:
-        sim_param = json.load(f)
-    return sim_param[param_name]
+# def get_param(param_name):
+#     with open('./simulation/config.json', 'r') as f:
+#         sim_param = json.load(f)
+#     return sim_param[param_name]
 
 
-def set_task_time(task, agent=None, seed=None, fail_prob=None):
-    if seed is None or seed < 0:
-        seed = get_param('Seed')
-
-    if fail_prob is None:
-        fail_prob = get_param('Fail probability')
-
+def set_task_time(task, agent=None, **kwargs):
     if isinstance(task, dict):
         if not agent:
             agent = task['Agent']
@@ -192,16 +193,22 @@ def set_task_time(task, agent=None, seed=None, fail_prob=None):
     duration = get_approximated_task_duration(agent, action)
     logging.debug(f'{agent}, {action}, {[sum(duration), duration[0], duration[1], duration[2]]}')
     if duration[0] != 0:
-        scale = 2 if agent == 'Human' else 1
+        # scale = 2 if agent == 'Human' else 1
         for i in range(len(duration)):
-            np.random.seed(seed + ID)
             # Generate samples from the first Gaussian component
-            samples1 = np.random.normal(loc=duration[i], scale=scale, size=int(fail_prob[1] * 1000))
+            np.random.seed(kwargs['seed'] + ID)
+            samples1 = np.random.normal(loc=duration[i],
+                                        scale=kwargs['scale'],
+                                        size=int(kwargs['fail_prob'][1] * 1000))
             # Generate samples from the second Gaussian component
-            samples2 = np.random.normal(loc=duration[i] * 3, scale=scale * 3, size=int(fail_prob[0] * 1000))
+            np.random.seed(kwargs['seed'] + ID)
+            samples2 = np.random.normal(loc=duration[i] * kwargs['second_mode'][0],
+                                        scale=kwargs['scale'] * kwargs['second_mode'][1],
+                                        size=int(kwargs['fail_prob'][0] * 1000))
             # Concatenate the samples from both components
             samples = np.concatenate((samples1, samples2))
             # Choice a random value from the concatenated samples
+            np.random.seed(kwargs['seed'] + ID)
             sample = int(np.random.choice(samples))
             if sample <= 0:
                 sample = 1

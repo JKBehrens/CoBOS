@@ -48,14 +48,11 @@ class Schedule:
         """
         Sets constraints for schedule
         """
-        self.set_max_horizon()
         # Named tuple to store information about created variables.
         task_info = collections.namedtuple('task_info', 'start end agent interval')
 
         for i, task in enumerate(self.job.task_sequence):
             self.human_task_bool[i] = self.model.NewBoolVar(f"task_{task.id}_4_human")
-            self.task_duration["Human"].append(set_task_time(task, 'Human', seed=0))
-            self.task_duration["Robot"].append(set_task_time(task, 'Robot', seed=0))
             suffix = f'_{task.id}'
 
             # condition for different agent
@@ -289,13 +286,13 @@ class Schedule:
         else:
             self.model.Add(self.human_task_bool[idx] == False)
 
-    def set_max_horizon(self):
+    def set_max_horizon(self, **kwargs):
         """
         Computes horizon dynamically as the sum of all durations.
         :return:
         """
         self.horizon = 0
-        self.set_duration_of_all_tasks()
+        self.set_duration_of_all_tasks(**kwargs)
         for i, task in enumerate(self.job.task_sequence):
             if task.universal:
                 self.horizon += max(self.task_duration['Human'][i][0], self.task_duration['Robot'][i][0])
@@ -303,18 +300,19 @@ class Schedule:
                 self.horizon += self.task_duration[task.agent][i][0]
         self.horizon = int(self.horizon)
 
-    def set_duration_of_all_tasks(self):
+    def set_duration_of_all_tasks(self, **kwargs):
         """
         Set durations of all tasks by each agent
         """
         for task in self.job.task_sequence:
-            self.task_duration["Human"].append(set_task_time(task, 'Human', seed=0))
-            self.task_duration["Robot"].append(set_task_time(task, 'Robot', seed=0))
+            self.task_duration["Human"].append(set_task_time(task, 'Human',  **kwargs))
+            self.task_duration["Robot"].append(set_task_time(task, 'Robot',  **kwargs))
 
-    def set_schedule(self):
+    def set_schedule(self, **kwargs):
         """
         Creates variables, their domains and constraints in model, then solves it.
         """
+        self.set_max_horizon(**kwargs)
         self.set_variables()
         self.set_constraints()
         schedule = self.solve()

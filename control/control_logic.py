@@ -27,7 +27,7 @@ class ControlLogic:
     def __init__(self, case):
         self.case = case
         self.agent_list = ['Robot', 'Human']
-        self.agents = None
+        self.agents = []
         self.current_time = 0
         self.start_time = time.time()
         self.task_finish_time = []
@@ -46,12 +46,15 @@ class ControlLogic:
         Sets the schedule for task execution by agents.
         """
         self.schedule_model = Schedule(self.job)
-        schedule = self.schedule_model.set_schedule()
+        schedule = self.schedule_model.set_schedule(seed=10, fail_prob=[0.1, 0.9], second_mode=[3, 3], scale=2)
         if not schedule:
             self.FAIL = True
             logging.error('Scheduling failed')
         else:
-            self.agents = [Agent(agent_name, schedule[agent_name]) for agent_name in self.agent_list]
+            for agent_name in self.agent_list:
+                self.agents.append(Agent(agent_name, schedule[agent_name], self.job,
+                                 seed=7, fail_prob=[0.1, 0.9], second_mode=[3, 3], scale=2))
+
             self.job.predicted_makespan = self.job.get_current_makespan()
         self.set_task_status()
 
@@ -251,7 +254,6 @@ class ControlLogic:
                     self.plot.current_time = self.current_time
                     self.plot.data = self.schedule_as_dict(hierarchy=True)
                     self.plot.save_data()
-
 
         logging.info('__________FINAL SCHEDULE___________')
         for agent in self.agents:
