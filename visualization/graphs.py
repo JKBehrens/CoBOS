@@ -140,7 +140,7 @@ class Vis:
         self.labels.append(mpatches.Patch(color='lightgreen', label='In process'))
         self.labels.append(mpatches.Patch(color='silver', label='Completed'))
 
-    def plot_schedule(self, file_name=''):
+    def plot_schedule(self, file_name='', video=False):
         if file_name == 'simulation.png':
             title = ['Gantt Chart: initial', 'Gantt Chart: final']
             positions = [[311, 312], [313]]
@@ -212,7 +212,8 @@ class Vis:
         else:
             plt.legend(handles=self.labels, loc='upper center', bbox_to_anchor=(0.5, -0.05),
                         fancybox=True, shadow=True, ncol=5)
-            plt.show()
+            if not video:
+                plt.show()
 
     def online_plotting(self):
         data = pd.DataFrame({
