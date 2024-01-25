@@ -253,7 +253,9 @@ class Schedule:
                         self.job.task_sequence[assigned_task.task_id].finish = end
                     elif task.status == 1:
                         self.job.task_sequence[assigned_task.task_id].finish = \
-                            task.start + self.task_duration[task.agent][task.id][0]
+                            [task.start + self.task_duration[task.agent][task.id][0],
+                             self.task_duration[task.agent][task.id][1],
+                             self.task_duration[task.agent][task.id][2], self.task_duration[task.agent][task.id][3]]
 
                     output[agent].append(self.job.task_sequence[assigned_task.task_id])
             self.rescheduling_run_time.append([self.solver.StatusName(self.status),

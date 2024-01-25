@@ -91,9 +91,9 @@ class Vis:
         self.gnt.set_ylim(0, 13)
 
         # Setting X-axis limits
-        if self.horizon:
-            self.gnt.set_xlim(0, self.horizon + 50)
-        self.gnt.set_xlim(0,150)
+        # if self.horizon:
+        #     self.gnt.set_xlim(0, self.horizon + 50)
+        # self.gnt.set_xlim(0,150)
 
         # Setting labels for x-axis and y-axis
         self.gnt.set_xlabel('Time [s]')

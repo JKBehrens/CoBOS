@@ -22,9 +22,8 @@ class Sim:
         self.agent_name = agent_name
         self.job = job
         self.task_duration = {}
-        self.weights = None
         self.prob = None
-        self.seed = None
+        self.seed = kwargs['seed']
         self.fail_probability = []
         self.task_execution = {'Human': {'Start': 0, 'Duration': []}, 'Robot': {'Start': 0, 'Duration': []}}
         self.start_time = time.time()

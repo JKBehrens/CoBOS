@@ -94,7 +94,10 @@ class ControlLogic:
                             agent.execute_task(coworker_task[1], self.job, self.current_time)
                             self.update_tasks_status()
                             if self.plot:
-                                self.plot.update_info(agent, start=True)
+                                try:
+                                    self.plot.update_info(agent, start=True)
+                                except AttributeError:
+                                    pass
                             return True
                         else:
                             agent.rejection_tasks.append(coworker_task[1].id)
