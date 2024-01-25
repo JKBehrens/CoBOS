@@ -156,37 +156,25 @@ class Vis:
                 for task in local_data[i + index_offset][agent]:
                     position_y, task_name_y, action_y = self.y_pos_and_text[task["Universal"]][agent]
 
-                    if isinstance(task['Finish'], int):
-                        actions = set_task_time(task, seed=0)
-                        duration = task['Finish'] - task['Start']
-                        preps_end = task['Start'] + actions[1]
-                        execution_end = task['Start'] + actions[1] + actions[2]
-                    else:
-                        duration = task['Finish'][0] - task['Start']
-                        preps_end = task['Finish'][0] - task['Finish'][2] - task['Finish'][3]
-                        execution_end = task['Finish'][0] - task['Finish'][3]
-                        actions = [duration,
-                                   duration - task['Finish'][2] - task['Finish'][3], task['Finish'][2],
-                                   task['Finish'][3]]
-
                     if self.from_file:
                         if task['Universal']:
                             color = ['paleturquoise', 'turquoise', 'lightseagreen']
                         else:
                             color = ['lightsteelblue', 'cornflowerblue', 'royalblue']
 
-                        self.gnt.text(task["Start"] + 0.5, task_name_y, task["Action"]['Object'], fontsize=9,
+                        self.gnt.text(task["Start"] + 0.5, task_name_y, task['Action']['Object'], fontsize=9,
                                       rotation='horizontal')
-                        self.gnt.broken_barh([(task["Start"], actions[1])], [position_y - 1.2, 2.4],
+                        self.gnt.broken_barh([(task['Start'], task['Finish'][1])], [position_y - 1.2, 2.4],
                                              facecolors=color[0])
-                        self.gnt.broken_barh([(preps_end, actions[2])], [position_y - 1.2, 2.4],
-                                             facecolors=color[1])
-                        self.gnt.broken_barh([(execution_end, actions[3])], [position_y - 1.2, 2.4],
-                                             facecolors=color[2])
-                        self.gnt.annotate("", xy=((execution_end + actions[3]), position_y - 1.3),
-                                          xytext=((execution_end + actions[3]), position_y + 1.3),
+                        self.gnt.broken_barh([(task['Start']+task['Finish'][1], task['Finish'][2])],
+                                             [position_y - 1.2, 2.4], facecolors=color[1])
+                        self.gnt.broken_barh([(task['Start']+task['Finish'][1]+task['Finish'][2], task["Finish"][3])],
+                                             [position_y - 1.2, 2.4], facecolors=color[2])
+                        self.gnt.annotate("", xy=((task['Finish'][0]), position_y - 1.3),
+                                          xytext=((task['Finish'][0]), position_y + 1.3),
                                           arrowprops=dict(arrowstyle="-", lw=1, color="black"))
                     else:
+                        duration = task['Finish'][0] - task['Start']
                         color = self.color[task["Status"]]
                         self.gnt.broken_barh([(task["Start"], duration - 0.2)], [position_y - 1.2, 2.4],
                                              facecolors=color)
