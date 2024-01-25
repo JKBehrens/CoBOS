@@ -38,7 +38,8 @@ class Web_vis:
             "Status": self.data['Status'],
             "Start": self.data['Start'],
             "End": self.data['End'],
-            "Agent": self.data['Agent']
+            "Agent": self.data['Agent'],
+            "Object": self.data['Object']
         })
         pandas_data["Status"] = pandas_data["Status"].map(self.status_mapping)
         bar_chart = alt.Chart(pandas_data).mark_bar().encode(
@@ -50,12 +51,30 @@ class Web_vis:
                                 domain=['Completed', 'In progress', 'Available', 'Not available'],
                                 range=['#1f77b4', '#2ca02c', '#ff7f0e', '#d62728']
                             )))
+
+        tick = alt.Chart(pandas_data).mark_tick(
+            color='black',
+            thickness=1,
+            size=15,  # controls width of tick.
+        ).encode(
+            x='End:Q',
+            y='Agent:N'
+        )
+
+        text = alt.Chart(pandas_data).mark_text(dx=7, dy=0, color='white').encode(
+            x='Start',
+            y='Agent',
+            # detail='site:N',
+            text=alt.Text('Object')
+        )
+
         current_time_rule = alt.Chart(pd.DataFrame({'current_time': [self.current_time]})).mark_rule(
             color='red').encode(
             x='current_time',
             size=alt.value(2)
         )
-        self.chart_placeholder.altair_chart(bar_chart + current_time_rule, use_container_width=True)
+
+        self.chart_placeholder.altair_chart(bar_chart + current_time_rule + tick + text, use_container_width=True)
 
     def update_dependency_graph(self):
         pandas_data = pd.DataFrame({
