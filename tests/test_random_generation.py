@@ -21,12 +21,12 @@ def test_randon_number_gen():
 
     assert np.allclose(array1, array2)
 
-    schedule_model = Schedule(job)
+    schedule_model = Schedule(job, seed=seed)
     schedule = schedule_model.set_schedule(seed=seed, fail_prob=fail_prob, second_mode=second_mode, scale=scale)
 
     assert np.allclose(array1, schedule_model.task_duration[agent])
 
-    schedule_model = Schedule(job)
+    schedule_model = Schedule(job, seed=seed+1)
     schedule = schedule_model.set_schedule(seed=seed+1, fail_prob=fail_prob, second_mode=second_mode, scale=scale)
 
     assert not np.allclose(array1, schedule_model.task_duration[agent])

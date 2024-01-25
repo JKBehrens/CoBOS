@@ -4,6 +4,7 @@ This class create model and solve scheduling problem.
 @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
 @contact: marina.ionova@cvut.cz
 """
+import numpy as np
 from simulation.sim import set_task_time
 from ortools.sat.python import cp_model
 import collections
@@ -20,7 +21,7 @@ class Schedule:
     :param job: Job for which schedule is to be generated.
     :type job: Job
     """
-    def __init__(self, job):
+    def __init__(self, job, seed=0):
         self.COUNTER = 0
         self.job = job
         self.model = cp_model.CpModel()
@@ -43,6 +44,9 @@ class Schedule:
         self.rescheduling_run_time = []
         self.evaluation_run_time = []
         self.soft_constr = [0] * self.job.task_number
+
+        self.seed = seed
+        self.rand = np.random.default_rng(seed=self.seed)
 
     def set_variables(self):
         """
@@ -207,7 +211,7 @@ class Schedule:
         self.assigned_jobs = collections.defaultdict(list)
         # Creates the solver and solve.
         self.solver = cp_model.CpSolver()
-        self.solver.parameters.random_seed = 73
+        self.solver.parameters.random_seed = self.seed
         self.solver.parameters.max_time_in_seconds = 10.0
         self.status = self.solver.Solve(self.model)
 
@@ -305,8 +309,9 @@ class Schedule:
         Set durations of all tasks by each agent
         """
         for task in self.job.task_sequence:
-            self.task_duration["Human"].append(set_task_time(task, 'Human',  **kwargs))
-            self.task_duration["Robot"].append(set_task_time(task, 'Robot',  **kwargs))
+            self.task_duration["Human"].append(set_task_time(task, 'Human', rand_gen=self.rand,  **kwargs))
+            self.task_duration["Robot"].append(set_task_time(task, 'Robot', rand_gen=self.rand, **kwargs))
+
 
     def set_schedule(self, **kwargs):
         """

@@ -4,6 +4,7 @@
     @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
     @contact: marina.ionova@cvut.cz
 """
+from typing import Optional
 from simulation.task_execution_time_const import get_approximated_task_duration
 from numpy.random import Generator, choice
 import numpy as np
@@ -24,7 +25,9 @@ class Sim:
         self.task_duration = {}
         self.weights = None
         self.prob = None
-        self.seed = None
+        if "seed" in kwargs:
+            self.seed = int(kwargs["seed"])
+        self.rand = np.random.default_rng(seed=self.seed)
         self.fail_probability = []
         self.task_execution = {'Human': {'Start': 0, 'Duration': []}, 'Robot': {'Start': 0, 'Duration': []}}
         self.start_time = time.time()
@@ -44,7 +47,7 @@ class Sim:
 
     def set_tasks_duration(self, **kwargs):
         for task in self.job.task_sequence:
-            self.task_duration[task.id] = set_task_time(task, self.agent_name, **kwargs)
+            self.task_duration[task.id] = set_task_time(task, self.agent_name, self.rand, **kwargs)
 
     def set_task_end(self, agent, job, current_time):
         """
@@ -179,7 +182,8 @@ class Sim:
 #     return sim_param[param_name]
 
 
-def set_task_time(task, agent=None, **kwargs):
+def set_task_time(task, agent=None, rand_gen:Optional[np.random.Generator]=None, seed=None, fail_prob=None, second_mode=None, scale=None):
+
     if isinstance(task, dict):
         if not agent:
             agent = task['Agent']
@@ -190,26 +194,32 @@ def set_task_time(task, agent=None, **kwargs):
             agent = task.agent
         action = task.action
         ID = task.id
-    duration = get_approximated_task_duration(agent, action)
-    logging.debug(f'{agent}, {action}, {[sum(duration), duration[0], duration[1], duration[2]]}')
-    if duration[0] != 0:
+    if rand_gen is None:
+        rand_gen = np.random.default_rng(seed+ID)
+    assert isinstance(rand_gen, np.random.Generator)
+    if fail_prob is None:
+        raise ValueError("no failure probability is specified.")
+    if second_mode is None:
+        raise ValueError("no second mode is specified.")
+
+    duration_prior = get_approximated_task_duration(agent, action)
+    duration = [0] * len(duration_prior)
+    logging.debug(f'{agent}, {action}, {[sum(duration_prior), duration_prior[0], duration_prior[1], duration_prior[2]]}')
+    if duration_prior[0] != 0:
         # scale = 2 if agent == 'Human' else 1
-        for i in range(len(duration)):
+        for i in range(len(duration_prior)):
             # Generate samples from the first Gaussian component
-            np.random.seed(kwargs['seed'] + ID)
-            samples1 = np.random.normal(loc=duration[i],
-                                        scale=kwargs['scale'],
-                                        size=int(kwargs['fail_prob'][1] * 1000))
+            samples1 = rand_gen.normal(loc=duration_prior[i],
+                                        scale=scale,
+                                        size=int(fail_prob[1] * 1000))
             # Generate samples from the second Gaussian component
-            np.random.seed(kwargs['seed'] + ID)
-            samples2 = np.random.normal(loc=duration[i] * kwargs['second_mode'][0],
-                                        scale=kwargs['scale'] * kwargs['second_mode'][1],
-                                        size=int(kwargs['fail_prob'][0] * 1000))
+            samples2 = rand_gen.normal(loc=duration_prior[i] * second_mode[0],
+                                        scale=scale * second_mode[1],
+                                        size=int(fail_prob[0] * 1000))
             # Concatenate the samples from both components
             samples = np.concatenate((samples1, samples2))
             # Choice a random value from the concatenated samples
-            np.random.seed(kwargs['seed'] + ID)
-            sample = int(np.random.choice(samples))
+            sample = int(np.round(rand_gen.choice(samples), decimals=0))
             if sample <= 0:
                 sample = 1
             duration[i] = sample
