@@ -174,7 +174,7 @@ class Schedule:
                     self.tasks_with_final_var.append(task.id)
                 else:
                     # Change start var
-                    if task.finish < current_time:
+                    if task.finish[0] < current_time:
                         task_duration = current_time - task.start
                         # Change duration var
                         self.model.Proto().variables[self.duration[i].Index()].domain[:] = []
@@ -231,11 +231,13 @@ class Schedule:
                         agent = "Robot"
                 else:
                     agent = task.agent
+                print(agent, i, self.task_duration[agent][i])
                 self.assigned_jobs[agent].append(
                     assigned_task_info(start=self.solver.Value(
                         self.all_tasks[i].start),
-                        end=self.solver.Value(
-                            self.all_tasks[i].end),
+                        end=[self.solver.Value(
+                            self.all_tasks[i].end), self.task_duration[agent][i][1],
+                        self.task_duration[agent][i][2], self.task_duration[agent][i][3]],
                         task_id=i,
                         agent=agent))
 
@@ -251,10 +253,13 @@ class Schedule:
                     self.job.task_sequence[assigned_task.task_id].agent = agent
                     if (task.status == -1) or (task.status == 0) or (task.status is None):
                         self.job.task_sequence[assigned_task.task_id].start = start
+                        print(start,end)
                         self.job.task_sequence[assigned_task.task_id].finish = end
                     elif task.status == 1:
                         self.job.task_sequence[assigned_task.task_id].finish = \
-                            task.start + self.task_duration[task.agent][task.id][0]
+                            [task.start + self.task_duration[task.agent][task.id][0],
+                             self.task_duration[task.agent][task.id][1],
+                             self.task_duration[task.agent][task.id][2], self.task_duration[task.agent][task.id][3]]
 
                     output[agent].append(self.job.task_sequence[assigned_task.task_id])
             self.rescheduling_run_time.append([self.solver.StatusName(self.status),

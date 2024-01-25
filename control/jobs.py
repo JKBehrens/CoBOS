@@ -7,7 +7,7 @@
 """
 from inputs import case_generator
 import logging
-
+import copy
 
 class Job:
     """
@@ -46,7 +46,7 @@ class Job:
         """
         Returns the current makespan of the job.
         """
-        return max(task.finish if isinstance(task.finish, int) else task.finish[0] for task in self.task_sequence)
+        return max(task.finish[0] for task in self.task_sequence)
 
     def get_task_idx(self, task):
         """
@@ -132,11 +132,11 @@ class Task:
         :rtype: dict
         """
         return {
-            'Agent': self.agent,
-            'ID': self.id,
-            'Action': self.action,
-            'Status': self.status,
-            'Conditions': self.conditions,
-            'Universal': self.universal,
-            'Start': self.start,
-            'Finish': self.finish}
+            'Agent': copy.deepcopy(self.agent),
+            'ID': copy.deepcopy(self.id),
+            'Action': copy.deepcopy(self.action),
+            'Status': copy.deepcopy(self.status),
+            'Conditions': copy.deepcopy(self.conditions),
+            'Universal': copy.deepcopy(self.universal),
+            'Start': copy.deepcopy(self.start),
+            'Finish': copy.deepcopy(self.finish)}

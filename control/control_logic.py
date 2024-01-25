@@ -94,7 +94,10 @@ class ControlLogic:
                             agent.execute_task(coworker_task[1], self.job, self.current_time)
                             self.update_tasks_status()
                             if self.plot:
-                                self.plot.update_info(agent, start=True)
+                                try:
+                                    self.plot.update_info(agent, start=True)
+                                except AttributeError:
+                                    pass
                             return True
                         else:
                             agent.rejection_tasks.append(coworker_task[1].id)
@@ -151,12 +154,12 @@ class ControlLogic:
         for agent in self.agents:
             shift = False
             for task in agent.tasks:
-                if task.status == 1 and task.finish < self.current_time:
-                    task.finish = self.current_time
+                if task.status == 1 and task.finish[0] < self.current_time:
+                    task.finish[0] = self.current_time
                     shift = True
                 elif shift and (task.status == -1 or task.status == 0):
                     task.start += 1
-                    task.finish += 1
+                    task.finish[0] += 1
 
     def task_completed(self, agent, time_info):
         """
@@ -176,9 +179,7 @@ class ControlLogic:
         if hierarchy:
             output = {}
             for agent in self.agents:
-                output[agent.name] = []
-                for task in agent.tasks_as_dict():
-                    output[agent.name].append(task)
+                output[agent.name] = agent.tasks_as_dict()
         else:
             output = {
                 "Status": [],
@@ -194,6 +195,7 @@ class ControlLogic:
                 for task in agent.tasks_as_dict():
                     output['Status'].append(task['Status'])
                     output['Start'].append(task['Start'])
+                    output['End'].append(task['Finish'][0])
                     output['ID'].append(task['ID'])
                     output['Conditions'].append(task['Conditions'])
                     output['Object'].append(task['Action']['Object'])
@@ -203,11 +205,6 @@ class ControlLogic:
                         output['Agent'].append(f'Assigned\n to {task["Agent"]}')
                     else:
                         output['Agent'].append(task['Agent'])
-                    if isinstance(task['Finish'], int):
-                        output['End'].append(task['Finish'])
-                    else:
-                        output['End'].append(task['Finish'][0])
-
         return output
 
     def run(self, animation=False, online_plot=False, experiments=False):

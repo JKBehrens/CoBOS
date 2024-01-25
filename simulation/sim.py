@@ -23,7 +23,6 @@ class Sim:
         self.agent_name = agent_name
         self.job = job
         self.task_duration = {}
-        self.weights = None
         self.prob = None
         if "seed" in kwargs:
             self.seed = int(kwargs["seed"])
