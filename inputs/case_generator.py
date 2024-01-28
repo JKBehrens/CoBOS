@@ -1,6 +1,6 @@
 from simulation import sim_param_path
 from typing import Optional
-from inputs.config import seed, n, mean_min, mean_max, deviation_min, deviation_max
+from inputs.config import seed, n, mean_min, mean_max, deviation_min, deviation_max, allocation_weights
 import numpy as np
 import json
 
@@ -31,14 +31,11 @@ X = ['A', 'B', 'C', 'D']
 Y = ['1', '2', '3', '4']
 
 
-def set_random_sequence(case, length=CASES_LENGTH):
-    with open(sim_param_path) as f:
-        param = json.load(f)
+def set_random_sequence(case, rand_gen:Optional[np.random.Generator], length=CASES_LENGTH):
     if case in ['1', '2', '3']:
         weights = (0.5, 0.5, 0)
     else:
-        weights = param["Allocation weights"]
-    np.random.seed(param['Seed'])
+        weights = allocation_weights
     weights_for_each_task = []
     for weight in weights:
         if weight != 0:
@@ -52,8 +49,8 @@ def set_random_sequence(case, length=CASES_LENGTH):
         cubes = HUMAN_TASKS + ROBOT_TASKS
     else:
         cubes = HUMAN_TASKS + ROBOT_TASKS + ALLOCABLE_TASKS
-    sequence = np.random.choice(cubes, size=length, replace=False, p=weights_for_each_task)
-    return sequence
+    sequence = rand_gen.choice(cubes, size=length, replace=False, p=weights_for_each_task)
+    return sequence.astype(dtype=str)
 
 
 def set_distribution_parameters(rand_gen:Optional[np.random.Generator]=None):
@@ -78,11 +75,13 @@ def set_rejection_prob(rand_gen:Optional[np.random.Generator]=None):
     return rand_gen.dirichlet(np.ones(2), size=1)[0][0]
 
 
-
-def set_input(case):
+def set_input(case, rand_gen:Optional[np.random.Generator]=None):
+    if rand_gen is None:
+        rand_gen = np.random.default_rng(seed)
+    assert isinstance(rand_gen, np.random.Generator)
     job_description = []
     ID_counter = 0
-    cubes_sequence = set_random_sequence(case)
+    cubes_sequence = set_random_sequence(case, rand_gen)
 
     for x in X:
         for y in Y:
