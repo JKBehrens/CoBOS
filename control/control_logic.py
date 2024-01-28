@@ -15,7 +15,7 @@ from control.jobs import Job
 import logging
 import json
 import time
-
+import copy
 
 class ControlLogic:
     """
@@ -45,16 +45,14 @@ class ControlLogic:
         """
         Sets the schedule for task execution by agents.
         """
-        self.schedule_model = Schedule(self.job)
-        schedule = self.schedule_model.set_schedule(seed=10, fail_prob=[0.1, 0.9], second_mode=[3, 3], scale=2)
+        self.schedule_model = Schedule(self.job, seed=7)
+        schedule = self.schedule_model.set_schedule()
         if not schedule:
             self.FAIL = True
             logging.error('Scheduling failed')
         else:
             for agent_name in self.agent_list:
-                self.agents.append(Agent(agent_name, schedule[agent_name], self.job,
-                                 seed=7, fail_prob=[0.1, 0.9], second_mode=[3, 3], scale=2))
-
+                self.agents.append(Agent(agent_name, schedule[agent_name], self.job, seed=7))
             self.job.predicted_makespan = self.job.get_current_makespan()
         self.set_task_status()
 
@@ -141,7 +139,7 @@ class ControlLogic:
             if not agent.availability:
                 coworker = self.agents[self.agents.index(agent) - 1]
                 status, time_info = agent.get_feedback(self.job, self.current_time, coworker)
-                logging.debug(f'Status{status}')
+                logging.debug(f'Agent: {agent.name} status {status}')
                 if status == 'Completed':
                     self.task_completed(agent, time_info)
                 elif status == 'Waiting':
@@ -189,22 +187,24 @@ class ControlLogic:
                 "ID": [],
                 "Conditions": [],
                 "Object": [],
-                "Place": []
+                "Place": [],
+                "Universal": []
             }
             for agent in self.agents:
                 for task in agent.tasks_as_dict():
-                    output['Status'].append(task['Status'])
-                    output['Start'].append(task['Start'])
-                    output['End'].append(task['Finish'][0])
-                    output['ID'].append(task['ID'])
-                    output['Conditions'].append(task['Conditions'])
-                    output['Object'].append(task['Action']['Object'])
-                    output['Place'].append(task['Action']['Place'])
-
-                    if task['Universal']:
-                        output['Agent'].append(f'Assigned\n to {task["Agent"]}')
-                    else:
-                        output['Agent'].append(task['Agent'])
+                    output['Status'].append(copy.deepcopy(task['Status']))
+                    output['Start'].append(copy.deepcopy(task['Start']))
+                    output['End'].append(copy.deepcopy(task['Finish'][0]))
+                    output['ID'].append(copy.deepcopy(task['ID']))
+                    output['Conditions'].append(copy.deepcopy(task['Conditions']))
+                    output['Object'].append(copy.deepcopy(task['Action']['Object']))
+                    output['Place'].append(copy.deepcopy(task['Action']['Place']))
+                    output['Universal'].append(copy.deepcopy(task['Universal']))
+                    output['Agent'].append(copy.deepcopy(task['Agent']))
+                    # if task['Universal']:
+                    #     output['Agent'].append(f'Assigned\n to {task["Agent"]}')
+                    # else:
+                    #     output['Agent'].append(task['Agent'])
         return output
 
     def run(self, animation=False, online_plot=False, experiments=False):

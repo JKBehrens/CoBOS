@@ -21,7 +21,7 @@ class Schedule:
     :param job: Job for which schedule is to be generated.
     :type job: Job
     """
-    def __init__(self, job, seed=0):
+    def __init__(self, job, seed=None):
         self.COUNTER = 0
         self.job = job
         self.model = cp_model.CpModel()
@@ -47,6 +47,7 @@ class Schedule:
 
         self.seed = seed
         self.rand = np.random.default_rng(seed=self.seed)
+        self.task_duration = self.job.task_duration(rand_gen=self.rand)
 
     def set_variables(self):
         """
@@ -65,7 +66,7 @@ class Schedule:
 
             self.duration[i] = self.model.NewIntVarFromDomain(
                 cp_model.Domain.FromIntervals(
-                    [[self.task_duration["Human"][i][0]], [self.task_duration["Robot"][i][0]]]),
+                    [[self.task_duration["Human"][task.id][0]], [self.task_duration["Robot"][task.id][0]]]),
                 'duration' + suffix)
 
             if task.agent == "Human":
@@ -73,7 +74,7 @@ class Schedule:
             elif task.agent == "Robot":
                 self.model.Add(self.human_task_bool[i] == False)
             else:
-                prob = int(LAMBDA*task.get_reject_prob()*10)
+                prob = int(LAMBDA*task.rejection_prob*10)
                 self.soft_constr[i] = self.model.NewIntVar(0, prob, 'rejection'+suffix)
                 self.model.Add(self.soft_constr[i] == prob).OnlyEnforceIf(self.human_task_bool[i])
                 self.model.Add(self.soft_constr[i] == 0).OnlyEnforceIf(self.human_task_bool[i].Not())
@@ -92,9 +93,9 @@ class Schedule:
         """
         # Precedences inside a job.
         for i, task in enumerate(self.job.task_sequence):
-            self.duration_constraints[i][0] = self.model.Add(self.duration[i] == self.task_duration["Human"][i][0]) \
+            self.duration_constraints[i][0] = self.model.Add(self.duration[i] == self.task_duration["Human"][task.id][0]) \
                 .OnlyEnforceIf(self.human_task_bool[i])
-            self.duration_constraints[i][1] = self.model.Add(self.duration[i] == self.task_duration["Robot"][i][0]) \
+            self.duration_constraints[i][1] = self.model.Add(self.duration[i] == self.task_duration["Robot"][task.id][0]) \
                 .OnlyEnforceIf(self.human_task_bool[i].Not())
 
             self.model.Add(self.all_tasks[task.id].end > self.all_tasks[task.id].start)
@@ -109,7 +110,6 @@ class Schedule:
 
                     dependent_task_id = self.job.task_sequence[j].id
                     condition = self.model.NewBoolVar(f"{j}_depend_on_{i}")
-                    # print(task.id, self.job.task_sequence[j].id, self.job.task_sequence[j].conditions)
                     if task.id in self.job.task_sequence[j].conditions:
                         self.model.Add(condition == True)
                     else:
@@ -129,10 +129,13 @@ class Schedule:
 
                     # If conditions and not same agents
                     k = self.model.NewIntVar(0, 1000, f'overlap_offset_{i}_{j}')
-                    k1 = self.task_duration["Human"][i][1] + self.task_duration["Human"][i][2] - \
-                         self.task_duration["Robot"][dependent_task_id][1]
-                    k2 = self.task_duration["Robot"][i][1] + self.task_duration["Robot"][i][2] - \
-                         self.task_duration["Human"][dependent_task_id][1]
+                    # k1 = self.task_duration["Human"][task.id][1] + self.task_duration["Human"][task.id][2] - \
+                    #      self.task_duration["Robot"][dependent_task_id][1]
+                    # k2 = self.task_duration["Robot"][task.id][1] + self.task_duration["Robot"][task.id][2] - \
+                    #      self.task_duration["Human"][dependent_task_id][1]
+
+                    k1 = self.task_duration["Human"][task.id][3] + self.task_duration["Robot"][dependent_task_id][1]
+                    k2 = self.task_duration["Robot"][task.id][1] + self.task_duration["Human"][dependent_task_id][1]
 
                     if k1 < 0:
                         k1 = 0
@@ -144,11 +147,13 @@ class Schedule:
                     self.model.Add(k == k2).OnlyEnforceIf([self.human_task_bool[i].Not(), condition])
 
                     self.border_constraints[i][j][3] = self.model.Add(
-                        self.all_tasks[dependent_task_id].end >= self.all_tasks[task.id].end + k) \
+                        self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].end - k) \
                         .OnlyEnforceIf([condition, same_agent.Not()])
+                        # self.all_tasks[dependent_task_id].end >= self.all_tasks[task.id].end + k) \
+
 
         # Makespan objective.
-        obj_var = self.model.NewIntVar(0, self.horizon, 'makespan')
+        obj_var = self.model.NewIntVar(0, self.horizon, 'makespanH')
         self.model.AddMaxEquality(obj_var, [self.all_tasks[i].end for i, task in enumerate(self.all_tasks)])
         obj_var1 = self.model.NewIntVar(0, self.horizon, 'soft_constrains')
         self.model.AddMaxEquality(obj_var1, self.soft_constr)
@@ -211,7 +216,7 @@ class Schedule:
         self.assigned_jobs = collections.defaultdict(list)
         # Creates the solver and solve.
         self.solver = cp_model.CpSolver()
-        self.solver.parameters.random_seed = self.seed
+        self.solver.parameters.random_seed = 10# self.seed
         self.solver.parameters.max_time_in_seconds = 10.0
         self.status = self.solver.Solve(self.model)
 
@@ -231,13 +236,12 @@ class Schedule:
                         agent = "Robot"
                 else:
                     agent = task.agent
-                print(agent, i, self.task_duration[agent][i])
                 self.assigned_jobs[agent].append(
                     assigned_task_info(start=self.solver.Value(
                         self.all_tasks[i].start),
                         end=[self.solver.Value(
-                            self.all_tasks[i].end), self.task_duration[agent][i][1],
-                        self.task_duration[agent][i][2], self.task_duration[agent][i][3]],
+                            self.all_tasks[i].end), self.task_duration[agent][task.id][1],
+                        self.task_duration[agent][task.id][2], self.task_duration[agent][task.id][3]],
                         task_id=i,
                         agent=agent))
 
@@ -253,7 +257,6 @@ class Schedule:
                     self.job.task_sequence[assigned_task.task_id].agent = agent
                     if (task.status == -1) or (task.status == 0) or (task.status is None):
                         self.job.task_sequence[assigned_task.task_id].start = start
-                        print(start,end)
                         self.job.task_sequence[assigned_task.task_id].finish = end
                     elif task.status == 1:
                         self.job.task_sequence[assigned_task.task_id].finish = \
@@ -301,22 +304,12 @@ class Schedule:
         :return:
         """
         self.horizon = 0
-        self.set_duration_of_all_tasks(**kwargs)
-        for i, task in enumerate(self.job.task_sequence):
-            if task.universal:
-                self.horizon += max(self.task_duration['Human'][i][0], self.task_duration['Robot'][i][0])
-            else:
-                self.horizon += self.task_duration[task.agent][i][0]
-        self.horizon = int(self.horizon)
-
-    def set_duration_of_all_tasks(self, **kwargs):
-        """
-        Set durations of all tasks by each agent
-        """
         for task in self.job.task_sequence:
-            self.task_duration["Human"].append(set_task_time(task, 'Human', rand_gen=self.rand,  **kwargs))
-            self.task_duration["Robot"].append(set_task_time(task, 'Robot', rand_gen=self.rand, **kwargs))
-
+            if task.universal:
+                self.horizon += max(self.task_duration['Human'][task.id][0], self.task_duration['Robot'][task.id][0])
+            else:
+                self.horizon += self.task_duration[task.agent][task.id][0]
+        self.horizon = int(self.horizon)
 
     def set_schedule(self, **kwargs):
         """
