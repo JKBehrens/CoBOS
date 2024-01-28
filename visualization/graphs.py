@@ -10,6 +10,7 @@ import json
 import os
 import networkx as nx
 import matplotlib.patches as mpatches
+from matplotlib import gridspec
 from matplotlib.collections import PatchCollection
 import pandas
 import streamlit as st
@@ -83,17 +84,16 @@ class Vis:
         except Exception as e:
             pass
 
-    def set_plot_param(self, position, title):
-        self.gnt = self.fig.add_subplot(position)  # 211
+    def set_plot_param(self, title, gs, lim=None):
+        self.gnt = self.fig.add_subplot(gs)  # 211
         self.gnt.set_title(title)
 
         # Setting Y-axis limits
         self.gnt.set_ylim(0, 13)
 
         # Setting X-axis limits
-        # if self.horizon:
-        #     self.gnt.set_xlim(0, self.horizon + 50)
-        # self.gnt.set_xlim(0,150)
+        if lim:
+            self.gnt.set_xlim(0, lim+5)
 
         # Setting labels for x-axis and y-axis
         self.gnt.set_xlabel('Time [s]')
@@ -103,7 +103,7 @@ class Vis:
 
         # Labelling tickes of y-axis
         self.gnt.set_yticklabels(
-            ['Robot', 'Allocatable\n assigned\n to robot', 'Allocatable\n assigned\n to human', 'Human'])
+            ['Robot', 'Allocatable\n for robot', 'Allocatable\n for human', 'Human'])
 
         # Setting graph attribute
         self.gnt.grid(True)
@@ -140,18 +140,28 @@ class Vis:
         self.labels.append(mpatches.Patch(color='lightgreen', label='In process'))
         self.labels.append(mpatches.Patch(color='silver', label='Completed'))
 
+    def set_horizon(self, data):
+        # Flatten the nested dictionary to get all "Finish" values
+        finish_times = [task["Finish"][0] for agent_tasks in data for task in data[agent_tasks]]
+
+        # Find the maximum "Finish" time
+        return max(finish_times)
+
     def plot_schedule(self, file_name='', video=False):
         if file_name == 'simulation.png':
             title = ['Gantt Chart: initial', 'Gantt Chart: final']
+            gs = gridspec.GridSpec(3, 3, height_ratios=[1, 1, 2])
             positions = [[311, 312], [313]]
             index_offset = 0
         else:
             title = ['Gantt Chart']
+            gs = gridspec.GridSpec(2, 1, height_ratios=[1, 1])
             positions = [[211], [212]]
             index_offset = 0
         local_data = self.data if self.from_file and file_name == 'simulation.png' else [self.data]
         for i, position in enumerate(positions[0]):
-            self.set_plot_param(position, title[i])  # [0]
+            horizon = self.set_horizon(local_data[i + index_offset])
+            self.set_plot_param( title[i], gs[i, :], lim=horizon)  # [0]
             for agent in local_data[i + index_offset]:
                 for task in local_data[i + index_offset][agent]:
                     position_y, task_name_y, action_y = self.y_pos_and_text[task["Universal"]][agent]
@@ -187,18 +197,18 @@ class Vis:
             self.gnt.annotate("", xy=(self.current_time, 0), xytext=(self.current_time, 13),
                               arrowprops=dict(arrowstyle="-", lw=2, color="red"))
 
-        self.plot_dependency_graph(local_data[0], positions[1][0])
+        self.plot_dependency_graph(local_data[0], gs=gs[2:, :-1])
         # ------ create the legend
 
         plt.tight_layout()
         if self.from_file:
-            plt.legend(self.h, self.l, loc='upper right',
+            plt.legend(self.h, self.l, loc='center left', bbox_to_anchor=(1.1, 0.5), fontsize="15",
                        handler_map={MulticolorPatch: MulticolorPatchHandler()})
             if file_name:
                 plt.savefig('./img/' + file_name)
             # plt.show()
         else:
-            plt.legend(handles=self.labels, loc='upper center', bbox_to_anchor=(0.5, -0.05),
+            plt.legend(handles=self.labels, loc='center left', bbox_to_anchor=(1, 0.5), # bbox_to_anchor=(0.5, -0.05),
                         fancybox=True, shadow=True, ncol=5)
             if not video:
                 plt.show()
@@ -259,9 +269,14 @@ class Vis:
         with open(self.data4video, 'w') as f:
             json.dump(data, f, indent=4)
 
-    def plot_dependency_graph(self, local_data, position):
-        sub2 = self.fig.add_subplot(position)
+    def plot_dependency_graph(self, local_data, gs):
+        sub2 = self.fig.add_subplot(gs)
         sub2.set_title("Dependency graph")
+        axis = plt.gca()
+        # maybe smaller factors work as well, but 1.1 works fine for this minimal example
+        axis.set_xlim([1.1 * x for x in axis.get_xlim()])
+        axis.set_ylim([1.1 * y for y in axis.get_ylim()])
+
         G = nx.DiGraph()
         labels = {}
         status = {None: [], -1: [], 0: [], 1: [], 2: []}
@@ -286,7 +301,7 @@ class Vis:
         #        "A2": (0, 1), 'C2': (2, 0), 'D2': (2, 2),
         #        'C3': (3, 0.5), 'D3': (3, 1.5)}  # positions for all nodes
 
-        node_size = 800
+        node_size = 900
         nx.draw_networkx_edges(G, pos, width=1.0, alpha=0.7, node_size=node_size)
         nx.draw_networkx_labels(G, pos, labels, font_size=14, font_color="whitesmoke")
 
@@ -300,3 +315,9 @@ class Vis:
             nx.draw_networkx_nodes(G, pos, nodelist=status[0], node_color=node_color[2], node_size=node_size)
             nx.draw_networkx_nodes(G, pos, nodelist=status[1], node_color=node_color[3], node_size=node_size)
             nx.draw_networkx_nodes(G, pos, nodelist=status[2], node_color=node_color[4], node_size=node_size)
+
+        axis = plt.gca()
+        # maybe smaller factors work as well, but 1.1 works fine for this minimal example
+        axis.set_xlim([-0.5, 3.5])
+        axis.set_ylim([-0.5, 3.5])
+

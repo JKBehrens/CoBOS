@@ -32,6 +32,11 @@ class Web_vis:
             'Not available': '#d62728'
         }
 
+    def update_agent(self, row):
+        if row['Universal']:
+            return f"Allacatable for {row['Agent']}"
+        else:
+            return row['Agent']
 
     def update_gantt_chart(self):
         pandas_data = pd.DataFrame({
@@ -39,8 +44,11 @@ class Web_vis:
             "Start": self.data['Start'],
             "End": self.data['End'],
             "Agent": self.data['Agent'],
-            "Object": self.data['Object']
+            "ID": self.data['ID'],
+            "Universal": self.data["Universal"]
         })
+
+        pandas_data["Agent"] = pandas_data.apply(self.update_agent, axis=1)
         pandas_data["Status"] = pandas_data["Status"].map(self.status_mapping)
         bar_chart = alt.Chart(pandas_data).mark_bar().encode(
             y=alt.X('Agent:N', title='Agents'),
@@ -65,7 +73,7 @@ class Web_vis:
             x='Start',
             y='Agent',
             # detail='site:N',
-            text=alt.Text('Object')
+            text=alt.Text('ID')
         )
 
         current_time_rule = alt.Chart(pd.DataFrame({'current_time': [self.current_time]})).mark_rule(
@@ -74,7 +82,10 @@ class Web_vis:
             size=alt.value(2)
         )
 
-        self.chart_placeholder.altair_chart(bar_chart + current_time_rule + tick + text, use_container_width=True)
+        try:
+            self.chart_placeholder.altair_chart(bar_chart + current_time_rule + tick + text, use_container_width=True)
+        except RuntimeError:
+            pass
 
     def update_dependency_graph(self):
         pandas_data = pd.DataFrame({
