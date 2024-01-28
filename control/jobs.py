@@ -85,6 +85,11 @@ class Job:
         self.completed_tasks.append(task_id)
         self.in_progress_tasks.remove(task_id)
 
+    def get_in_process_dependent_task(self, task):
+        for another_task in self.task_sequence:
+            if (another_task.id in task.conditions) & (another_task.status == 1):
+                return another_task
+        return None
 
 class Task:
     """

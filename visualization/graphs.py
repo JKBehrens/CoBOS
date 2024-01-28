@@ -15,7 +15,6 @@ from matplotlib.collections import PatchCollection
 import pandas
 import streamlit as st
 import numpy as np
-from simulation.sim import set_task_time
 import altair as alt
 
 

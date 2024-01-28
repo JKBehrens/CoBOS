@@ -64,7 +64,7 @@ class Sim:
         """
         self.task_execution[agent.name]['Start'] = current_time
         self.task_execution[agent.name]['Duration'] = self.task_duration[agent.name][agent.current_task.id]
-        dependent_task = check_dependencies(job, agent.current_task)
+        dependent_task = job.get_in_process_dependent_task(agent.current_task)
         if dependent_task:
             overlapping = dependent_task.start + sum(
                 self.task_execution[dependent_task.agent]['Duration'][1:3]) - current_time
@@ -125,7 +125,7 @@ class Sim:
                 return 'Preparation', -1
             elif current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][0] -
                                  self.task_execution['Robot']['Duration'][3]):
-                dependent_task = check_dependencies(job, task)
+                dependent_task = job.get_in_process_dependent_task(task)
 
                 if dependent_task and current_time < (self.task_execution['Human']['Start'] +
                                                       (self.task_execution['Human']['Duration'][0] -
@@ -163,7 +163,7 @@ class Sim:
 
             if (self.task_execution['Human']['Start'] + self.task_execution['Human']['Duration'][0]) \
                     > current_time:
-                dependent_task = check_dependencies(job, task)
+                dependent_task = job.get_in_process_dependent_task(task)
                 if dependent_task and current_time < (self.task_execution['Robot']['Start'] +
                                                       (self.task_execution['Robot']['Duration'][0] -
                                                        self.task_execution['Robot']['Duration'][3])):
@@ -177,62 +177,3 @@ class Sim:
                 self.task_execution['Human']['Start'] = 0
                 self.task_execution['Human']['Duration'] = [0, 0, 0, 0]
                 return 'Completed', time_info
-
-
-# def get_param(param_name):
-#     with open('./simulation/config.json', 'r') as f:
-#         sim_param = json.load(f)
-#     return sim_param[param_name]
-
-
-def set_task_time(task, agent=None, rand_gen:Optional[np.random.Generator]=None, seed=None, fail_prob=None, second_mode=None, scale=None):
-
-    if isinstance(task, dict):
-        if not agent:
-            agent = task['Agent']
-        action = task['Action']
-        ID = task['ID']
-    else:
-        if not agent:
-            agent = task.agent
-        action = task.action
-        ID = task.id
-    if rand_gen is None:
-        rand_gen = np.random.default_rng(seed+ID)
-    assert isinstance(rand_gen, np.random.Generator)
-    if fail_prob is None:
-        raise ValueError("no failure probability is specified.")
-    if second_mode is None:
-        raise ValueError("no second mode is specified.")
-
-    duration_prior = get_approximated_task_duration(agent, action)
-    duration = [0] * len(duration_prior)
-    logging.debug(f'{agent}, {action}, {[sum(duration_prior), duration_prior[0], duration_prior[1], duration_prior[2]]}')
-    if duration_prior[0] != 0:
-        # scale = 2 if agent == 'Human' else 1
-        for i in range(len(duration_prior)):
-            # Generate samples from the first Gaussian component
-            samples1 = rand_gen.normal(loc=duration_prior[i],
-                                        scale=scale,
-                                        size=int(fail_prob[1] * 1000))
-            # Generate samples from the second Gaussian component
-            samples2 = rand_gen.normal(loc=duration_prior[i] * second_mode[0],
-                                        scale=scale * second_mode[1],
-                                        size=int(fail_prob[0] * 1000))
-            # Concatenate the samples from both components
-            samples = np.concatenate((samples1, samples2))
-            # Choice a random value from the concatenated samples
-            sample = int(np.round(rand_gen.choice(samples), decimals=0))
-            if sample <= 0:
-                sample = 1
-            duration[i] = sample
-
-    logging.debug(f'{agent}, {action}, {[sum(duration), duration[0], duration[1], duration[2]]}')
-    return [sum(duration), duration[0], duration[1], duration[2]]
-
-
-def check_dependencies(job, task):
-    for another_task in job.task_sequence:
-        if (another_task.id in task.conditions) & (another_task.status == 1):
-            return another_task
-    return None

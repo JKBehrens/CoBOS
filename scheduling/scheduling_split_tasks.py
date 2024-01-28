@@ -5,7 +5,6 @@ This class create model and solve scheduling problem.
 @contact: marina.ionova@cvut.cz
 """
 import numpy as np
-from simulation.sim import set_task_time
 from ortools.sat.python import cp_model
 import collections
 import logging
