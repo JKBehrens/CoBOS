@@ -216,7 +216,7 @@ class Schedule:
         self.assigned_jobs = collections.defaultdict(list)
         # Creates the solver and solve.
         self.solver = cp_model.CpSolver()
-        self.solver.parameters.random_seed = 10# self.seed
+        self.solver.parameters.random_seed = self.seed
         self.solver.parameters.max_time_in_seconds = 10.0
         self.status = self.solver.Solve(self.model)
 

@@ -148,7 +148,7 @@ class Vis:
         return max(finish_times)
 
     def plot_schedule(self, file_name='', video=False):
-        if file_name == 'simulation.png':
+        if 'simulation' in file_name:
             title = ['Gantt Chart: initial', 'Gantt Chart: final']
             gs = gridspec.GridSpec(3, 3, height_ratios=[1, 1, 2])
             positions = [[311, 312], [313]]
@@ -158,7 +158,7 @@ class Vis:
             gs = gridspec.GridSpec(2, 1, height_ratios=[1, 1])
             positions = [[211], [212]]
             index_offset = 0
-        local_data = self.data if self.from_file and file_name == 'simulation.png' else [self.data]
+        local_data = self.data if self.from_file and 'simulation' in file_name else [self.data]
         for i, position in enumerate(positions[0]):
             horizon = self.set_horizon(local_data[i + index_offset])
             self.set_plot_param( title[i], gs[i, :], lim=horizon)  # [0]
@@ -174,11 +174,12 @@ class Vis:
 
                         self.gnt.text(task["Start"] + 0.5, task_name_y, task['Action']['Object'], fontsize=9,
                                       rotation='horizontal')
-                        self.gnt.broken_barh([(task['Start'], task['Finish'][1])], [position_y - 1.2, 2.4],
+                        preps_duration = task['Finish'][0]-task['Start'] - task['Finish'][2] - task['Finish'][3]
+                        self.gnt.broken_barh([(task['Start'], preps_duration)], [position_y - 1.2, 2.4],
                                              facecolors=color[0])
-                        self.gnt.broken_barh([(task['Start']+task['Finish'][1], task['Finish'][2])],
+                        self.gnt.broken_barh([(task['Start']+preps_duration, task['Finish'][2])],
                                              [position_y - 1.2, 2.4], facecolors=color[1])
-                        self.gnt.broken_barh([(task['Start']+task['Finish'][1]+task['Finish'][2], task["Finish"][3])],
+                        self.gnt.broken_barh([(task['Start']+preps_duration+task['Finish'][2], task["Finish"][3])],
                                              [position_y - 1.2, 2.4], facecolors=color[2])
                         self.gnt.annotate("", xy=((task['Finish'][0]), position_y - 1.3),
                                           xytext=((task['Finish'][0]), position_y + 1.3),
