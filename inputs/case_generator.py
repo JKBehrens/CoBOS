@@ -1,4 +1,6 @@
 from simulation import sim_param_path
+from typing import Optional
+from inputs.config import seed, n, mean_min, mean_max, deviation_min, deviation_max
 import numpy as np
 import json
 
@@ -29,7 +31,7 @@ X = ['A', 'B', 'C', 'D']
 Y = ['1', '2', '3', '4']
 
 
-def set_random_sequence(case, length):
+def set_random_sequence(case, length=CASES_LENGTH):
     with open(sim_param_path) as f:
         param = json.load(f)
     if case in ['1', '2', '3']:
@@ -54,10 +56,33 @@ def set_random_sequence(case, length):
     return sequence
 
 
+def set_distribution_parameters(rand_gen:Optional[np.random.Generator]=None):
+
+    if rand_gen is None:
+        rand_gen = np.random.default_rng(seed)
+    assert isinstance(rand_gen, np.random.Generator)
+
+    mean = np.sort(rand_gen.integers(mean_min, mean_max + 1, size=n))
+    deviation = np.linspace(deviation_min, deviation_max, num=n)/100
+    scale = np.round(deviation*mean)
+    fail_prob = np.flip(np.sort(rand_gen.dirichlet(np.ones(n), size=1)))[0]
+
+    return [mean, scale, fail_prob]
+
+
+def set_rejection_prob(rand_gen:Optional[np.random.Generator]=None):
+    if rand_gen is None:
+        rand_gen = np.random.default_rng(seed)
+    assert isinstance(rand_gen, np.random.Generator)
+
+    return rand_gen.dirichlet(np.ones(2), size=1)[0][0]
+
+
+
 def set_input(case):
     job_description = []
     ID_counter = 0
-    cubes_sequence = set_random_sequence(case, CASES_LENGTH)
+    cubes_sequence = set_random_sequence(case)
 
     for x in X:
         for y in Y:
@@ -75,6 +100,10 @@ def set_input(case):
                 task_description['Conditions'] = []
             else:
                 task_description['Conditions'] = CONDITIONS[case][ID_counter]
+
+            task_description['Distribution'] = [set_distribution_parameters(np.random.default_rng(seed+ID_counter+i))
+                                                for i in range(3)]
+            task_description['Rejection_prob'] = set_rejection_prob(np.random.default_rng(seed+ID_counter))
             ID_counter += 1
             job_description.append(task_description)
     return job_description

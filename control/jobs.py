@@ -6,8 +6,11 @@
     @contact: marina.ionova@cvut.cz
 """
 from inputs import case_generator
+from typing import Optional
+import numpy as np
 import logging
 import copy
+
 
 class Job:
     """
@@ -16,6 +19,7 @@ class Job:
     :param case: Input case for generating job description.
     :type case: str
     """
+
     def __init__(self, case):
         self.case = str(case)
         self.job_description = case_generator.set_input(self.case)
@@ -48,6 +52,18 @@ class Job:
         """
         return max(task.finish[0] for task in self.task_sequence)
 
+    def task_duration(self,  rand_gen: Optional[np.random.Generator] = None,  seed=None):
+        if rand_gen is None:
+            rand_gen = np.random.default_rng(seed)
+        assert isinstance(rand_gen, np.random.Generator)
+
+        task_duration = {"Human": {}, "Robot": {}}
+        for task in self.task_sequence:
+            task_duration["Human"][task.id] = task.get_duration(rand_gen=rand_gen)
+            task_duration["Robot"][task.id] = task.get_duration(rand_gen=rand_gen)
+
+        return task_duration
+
     def get_task_idx(self, task):
         """
         Returns the index of a specified task in the job's task sequence.
@@ -77,6 +93,7 @@ class Task:
     :param task_description: Dictionary containing task details.
     :type task_description: dict
     """
+
     def __init__(self, task_description):
         self.id = task_description['ID']
         self.action = {'Object': task_description['Object'], 'Place': task_description['Place']}
@@ -86,6 +103,9 @@ class Task:
         self.agent = task_description['Agent']
         self.start = None
         self.finish = None
+
+        self.distribution = task_description["Distribution"]
+        self.rejection_prob = task_description["Rejection_prob"]
 
     def __str__(self):
         """
@@ -111,19 +131,6 @@ class Task:
         """
         return round((current_time - self.start / float(duration)) * 100, 2)
 
-    def get_reject_prob(self):
-        """
-       Returns the probability of task rejection based on task ID.
-
-       :return: Probability of task rejection.
-       :rtype: float
-       """
-        task_rejection_prob = {0: 0.1, 1: 0.2, 2: 0.1, 3: 0.8,
-                               4: 0.2, 5: 0.2, 6: 0.2, 7: 0.1,
-                               8: 0.2, 9: 0.8, 10: 0.2, 11: 0.2,
-                               12: 0.1, 13: 0.2, 14: 0.1, 15: 0.2}
-        return task_rejection_prob[self.id]
-
     def as_dict(self):
         """
         Returns task details as a dictionary.
@@ -140,3 +147,40 @@ class Task:
             'Universal': copy.deepcopy(self.universal),
             'Start': copy.deepcopy(self.start),
             'Finish': copy.deepcopy(self.finish)}
+
+    def get_duration(self, rand_gen: Optional[np.random.Generator] = None, seed=None):
+        if rand_gen is None:
+            rand_gen = np.random.default_rng(seed + self.id)
+        assert isinstance(rand_gen, np.random.Generator)
+
+        duration = []
+        for phase in range(3):
+            duration.append(self.get_phase_duration(phase, rand_gen, seed))
+
+        return [sum(duration), duration[0], duration[1], duration[2]]
+
+    def get_phase_distribution(self, phase, rand_gen: Optional[np.random.Generator] = None,  seed=None):
+        if rand_gen is None:
+            rand_gen = np.random.default_rng(seed + self.id)
+
+        distributions = []
+        # Create distribution for each set of parameters
+        for mean, scale, fail_prob in zip(*self.distribution[phase]):
+            distributions.append(rand_gen.normal(loc=mean,
+                                                 scale=scale,
+                                                 size=int(fail_prob * 1000)))
+        return np.concatenate(distributions)
+
+    def get_phase_duration(self, phase, rand_gen: Optional[np.random.Generator] = None,  seed=None):
+        if rand_gen is None:
+            rand_gen = np.random.default_rng(seed + self.id)
+        assert isinstance(rand_gen, np.random.Generator)
+
+        distribution = self.get_phase_distribution(phase, rand_gen, seed)
+
+        # Choice a random value from the concatenated distribution
+        sample = int(np.round(rand_gen.choice(distribution), decimals=0))
+        if sample <= 0:
+            sample = 1
+
+        return sample

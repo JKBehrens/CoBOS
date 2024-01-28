@@ -27,8 +27,8 @@ if __name__ == '__main__':
         lvl = logging.DEBUG
     else:
         lvl = logging.INFO
-        logging.basicConfig(level=lvl,
-                            format=f"%(levelname)-8s: - %(message)s")
+    logging.basicConfig(level=lvl,
+                        format=f"%(levelname)-8s: - %(message)s")
     logging.getLogger("mylogger")
 
     if args.case in cases:

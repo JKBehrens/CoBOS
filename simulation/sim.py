@@ -22,7 +22,7 @@ class Sim:
     def __init__(self, agent_name, job, **kwargs):
         self.agent_name = agent_name
         self.job = job
-        self.task_duration = {}
+        self.task_duration = {"Human": {}, "Robot": {}}
         self.prob = None
         if "seed" in kwargs:
             self.seed = int(kwargs["seed"])
@@ -45,8 +45,8 @@ class Sim:
         self.fail_probability = param['Fail probability']
 
     def set_tasks_duration(self, **kwargs):
-        for task in self.job.task_sequence:
-            self.task_duration[task.id] = set_task_time(task, self.agent_name, self.rand, **kwargs)
+        self.task_duration = self.job.task_duration(rand_gen=self.rand)
+
 
     def set_task_end(self, agent, job, current_time):
         """
@@ -63,7 +63,7 @@ class Sim:
         :rtype: int
         """
         self.task_execution[agent.name]['Start'] = current_time
-        self.task_execution[agent.name]['Duration'] = self.task_duration[agent.current_task.id]
+        self.task_execution[agent.name]['Duration'] = self.task_duration[agent.name][agent.current_task.id]
         dependent_task = check_dependencies(job, agent.current_task)
         if dependent_task:
             overlapping = dependent_task.start + sum(
@@ -90,17 +90,17 @@ class Sim:
         if question_type == 'change_agent':
             if task.agent == 'Robot':
                 np.random.seed(self.seed + task.id)
-                answer = choice(nameList,  p=(task.get_reject_prob(), 1-task.get_reject_prob()), size=1)
+                answer = choice(nameList,  p=(task.rejection_prob, 1-task.rejection_prob), size=1)
                 logging.info(f'Offer to complete task {task.id} instead of robot. Answer {answer[0]}')
                 return answer[0]
             else:
                 np.random.seed(self.seed + task.id)
-                answer = choice(nameList, p=(1-task.get_reject_prob(), task.get_reject_prob()), size=1)
+                answer = choice(nameList, p=(1-task.rejection_prob, task.rejection_prob), size=1)
                 logging.info(f'Offer to complete task {task.id} instead of human. Answer {answer[0]}')
                 return answer[0]
         elif question_type == 'execute_task':
             np.random.seed(self.seed + task.id)
-            answer = choice(nameList, p=(1 - task.get_reject_prob(), task.get_reject_prob()), size=1)
+            answer = choice(nameList, p=(1 - task.rejection_prob, task.rejection_prob), size=1)
             logging.info(f'Offer to complete task {task.id}. Answer {answer[0]}')
             return answer[0]
         return False
@@ -120,12 +120,13 @@ class Sim:
         """
         if self.task_execution['Robot']['Duration'][0] != 0:
             logging.debug(
-                f'start: {self.task_execution["Robot"]["Start"]}, duration :{self.task_execution["Robot"]["Duration"]}')
+                f'Robot: start: {self.task_execution["Robot"]["Start"]}, duration :{self.task_execution["Robot"]["Duration"]}')
             if current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][1]):
                 return 'Preparation', -1
             elif current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][0] -
                                  self.task_execution['Robot']['Duration'][3]):
                 dependent_task = check_dependencies(job, task)
+
                 if dependent_task and current_time < (self.task_execution['Human']['Start'] +
                                                       (self.task_execution['Human']['Duration'][0] -
                                                        self.task_execution['Human']['Duration'][3])):
@@ -157,6 +158,9 @@ class Sim:
         :rtype: tuple
         """
         if self.task_execution['Human']['Duration'] != 0:
+            logging.debug(
+                f'Human: start: {self.task_execution["Human"]["Start"]}, duration :{self.task_execution["Human"]["Duration"]}')
+
             if (self.task_execution['Human']['Start'] + self.task_execution['Human']['Duration'][0]) \
                     > current_time:
                 dependent_task = check_dependencies(job, task)
