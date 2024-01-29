@@ -38,7 +38,7 @@ class Schedule:
         self.tasks_with_final_var = []
         self.duration_constraints = [[0, 0] for i in range(self.job.task_number)]
         self.fix_agent = [0] * self.job.task_number
-        self.border_constraints = [[[0, 0, 0, 0]] * self.job.task_number] * self.job.task_number
+        self.border_constraints = [[[0, 0, 0, 0, 0]] * self.job.task_number] * self.job.task_number
 
         self.rescheduling_run_time = []
         self.evaluation_run_time = []
@@ -148,11 +148,14 @@ class Schedule:
                     self.border_constraints[i][j][3] = self.model.Add(
                         self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].end - k) \
                         .OnlyEnforceIf([condition, same_agent.Not()])
-                        # self.all_tasks[dependent_task_id].end >= self.all_tasks[task.id].end + k) \
+                    # self.all_tasks[dependent_task_id].end >= self.all_tasks[task.id].end + k) \
 
+                    self.border_constraints[i][j][4] = self.model.Add(
+                        self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].start) \
+                        .OnlyEnforceIf([condition, same_agent.Not()])
 
         # Makespan objective.
-        obj_var = self.model.NewIntVar(0, self.horizon, 'makespanH')
+        obj_var = self.model.NewIntVar(0, self.horizon, 'makespan')
         self.model.AddMaxEquality(obj_var, [self.all_tasks[i].end for i, task in enumerate(self.all_tasks)])
         obj_var1 = self.model.NewIntVar(0, self.horizon, 'soft_constrains')
         self.model.AddMaxEquality(obj_var1, self.soft_constr)
@@ -184,15 +187,16 @@ class Schedule:
                         self.model.Proto().variables[self.duration[i].Index()].domain[:] = []
                         self.model.Proto().variables[self.duration[i].Index()].domain.extend(
                             cp_model.Domain(task_duration, task_duration).FlattenedIntervals())
+
+                logging.debug(f'Constraints has been deleted, Task{task.id}')
                 if self.duration_constraints[i][0].Proto() in self.model.Proto().constraints:
                     for j in range(2):
                         self.model.Proto().constraints.remove(self.duration_constraints[i][j].Proto())
                 # Cancel constraints
                 for j in range(self.job.task_number):
-                    for k in range(4):
+                    for k in range(5):
                         if not isinstance(self.border_constraints[i][j][k], int) and \
                                 self.border_constraints[i][j][k].Proto() in self.model.Proto().constraints:
-                            logging.debug(f'Constraints has been deleted, Task{task.id}')
                             self.model.Proto().constraints.remove(self.border_constraints[i][j][k].Proto())
 
                 self.model.Proto().variables[self.start_var[i].Index()].domain[:] = []
@@ -204,6 +208,10 @@ class Schedule:
                 self.model.Proto().variables[self.start_var[i].Index()].domain[:] = []
                 self.model.Proto().variables[self.start_var[i].Index()].domain.extend(
                     cp_model.Domain(int(current_time), self.horizon).FlattenedIntervals())
+            else:
+                logging.debug(f'Ignore task{task.id}')
+
+
 
     def solve(self):
         """
@@ -215,7 +223,7 @@ class Schedule:
         self.assigned_jobs = collections.defaultdict(list)
         # Creates the solver and solve.
         self.solver = cp_model.CpSolver()
-        self.solver.parameters.random_seed = self.seed
+        self.solver.parameters.random_seed = 42 #self.seed
         self.solver.parameters.max_time_in_seconds = 10.0
         self.status = self.solver.Solve(self.model)
 
@@ -269,8 +277,7 @@ class Schedule:
             return output
         else:
             logging.error(f"Scheduling failed, max self.horizon: {self.horizon} \n")
-            self.job.__str__()
-            exit()
+            return None
 
     def fix_agents_var(self):
         """

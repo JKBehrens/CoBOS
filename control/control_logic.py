@@ -33,7 +33,7 @@ class ControlLogic:
         self.task_finish_time = []
         self.schedule_model = None
         self.available_tasks = []
-        self.FAIL = False
+        self.output_data = []
 
         self.job = Job(self.case)
         self.set_schedule()
@@ -48,8 +48,9 @@ class ControlLogic:
         self.schedule_model = Schedule(self.job, seed=7)
         schedule = self.schedule_model.set_schedule()
         if not schedule:
-            self.FAIL = True
             logging.error('Scheduling failed')
+            self.job.__str__()
+            exit()
         else:
             for agent_name in self.agent_list:
                 self.agents.append(Agent(agent_name, schedule[agent_name], self.job, seed=7))
@@ -114,6 +115,13 @@ class ControlLogic:
         self.schedule_model.set_new_agent(task)
         self.schedule_model.refresh_variables(self.current_time)
         schedule = self.schedule_model.solve()
+        if schedule is None:
+            self.job.__str__()
+            self.output_data.append(self.schedule_as_dict(hierarchy=True))
+            with open(initial_and_final_schedule, 'w') as f:
+                json.dump(self.output_data, f, indent=4)
+            exit()
+
         for agent in self.agents:
             agent.refresh_tasks(schedule[agent.name])
         logging.info('____RESCHEDULING______')
@@ -211,7 +219,7 @@ class ControlLogic:
         """
         Run the scheduling simulation.
         """
-        schedule_data = [self.schedule_as_dict(hierarchy=True)]
+        self.output_data.append(self.schedule_as_dict(hierarchy=True))
 
         if animation:
             self.plot = Vis(horizon=self.schedule_model.horizon)
@@ -258,14 +266,14 @@ class ControlLogic:
             agent.print_tasks()
         logging.info('___________________________________')
         logging.info(f'SIMULATION TOTAL TIME: {time.time() - self.start_time}')
-        schedule_data.append(self.schedule_as_dict(hierarchy=True))
+        self.output_data.append(self.schedule_as_dict(hierarchy=True))
         with open(initial_and_final_schedule, 'w') as f:
-            json.dump(schedule_data, f, indent=4)
+            json.dump(self.output_data, f, indent=4)
 
         if experiments:
             statistics = {}
             statistics['makespan'] = [self.job.predicted_makespan, self.job.get_current_makespan()]
             statistics['rejection number'] = len(self.agents[1].rejection_tasks)
             statistics['runtime'] = [self.schedule_model.rescheduling_run_time, self.schedule_model.evaluation_run_time]
-            return schedule_data, statistics
+            return self.output_data, statistics
 
