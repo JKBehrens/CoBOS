@@ -134,7 +134,7 @@ class Schedule:
                     #      self.task_duration["Human"][dependent_task_id][1]
 
                     k1 = self.task_duration["Human"][task.id][3] + self.task_duration["Robot"][dependent_task_id][1]
-                    k2 = self.task_duration["Robot"][task.id][1] + self.task_duration["Human"][dependent_task_id][1]
+                    k2 = self.task_duration["Robot"][task.id][3] + self.task_duration["Human"][dependent_task_id][1]
 
                     if k1 < 0:
                         k1 = 0
