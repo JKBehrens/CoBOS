@@ -211,8 +211,6 @@ class Schedule:
             else:
                 logging.debug(f'Ignore task{task.id}')
 
-
-
     def solve(self):
         """
         Finds schedula and parsers it.
@@ -223,8 +221,11 @@ class Schedule:
         self.assigned_jobs = collections.defaultdict(list)
         # Creates the solver and solve.
         self.solver = cp_model.CpSolver()
-        self.solver.parameters.random_seed = 42 #self.seed
+        self.solver.parameters.num_search_workers = 1
+        self.solver.parameters.random_seed = self.seed
         self.solver.parameters.max_time_in_seconds = 10.0
+        self.solver.parameters.enumerate_all_solutions = True
+        self.solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
         self.status = self.solver.Solve(self.model)
 
         # Named tuple to manipulate solution information.
@@ -276,6 +277,7 @@ class Schedule:
                                                self.solver.ObjectiveValue(), self.solver.WallTime()])
             return output
         else:
+            self.model.ExportToFile(f'model.txt')
             logging.error(f"Scheduling failed, max self.horizon: {self.horizon} \n")
             return None
 

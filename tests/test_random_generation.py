@@ -9,7 +9,6 @@ def test_randon_number_gen():
     task_case = '1'
     seed = 7
 
-
     job = Job(task_case)
 
     h_agent_1 = Sim("Human", job, seed=seed)
@@ -92,3 +91,18 @@ def test_random_number_in_function():
 
     assert np.allclose(values_1[0], values_2[0])
     assert np.allclose(values_1[4], values_2[4])
+
+
+def test_schedule():
+    task_case = '5'
+    seed = 7
+
+    job = Job(task_case)
+
+    schedule_model1 = Schedule(job, seed=seed)
+    output1 = schedule_model1.set_schedule()
+
+    schedule_model2 = Schedule(job, seed=seed)
+    output2 = schedule_model2.set_schedule()
+
+    assert output1["Human"][0].id == output2["Human"][0].id
