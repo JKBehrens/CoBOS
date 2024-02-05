@@ -1,6 +1,6 @@
 from simulation import sim_param_path
 from typing import Optional
-from inputs.config import seed, n, mean_min, mean_max, deviation_min, deviation_max, allocation_weights
+from inputs.config import n, mean_min, mean_max, deviation_min, deviation_max, allocation_weights
 import numpy as np
 import json
 
@@ -75,9 +75,8 @@ def set_rejection_prob(rand_gen:Optional[np.random.Generator]=None):
     return rand_gen.dirichlet(np.ones(2), size=1)[0][0]
 
 
-def set_input(case, rand_gen:Optional[np.random.Generator]=None):
-    if rand_gen is None:
-        rand_gen = np.random.default_rng(seed)
+def set_input(case, seed):
+    rand_gen = np.random.default_rng(seed)
     assert isinstance(rand_gen, np.random.Generator)
     job_description = []
     ID_counter = 0

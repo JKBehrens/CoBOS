@@ -5,7 +5,6 @@
     @contact: marina.ionova@cvut.cz
 """
 import threading
-
 import pandas as pd
 
 from visualization import Vis, initial_and_final_schedule, Web_vis
@@ -24,7 +23,7 @@ class ControlLogic:
     :param case: Case to be executed.
     :type case: str
     """
-    def __init__(self, case):
+    def __init__(self, case, **kwargs):
         self.case = case
         self.agent_list = ['Robot', 'Human']
         self.agents = []
@@ -35,7 +34,11 @@ class ControlLogic:
         self.available_tasks = []
         self.output_data = []
 
-        self.job = Job(self.case)
+        self.distribution_seed = kwargs.get('distribution_seed', 0)
+        self.sim_seed = kwargs.get('sim_seed', 0)
+        self.schedule_seed = kwargs.get('schedule_seed', 0)
+
+        self.job = Job(self.case, seed=self.distribution_seed)
         self.set_schedule()
 
         # self.plot = Vis(horizon=self.schedule_model.horizon)
@@ -45,15 +48,16 @@ class ControlLogic:
         """
         Sets the schedule for task execution by agents.
         """
-        self.schedule_model = Schedule(self.job, seed=7)
+        self.schedule_model = Schedule(self.job, seed=self.schedule_seed)
         schedule = self.schedule_model.set_schedule()
         if not schedule:
-            logging.error('Scheduling failed')
+            logging.error(f'Scheduling failed. Case {self.case}. Distribution seed {self.distribution_seed}, sim seed {self.sim_seed}, '
+                          f'schedule seed {self.schedule_seed}')
             self.job.__str__()
             exit()
         else:
             for agent_name in self.agent_list:
-                self.agents.append(Agent(agent_name, schedule[agent_name], self.job, seed=7))
+                self.agents.append(Agent(agent_name, schedule[agent_name], self.job, seed=self.sim_seed))
             self.job.predicted_makespan = self.job.get_current_makespan()
         self.set_task_status()
 
@@ -116,12 +120,14 @@ class ControlLogic:
         self.schedule_model.refresh_variables(self.current_time)
         schedule = self.schedule_model.solve()
         if schedule is None:
+            logging.error(
+                f'Rescheduling failed. Case {self.case}. Distribution seed {self.distribution_seed}, sim seed {self.sim_seed}, '
+                f'schedule seed {self.schedule_seed}')
             self.job.__str__()
             self.output_data.append(self.schedule_as_dict(hierarchy=True))
             with open(initial_and_final_schedule, 'w') as f:
                 json.dump(self.output_data, f, indent=4)
             exit()
-
         for agent in self.agents:
             agent.refresh_tasks(schedule[agent.name])
         logging.info('____RESCHEDULING______')
@@ -238,7 +244,8 @@ class ControlLogic:
                     if task is None:
                         self.find_coworker_task(agent)
                     else:
-                        agent.execute_task(task, self.job, self.current_time)
+                        coworker = self.agents[self.agents.index(agent) - 1]
+                        agent.execute_task(task, self.job, self.current_time, coworker)
                         self.update_tasks_status()
                         if online_plot:
                             self.plot.update_info(agent, start=True)

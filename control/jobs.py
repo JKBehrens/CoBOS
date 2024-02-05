@@ -20,9 +20,9 @@ class Job:
     :type case: str
     """
 
-    def __init__(self, case):
+    def __init__(self, case, seed):
         self.case = str(case)
-        self.job_description = case_generator.set_input(self.case)
+        self.job_description = case_generator.set_input(self.case, seed)
         self.task_sequence = [Task(task) for task in self.job_description]
         self.in_progress_tasks = []
         self.completed_tasks = []
@@ -153,35 +153,38 @@ class Task:
             'Start': copy.deepcopy(self.start),
             'Finish': copy.deepcopy(self.finish)}
 
-    def get_duration(self, rand_gen: Optional[np.random.Generator] = None, seed=None):
+    def get_duration(self, rand_gen: Optional[np.random.Generator] = None, seed=None, distribution_param=None):
         if rand_gen is None:
             rand_gen = np.random.default_rng(seed + self.id)
         assert isinstance(rand_gen, np.random.Generator)
 
+        if distribution_param is None:
+            distribution_param = self.distribution
+
         duration = []
         for phase in range(3):
-            duration.append(self.get_phase_duration(phase, rand_gen, seed))
+            duration.append(self.get_phase_duration(phase, distribution_param, rand_gen, seed))
 
         return [sum(duration), duration[0], duration[1], duration[2]]
 
-    def get_phase_distribution(self, phase, rand_gen: Optional[np.random.Generator] = None,  seed=None):
+    def get_phase_distribution(self, phase, distribution_param, rand_gen: Optional[np.random.Generator]=None,  seed=None):
         if rand_gen is None:
             rand_gen = np.random.default_rng(seed + self.id)
 
         distributions = []
         # Create distribution for each set of parameters
-        for mean, scale, fail_prob in zip(*self.distribution[phase]):
+        for mean, scale, fail_prob in zip(*distribution_param[phase]):
             distributions.append(rand_gen.normal(loc=mean,
                                                  scale=scale,
                                                  size=int(fail_prob * 1000)))
         return np.concatenate(distributions)
 
-    def get_phase_duration(self, phase, rand_gen: Optional[np.random.Generator] = None,  seed=None):
+    def get_phase_duration(self, phase, distribution_param, rand_gen: Optional[np.random.Generator] = None,  seed=None):
         if rand_gen is None:
             rand_gen = np.random.default_rng(seed + self.id)
         assert isinstance(rand_gen, np.random.Generator)
 
-        distribution = self.get_phase_distribution(phase, rand_gen, seed)
+        distribution = self.get_phase_distribution(phase, distribution_param, rand_gen, seed)
 
         # Choice a random value from the concatenated distribution
         sample = int(np.round(rand_gen.choice(distribution), decimals=0))

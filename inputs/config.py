@@ -1,4 +1,3 @@
-seed = 8
 allocation_weights = [0.3, 0.3, 0.4]    # only for case 4-6
 
 n = 2

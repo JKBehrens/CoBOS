@@ -38,15 +38,15 @@ if __name__ == '__main__':
         raise SystemExit(1)
 
     if not args.only_schedule:
-        execute_job = ControlLogic(case)
+        execute_job = ControlLogic(case, distribution_seed=1, schedule_seed=0, sim_seed=0)
         if args.offline:
             execute_job.run(animation=True)
         else:
             execute_job.run(online_plot=True)
 
     else:
-        job = Job(case)
-        schedule_model = Schedule(job)
+        job = Job(case, seed=0)
+        schedule_model = Schedule(job, seed=0)
         output = schedule_model.set_schedule()
         with open(schedule, "w") as outfile:
             json.dump(schedule_as_dict(output), outfile)
