@@ -5,6 +5,7 @@ This class create model and solve scheduling problem.
 @contact: marina.ionova@cvut.cz
 """
 import numpy as np
+import ortools.sat.python.cp_model
 from ortools.sat.python import cp_model
 import collections
 import logging
@@ -20,7 +21,7 @@ class Schedule:
     :param job: Job for which schedule is to be generated.
     :type job: Job
     """
-    def __init__(self, job, seed=None):
+    def __init__(self, job, seed):
         self.COUNTER = 0
         self.job = job
         self.model = cp_model.CpModel()
@@ -47,6 +48,14 @@ class Schedule:
         self.seed = seed
         self.rand = np.random.default_rng(seed=self.seed)
         self.task_duration = self.job.task_duration(rand_gen=self.rand)
+
+        # Creates the solver and solve.
+        self.solver = cp_model.CpSolver()
+        self.solver.parameters.num_search_workers = 1
+        self.solver.parameters.random_seed = self.seed
+        self.solver.parameters.max_time_in_seconds = 10.0
+        self.solver.parameters.enumerate_all_solutions = True
+        self.solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
 
     def set_variables(self):
         """
@@ -110,6 +119,7 @@ class Schedule:
                     dependent_task_id = self.job.task_sequence[j].id
                     condition = self.model.NewBoolVar(f"{j}_depend_on_{i}")
                     if task.id in self.job.task_sequence[j].conditions:
+                        logging.debug(f'Create condition for task {j} <- task {i}')
                         self.model.Add(condition == True)
                     else:
                         self.model.Add(condition == False)
@@ -141,10 +151,9 @@ class Schedule:
                     if k2 < 0:
                         k2 = 0
 
-                    logging.debug(f'k1 = {k1}, k2 = {k2}')
                     self.model.Add(k == k1).OnlyEnforceIf([self.human_task_bool[i], condition])
                     self.model.Add(k == k2).OnlyEnforceIf([self.human_task_bool[i].Not(), condition])
-
+                    logging.debug(f'task i {i}, dt j {j}, k = {k2}')
                     self.border_constraints[i][j][3] = self.model.Add(
                         self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].end - k) \
                         .OnlyEnforceIf([condition, same_agent.Not()])
@@ -179,6 +188,7 @@ class Schedule:
                         cp_model.Domain(task_duration, task_duration).FlattenedIntervals())
 
                     self.tasks_with_final_var.append(task.id)
+                    logging.debug(f'Task {task.id}, new var: finish {task.finish[0]}, duration {task_duration}')
                 else:
                     # Change start var
                     if task.finish[0] < current_time:
@@ -187,21 +197,21 @@ class Schedule:
                         self.model.Proto().variables[self.duration[i].Index()].domain[:] = []
                         self.model.Proto().variables[self.duration[i].Index()].domain.extend(
                             cp_model.Domain(task_duration, task_duration).FlattenedIntervals())
+                        logging.debug(f'Task {task.id}, new var: duration {task_duration}')
 
-                logging.debug(f'Constraints has been deleted, Task{task.id}')
                 if self.duration_constraints[i][0].Proto() in self.model.Proto().constraints:
+                    logging.debug(f'Duration constraints has been deleted, Task i {i}')
                     for j in range(2):
                         self.model.Proto().constraints.remove(self.duration_constraints[i][j].Proto())
                 # Cancel constraints
-                for j in range(self.job.task_number):
+                for j, dependent_task in enumerate(self.job.task_sequence):
                     for k in range(5):
-                        if not isinstance(self.border_constraints[i][j][k], int) and \
-                                self.border_constraints[i][j][k].Proto() in self.model.Proto().constraints:
-                            self.model.Proto().constraints.remove(self.border_constraints[i][j][k].Proto())
+                        self.border_constraints[i][j][k].Proto().Clear()
 
                 self.model.Proto().variables[self.start_var[i].Index()].domain[:] = []
                 self.model.Proto().variables[self.start_var[i].Index()].domain.extend(
                     cp_model.Domain(int(task.start), int(task.start)).FlattenedIntervals())
+                logging.debug(f'Task {task.id}, new var: start {task.start}')
 
             elif task.status == 0 or task.status == -1:
                 # Change start var
@@ -209,7 +219,7 @@ class Schedule:
                 self.model.Proto().variables[self.start_var[i].Index()].domain.extend(
                     cp_model.Domain(int(current_time), self.horizon).FlattenedIntervals())
             else:
-                logging.debug(f'Ignore task{task.id}')
+                logging.debug(f'Ignore task {task.id}')
 
     def solve(self):
         """
@@ -219,13 +229,6 @@ class Schedule:
         :rtype agent: dictionary
         """
         self.assigned_jobs = collections.defaultdict(list)
-        # Creates the solver and solve.
-        self.solver = cp_model.CpSolver()
-        self.solver.parameters.num_search_workers = 1
-        self.solver.parameters.random_seed = self.seed
-        self.solver.parameters.max_time_in_seconds = 10.0
-        self.solver.parameters.enumerate_all_solutions = True
-        self.solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
         self.status = self.solver.Solve(self.model)
 
         # Named tuple to manipulate solution information.
@@ -345,6 +348,11 @@ class Schedule:
                 else:
                     test_model.Add(human_task_bool_copy[idx] == False)
                 solver = cp_model.CpSolver()
+                solver.parameters.num_search_workers = 1
+                solver.parameters.random_seed = self.seed
+                solver.parameters.max_time_in_seconds = 10.0
+                solver.parameters.enumerate_all_solutions = True
+                solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
                 status = solver.Solve(test_model)
                 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
                     makespans.append([solver.ObjectiveValue(), available_task])

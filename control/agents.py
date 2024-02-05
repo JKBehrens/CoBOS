@@ -182,7 +182,7 @@ class Agent(Sim):
             self.refresh_task_availability()
         return None
 
-    def execute_task(self, task, job, current_time):
+    def execute_task(self, task, job, current_time, coworker):
         """
         Executes a task and logs the action.
 
@@ -193,6 +193,7 @@ class Agent(Sim):
         :param current_time: Current time.
         :type current_time: int
         """
+        self.task_execution[coworker.name] = coworker.task_execution[coworker.name]
         self.set_start_task(task, current_time)
         self.set_task_end(self, job, current_time)
         job.in_progress_tasks.append(task.id)

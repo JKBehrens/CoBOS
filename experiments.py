@@ -4,6 +4,7 @@ The parameters of the experiments can be set in the experiment_config.json file.
 @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
 @contact: marina.ionova@cvut.cz
 """
+import argparse
 import logging
 from datetime import datetime
 
@@ -12,7 +13,7 @@ from simulation import sim_param_path as sim_config_path
 import json
 
 
-def run_test(params):
+def run_test_with_config(params):
 
     for case in params["cases"]:
         for fail in params["fail_probability"]:
@@ -73,6 +74,24 @@ def run_test(params):
                         json.dump(statistics, outfile)
 
 
+def run_test_with_random():
+    PATH = 'new_experiments/same_distribution_same_seed.json'
+    output = []
+    for case in range(1, 6):
+        for j in range(5):
+            for i in range(5):
+                execute_job = ControlLogic(str(case), distribution_seed=j, sim_seed=i, schedule_seed=i)
+                schedule, stat = execute_job.run(experiments=True)
+                if schedule:
+                    output.append([{'case': case, 'distribution_seed': j, 'sim_seed': i, 'schedule_seed': i}, stat])
+                    logging.warning(f'Iteration case: {case}, {j}/5, {i}/5')
+                else:
+                    logging.error(f'SIM PARAM: seed {i}')
+                    logging.error('Scheduling failed. Next measurement.')
+    with open(PATH, 'w') as outfile:
+        json.dump(output, outfile)
+
+
 def checking_file_existence(path):
     try:
         with open(path, "r+") as json_file:
@@ -91,10 +110,17 @@ def get_parameters():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', action=argparse.BooleanOptionalAction)
+    args = parser.parse_args()
+
     lvl = logging.WARNING
     logging.basicConfig(level=lvl,
                         format=f"%(levelname)-8s: %(filename)s %(funcName)s %(lineno)s - %(message)s")
     logging.getLogger("mylogger")
 
-    params = get_parameters()
-    run_test(params)
+    if args.config:
+        params = get_parameters()
+        run_test_with_config(params)
+    else:
+        run_test_with_random()

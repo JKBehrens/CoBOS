@@ -12,6 +12,8 @@ import logging
 import json
 import time
 
+SIM_MODE = 'NORMAL'  # OVERFIT, UNDERFIT, NORMAL
+
 
 class Sim:
     """
@@ -45,8 +47,28 @@ class Sim:
         self.fail_probability = param['Fail probability']
 
     def set_tasks_duration(self, **kwargs):
-        self.task_duration = self.job.task_duration(rand_gen=self.rand)
-
+        for task in self.job.task_sequence:
+            if SIM_MODE == 'NORMAL':
+                self.task_duration["Human"][task.id] = task.get_duration(rand_gen=self.rand)
+                self.task_duration["Robot"][task.id] = task.get_duration(rand_gen=self.rand)
+            elif SIM_MODE == 'OVERFIT':
+                new_distribution_param = []
+                for phase_param in task.distribution:
+                    mean = [phase_param[0][0] + 2, phase_param[0][1] + 2]
+                    new_distribution_param.append([mean, phase_param[1], phase_param[2]])
+                self.task_duration["Human"][task.id] = task.get_duration(rand_gen=self.rand,
+                                                                         distribution_param=new_distribution_param)
+                self.task_duration["Robot"][task.id] = task.get_duration(rand_gen=self.rand,
+                                                                         distribution_param=new_distribution_param)
+            elif SIM_MODE == 'UNDERFIT':
+                new_distribution_param = []
+                for phase_param in task.distribution:
+                    mean = [phase_param[0][0] - 2 if phase_param[0][0] > 2 else 1, phase_param[0][1] - 2]
+                    new_distribution_param.append([mean, phase_param[1], phase_param[2]])
+                self.task_duration["Human"][task.id] = task.get_duration(rand_gen=self.rand,
+                                                                         distribution_param=new_distribution_param)
+                self.task_duration["Robot"][task.id] = task.get_duration(rand_gen=self.rand,
+                                                                         distribution_param=new_distribution_param)
 
     def set_task_end(self, agent, job, current_time):
         """
@@ -64,10 +86,13 @@ class Sim:
         """
         self.task_execution[agent.name]['Start'] = current_time
         self.task_execution[agent.name]['Duration'] = self.task_duration[agent.name][agent.current_task.id]
+        print(self.task_execution)
         dependent_task = job.get_in_process_dependent_task(agent.current_task)
         if dependent_task:
             overlapping = dependent_task.start + sum(
                 self.task_execution[dependent_task.agent]['Duration'][1:3]) - current_time
+            print(f'overlapping:{overlapping}, dependent_task.start :{dependent_task.start},'
+                  f'duration: {self.task_execution["Human"]["Duration"]}, time: {current_time}')
             if overlapping > self.task_execution[agent.name]['Duration'][1]:
                 self.task_execution[agent.name]['Duration'][0] += overlapping - \
                                                                   self.task_execution[agent.name]['Duration'][1]
@@ -120,7 +145,7 @@ class Sim:
         """
         if self.task_execution['Robot']['Duration'][0] != 0:
             logging.debug(
-                f'Robot: start: {self.task_execution["Robot"]["Start"]}, duration :{self.task_execution["Robot"]["Duration"]}')
+                f'Robot: start: {self.task_execution}') #["Robot"]["Start"]}, duration :{self.task_execution["Robot"]["Duration"]}')
             if current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][1]):
                 return 'Preparation', -1
             elif current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][0] -
@@ -159,7 +184,7 @@ class Sim:
         """
         if self.task_execution['Human']['Duration'] != 0:
             logging.debug(
-                f'Human: start: {self.task_execution["Human"]["Start"]}, duration :{self.task_execution["Human"]["Duration"]}')
+                f'Human: start: {self.task_execution}') #["Human"]["Start"]}, duration :{self.task_execution["Human"]["Duration"]}')
 
             if (self.task_execution['Human']['Start'] + self.task_execution['Human']['Duration'][0]) \
                     > current_time:

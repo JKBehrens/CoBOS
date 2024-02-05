@@ -18,7 +18,7 @@ if __name__ == '__main__':
     elif args.mode == "sim_vis":
         with open(initial_and_final_schedule, "r+") as json_file:
             data = json.load(json_file)
-        save_file_name = 'simulation.png'
+        save_file_name = 'simulation1.png'
     else:
         with open(schedule, "r+") as json_file:
             data = json.load(json_file)
