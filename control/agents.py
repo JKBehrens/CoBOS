@@ -168,10 +168,10 @@ class Agent(Sim):
         for i, task in enumerate(self.available_tasks):
             if task.universal and self.name == 'Human':
                 if self.ask_human('execute_task', task):
-                    logging.info(f'Human has agreed. Task in progress...')
+                    logging.info(f'Human accept task. Task in progress...')
                     return task
                 else:
-                    logging.info(f'Human has not agreed to the task.')
+                    logging.info(f'Human reject task.')
                     self.rejection_tasks.append(task.id)
                     cl.change_agent(task=task, current_agent=self)
             else:

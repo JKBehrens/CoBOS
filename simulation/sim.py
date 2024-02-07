@@ -33,8 +33,9 @@ class Sim:
         self.task_execution = {'Human': {'Start': 0, 'Duration': []}, 'Robot': {'Start': 0, 'Duration': []}}
         self.start_time = time.time()
 
-        # self.set_param()
         self.set_tasks_duration(**kwargs)
+        self.human_answer = {'change_agent': {}, 'execute_task': {}}
+        self.sample_human_response()
 
     def set_param(self):
         """
@@ -111,24 +112,8 @@ class Sim:
         :return: Agent's response to question.
         :rtype: bool
         """
-        nameList = [True, False]
-        if question_type == 'change_agent':
-            if task.agent == 'Robot':
-                np.random.seed(self.seed + task.id)
-                answer = choice(nameList,  p=(task.rejection_prob, 1-task.rejection_prob), size=1)
-                logging.info(f'Offer to complete task {task.id} instead of robot. Answer {answer[0]}')
-                return answer[0]
-            else:
-                np.random.seed(self.seed + task.id)
-                answer = choice(nameList, p=(1-task.rejection_prob, task.rejection_prob), size=1)
-                logging.info(f'Offer to complete task {task.id} instead of human. Answer {answer[0]}')
-                return answer[0]
-        elif question_type == 'execute_task':
-            np.random.seed(self.seed + task.id)
-            answer = choice(nameList, p=(1 - task.rejection_prob, task.rejection_prob), size=1)
-            logging.info(f'Offer to complete task {task.id}. Answer {answer[0]}')
-            return answer[0]
-        return False
+        return self.human_answer[question_type][task.id]
+
 
     def get_feedback_from_robot(self, task, job, current_time):
         """
@@ -202,3 +187,9 @@ class Sim:
                 self.task_execution['Human']['Start'] = 0
                 self.task_execution['Human']['Duration'] = [0, 0, 0, 0]
                 return 'Completed', time_info
+
+    def sample_human_response(self):
+        nameList = [True, False]
+        for task in self.job.task_sequence:
+            self.human_answer['change_agent'][task.id] = self.rand.choice(nameList, p=(task.rejection_prob, 1 - task.rejection_prob), size=1)
+            self.human_answer['execute_task'][task.id] = self.rand.choice(nameList, p=(1 - task.rejection_prob, task.rejection_prob), size=1)

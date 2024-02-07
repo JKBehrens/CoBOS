@@ -93,6 +93,7 @@ class ControlLogic:
                     if (agent.name == 'Human' and coworker_task[1].id not in agent.rejection_tasks) \
                             or agent.name == 'Robot':
                         if agent.ask_human('change_agent', coworker_task[1]):
+                            logging.info(f'Human accept the offer to change agent.')
                             self.change_agent(coworker_task[1], coworker)
                             agent.execute_task(coworker_task[1], self.job, self.current_time)
                             self.update_tasks_status()
@@ -103,6 +104,7 @@ class ControlLogic:
                                     pass
                             return True
                         else:
+                            logging.info(f'Human reject the offer to change agent.')
                             agent.rejection_tasks.append(coworker_task[1].id)
         return False
 
@@ -127,7 +129,8 @@ class ControlLogic:
             self.output_data.append(self.schedule_as_dict(hierarchy=True))
             with open(initial_and_final_schedule, 'w') as f:
                 json.dump(self.output_data, f, indent=4)
-            exit()
+            exit(2)
+
         for agent in self.agents:
             agent.refresh_tasks(schedule[agent.name])
         logging.info('____RESCHEDULING______')
