@@ -79,9 +79,12 @@ class Vis:
 
     def delete_existing_file(self):
         try:
-            os.remove(self.data4video)
-        except Exception as e:
-            pass
+            with open(self.data4video, "w") as json_file:
+                json.dump({}, json_file)
+        except FileNotFoundError as e:
+            self.data4video = './..' + self.data4video[1:]
+            with open(self.data4video, "w") as json_file:
+                json.dump({}, json_file)
 
     def set_plot_param(self, title, gs, lim=None):
         self.gnt = self.fig.add_subplot(gs)  # 211
@@ -262,8 +265,13 @@ class Vis:
         try:
             with open(self.data4video, "r+") as json_file:
                 data = json.load(json_file)
+        except FileNotFoundError as e:
+            self.data4video = './..' + self.data4video[1:]
+            with open(self.data4video, "r+") as json_file:
+                data = json.load(json_file)
         except Exception as e:
             data = {}
+
 
         data[len(data)] = {'Time': self.current_time, 'Schedule': self.data}
         with open(self.data4video, 'w') as f:
