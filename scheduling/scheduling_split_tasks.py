@@ -5,7 +5,7 @@ This class create model and solve scheduling problem.
 @contact: marina.ionova@cvut.cz
 """
 import numpy as np
-import ortools.sat.python.cp_model
+from control.agent_states import AgentState
 from ortools.sat.python import cp_model
 import collections
 import logging
@@ -25,6 +25,8 @@ class Schedule:
         self.COUNTER = 0
         self.job = job
         self.model = cp_model.CpModel()
+        self.schedule = {}
+        self.current_makespan = None
         self.solver = 0
         self.status = None
         self.all_tasks = {}
@@ -188,7 +190,7 @@ class Schedule:
                         cp_model.Domain(task_duration, task_duration).FlattenedIntervals())
 
                     self.tasks_with_final_var.append(task.id)
-                    logging.debug(f'Task {task.id}, new var: finish {task.finish[0]}, duration {task_duration}')
+                    # logging.debug(f'Task {task.id}, new var: finish {task.finish[0]}, duration {task_duration}')
                 else:
                     # Change start var
                     if task.finish[0] < current_time:
@@ -197,10 +199,10 @@ class Schedule:
                         self.model.Proto().variables[self.duration[i].Index()].domain[:] = []
                         self.model.Proto().variables[self.duration[i].Index()].domain.extend(
                             cp_model.Domain(task_duration, task_duration).FlattenedIntervals())
-                        logging.debug(f'Task {task.id}, new var: duration {task_duration}')
+                        # logging.debug(f'Task {task.id}, new var: duration {task_duration}')
 
                 if self.duration_constraints[i][0].Proto() in self.model.Proto().constraints:
-                    logging.debug(f'Duration constraints has been deleted, Task i {i}')
+                    # logging.debug(f'Duration constraints has been deleted, Task i {i}')
                     for j in range(2):
                         self.model.Proto().constraints.remove(self.duration_constraints[i][j].Proto())
                 # Cancel constraints
@@ -211,15 +213,13 @@ class Schedule:
                 self.model.Proto().variables[self.start_var[i].Index()].domain[:] = []
                 self.model.Proto().variables[self.start_var[i].Index()].domain.extend(
                     cp_model.Domain(int(task.start), int(task.start)).FlattenedIntervals())
-                logging.debug(f'Task {task.id}, new var: start {task.start}')
+                # logging.debug(f'Task {task.id}, new var: start {task.start}')
 
             elif task.status == 0 or task.status == -1:
                 # Change start var
                 self.model.Proto().variables[self.start_var[i].Index()].domain[:] = []
                 self.model.Proto().variables[self.start_var[i].Index()].domain.extend(
                     cp_model.Domain(int(current_time), self.horizon).FlattenedIntervals())
-            else:
-                logging.debug(f'Ignore task {task.id}')
 
     def solve(self):
         """
@@ -256,6 +256,7 @@ class Schedule:
                         task_id=i,
                         agent=agent))
 
+            makespan = 0
             for agent in self.job.agents:
                 # Sort by starting time.
                 self.assigned_jobs[agent].sort()
@@ -263,6 +264,8 @@ class Schedule:
                 for assigned_task in self.assigned_jobs[agent]:
                     start = assigned_task.start
                     end = assigned_task.end
+                    if end[0] > makespan:
+                        makespan = end[0]
 
                     task = self.job.task_sequence[assigned_task.task_id]
                     self.job.task_sequence[assigned_task.task_id].agent = agent
@@ -278,7 +281,8 @@ class Schedule:
                     output[agent].append(self.job.task_sequence[assigned_task.task_id])
             self.rescheduling_run_time.append([self.solver.StatusName(self.status),
                                                self.solver.ObjectiveValue(), self.solver.WallTime()])
-            return output
+
+            return output, makespan
         else:
             self.model.ExportToFile(f'model.txt')
             logging.error(f"Scheduling failed, max self.horizon: {self.horizon} \n")
@@ -329,11 +333,11 @@ class Schedule:
         self.set_max_horizon(**kwargs)
         self.set_variables()
         self.set_constraints()
-        schedule = self.solve()
-        print_schedule(schedule)
+        self.schedule, self.current_makespan = self.solve()
+        self.print_schedule()
         self.fix_agents_var()
         self.print_info()
-        return schedule
+        return self.schedule
 
     def set_list_of_possible_changes(self, available_tasks, agent):
         makespans = []
@@ -366,6 +370,91 @@ class Schedule:
         else:
             return makespans
 
+    def decide(self, agents, current_time):
+        decision = []
+        for agent in agents:
+            logging.debug(f'TIME: {current_time}. Is {agent.name} available? {agent.state}')
+            if agent.state == AgentState.IDLE:
+                decision.append([agent, self.find_task(agent, current_time)])
+            elif agent.state == AgentState.REJECT:
+                coworker = agents[agents.index(agent) - 1]
+                agent.current_task.agent = coworker.name
+                self.change_agent(agent.current_task, coworker, current_time)
+                decision.append([agent, self.find_task(agent, current_time)])
+            elif agent.state == AgentState.DONE:
+                self.update_tasks_status()
+                decision.append([agent, self.find_task(agent, current_time)])
+            else:
+                decision.append([agent, None])
+        return decision
+
+    def find_task(self, agent, current_time):
+        # find allocated task
+        for task in self.schedule[agent.name]:
+            if task.status == 0:
+                return task
+
+        # If the agent has run out of available tasks in his list, he looks for
+        # universal tasks in the list of a colleague that he can perform instead
+        # of him to speed up the process.
+        possible_tasks = []
+        for worker in self.schedule.keys():
+            if worker != agent:
+                for task in self.schedule[worker]:
+                    if task.status == 0 and task.universal:
+                        possible_tasks.append(task)
+
+        # rescheduling estimation
+        self.refresh_variables(current_time)
+        makespan_and_task = self.set_list_of_possible_changes(possible_tasks, agent)
+        if makespan_and_task and makespan_and_task[0][0] < self.current_makespan:
+            for coworker_task in makespan_and_task:
+                if (agent.name == 'Human' and coworker_task[1].id not in agent.rejection_tasks) \
+                        or agent.name == 'Robot':
+                    return coworker_task[1]
+
+        return None
+
+    def update_tasks_status(self):
+        """
+        Updates the status of tasks based on their dependencies.
+        """
+        tasks_list = self.job.get_completed_and_in_progress_task_list()
+        for task in self.job.task_sequence:
+            if len(task.conditions) != 0 and task.status == -1:
+                if set(task.conditions).issubset(tasks_list):
+                    task.status = 0
+
+    def change_agent(self, task, coworker, current_time):
+        """
+        Changes the agent assigned to a task.
+
+        :param task: Task to change agent for.
+        :type task: Task
+        :type current_agent: Agent
+        """
+        task.agent = coworker.name
+        self.set_new_agent(task)
+        self.refresh_variables(current_time)
+        self.schedule, self.current_makespan = self.solve()
+        self.print_info()
+
+
+        logging.info('____RESCHEDULING______')
+        self.print_schedule()
+        logging.info('______________________')
+
+    def print_schedule(self):
+        logging.info("____________________________")
+        logging.info("INFO: Task distribution")
+        logging.info("Robot")
+        for task in self.schedule["Robot"]:
+            task.__str__()
+        logging.info("Human")
+        for task in self.schedule["Human"]:
+            task.__str__()
+        logging.info("____________________________")
+
     def print_info(self):
         """
         Prints basic info about solution and solving process.
@@ -384,15 +473,3 @@ def schedule_as_dict(schedule):
         for task in schedule[agent]:
             schedule_as_dict[agent].append(task.as_dict())
     return schedule_as_dict
-
-
-def print_schedule(schedule):
-    logging.info("____________________________")
-    logging.info("INFO: Task distribution")
-    logging.info("Robot")
-    for task in schedule["Robot"]:
-        task.__str__()
-    logging.info("Human")
-    for task in schedule["Human"]:
-        task.__str__()
-    logging.info("____________________________")

@@ -53,13 +53,13 @@ def set_random_sequence(case, rand_gen:Optional[np.random.Generator], length=CAS
     return sequence.astype(dtype=str)
 
 
-def set_distribution_parameters(rand_gen:Optional[np.random.Generator]=None):
+def set_distribution_parameters(rand_gen:Optional[np.random.Generator]=None, seed=None):
 
     if rand_gen is None:
         rand_gen = np.random.default_rng(seed)
     assert isinstance(rand_gen, np.random.Generator)
 
-    mean = np.sort(rand_gen.integers(mean_min, mean_max + 1, size=n))
+    mean = np.sort(rand_gen.integers(mean_min, mean_max, size=n))
     deviation = np.linspace(deviation_min, deviation_max, num=n)/100
     scale = np.round(deviation*mean)
     fail_prob = np.flip(np.sort(rand_gen.dirichlet(np.ones(n), size=1)))[0]
@@ -67,7 +67,7 @@ def set_distribution_parameters(rand_gen:Optional[np.random.Generator]=None):
     return [mean, scale, fail_prob]
 
 
-def set_rejection_prob(rand_gen:Optional[np.random.Generator]=None):
+def set_rejection_prob(rand_gen:Optional[np.random.Generator]=None, seed=None):
     if rand_gen is None:
         rand_gen = np.random.default_rng(seed)
     assert isinstance(rand_gen, np.random.Generator)

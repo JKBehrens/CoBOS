@@ -6,7 +6,9 @@
 """
 from typing import Optional
 from simulation.task_execution_time_const import get_approximated_task_duration
-from numpy.random import Generator, choice
+from control.agent_states import AgentState
+from numpy.random import Generator
+from inputs.config import response_time_max, response_time_min
 import numpy as np
 import logging
 import json
@@ -36,6 +38,8 @@ class Sim:
         self.set_tasks_duration(**kwargs)
         self.human_answer = {'change_agent': {}, 'execute_task': {}}
         self.sample_human_response()
+        self.response_time = []
+        self.set_response_time()
 
     def set_param(self):
         """
@@ -70,6 +74,10 @@ class Sim:
                                                                          distribution_param=new_distribution_param)
                 self.task_duration["Robot"][task.id] = task.get_duration(rand_gen=self.rand,
                                                                          distribution_param=new_distribution_param)
+
+    def set_response_time(self):
+        n = self.job.get_universal_task_number()
+        self.response_time = self.rand.integers(response_time_min, response_time_max, size=n)
 
     def set_task_end(self, agent, job, current_time):
         """
@@ -114,7 +122,6 @@ class Sim:
         """
         return self.human_answer[question_type][task.id]
 
-
     def get_feedback_from_robot(self, task, job, current_time):
         """
         Checks the status of a task being executed by a robot agent.
@@ -132,7 +139,7 @@ class Sim:
             logging.debug(
                 f'Robot: start: {self.task_execution}') #["Robot"]["Start"]}, duration :{self.task_execution["Robot"]["Duration"]}')
             if current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][1]):
-                return 'Preparation', -1
+                return AgentState.PREPARATION, -1
             elif current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][0] -
                                  self.task_execution['Robot']['Duration'][3]):
                 dependent_task = job.get_in_process_dependent_task(task)
@@ -140,19 +147,20 @@ class Sim:
                 if dependent_task and current_time < (self.task_execution['Human']['Start'] +
                                                       (self.task_execution['Human']['Duration'][0] -
                                                        self.task_execution['Human']['Duration'][3])):
-                    return 'Waiting', current_time - (self.task_execution['Robot']['Start'] +
+                    return AgentState.WAITING, current_time - (self.task_execution['Robot']['Start'] +
                                                       self.task_execution['Robot']['Duration'][1])
                 else:
-                    return 'Execution', -1
+                    return AgentState.EXECUTION, -1
 
             elif current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][0]):
-                return 'Completion', -1
+                return AgentState.COMPLETION, -1
             else:
                 time_info = self.task_execution['Robot']['Duration']
                 time_info[0] += self.task_execution['Robot']['Start']
                 self.task_execution['Robot']['Start'] = 0
                 self.task_execution['Robot']['Duration'] = [0, 0, 0, 0]
-                return 'Completed', time_info
+                return AgentState.DONE, time_info
+        return AgentState.IDLE, -1
 
     def check_human_task(self, task, job, current_time):
         """
@@ -177,16 +185,16 @@ class Sim:
                 if dependent_task and current_time < (self.task_execution['Robot']['Start'] +
                                                       (self.task_execution['Robot']['Duration'][0] -
                                                        self.task_execution['Robot']['Duration'][3])):
-                    return 'Waiting', current_time - (self.task_execution['Human']['Start'] +
+                    return AgentState.WAITING, current_time - (self.task_execution['Human']['Start'] +
                                                       self.task_execution['Human']['Duration'][1])
                 else:
-                    return 'In progress', -1
+                    return AgentState.InPROGRESS, -1
             else:
                 time_info = self.task_execution['Human']['Duration']
                 time_info[0] += self.task_execution['Human']['Start']
                 self.task_execution['Human']['Start'] = 0
                 self.task_execution['Human']['Duration'] = [0, 0, 0, 0]
-                return 'Completed', time_info
+                return AgentState.DONE, time_info
 
     def sample_human_response(self):
         nameList = [True, False]
