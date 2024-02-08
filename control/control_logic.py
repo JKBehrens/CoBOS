@@ -128,7 +128,6 @@ class ControlLogic:
 
             # ask planner to decide about next actions for robot and human
             selected_task = self.schedule_model.decide(self.agents, self.current_time)
-            print(selected_task)
             for agent, task in selected_task:
                 if task is not None:
                     coworker = self.agents[self.agents.index(agent) - 1]

@@ -285,8 +285,9 @@ class Schedule:
             return output, makespan
         else:
             self.model.ExportToFile(f'model.txt')
+            self.job.__str__()
             logging.error(f"Scheduling failed, max self.horizon: {self.horizon} \n")
-            return None
+            exit(2)
 
     def fix_agents_var(self):
         """
@@ -372,6 +373,7 @@ class Schedule:
 
     def decide(self, agents, current_time):
         decision = []
+        self.update_tasks_status()
         for agent in agents:
             logging.debug(f'TIME: {current_time}. Is {agent.name} available? {agent.state}')
             if agent.state == AgentState.IDLE:
@@ -382,7 +384,6 @@ class Schedule:
                 self.change_agent(agent.current_task, coworker, current_time)
                 decision.append([agent, self.find_task(agent, current_time)])
             elif agent.state == AgentState.DONE:
-                self.update_tasks_status()
                 decision.append([agent, self.find_task(agent, current_time)])
             else:
                 decision.append([agent, None])
