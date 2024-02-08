@@ -9,7 +9,7 @@ def test_randon_number_gen():
     task_case = '1'
     seed = 7
 
-    job = Job(task_case)
+    job = Job(task_case, seed=seed)
 
     h_agent_1 = Sim("Human", job, seed=seed)
     h_agent_2 = Sim("Robot", job, seed=seed)
@@ -97,7 +97,7 @@ def test_schedule():
     task_case = '5'
     seed = 7
 
-    job = Job(task_case)
+    job = Job(task_case, seed=seed)
 
     schedule_model1 = Schedule(job, seed=seed)
     output1 = schedule_model1.set_schedule()
