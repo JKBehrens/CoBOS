@@ -95,12 +95,11 @@ class Sim:
         """
         self.task_execution[agent.name]['Start'] = current_time
         self.task_execution[agent.name]['Duration'] = self.task_duration[agent.name][agent.current_task.id]
-        print(self.task_execution)
         dependent_task = job.get_in_process_dependent_task(agent.current_task)
         if dependent_task:
             overlapping = dependent_task.start + sum(
                 self.task_execution[dependent_task.agent]['Duration'][1:3]) - current_time
-            print(f'overlapping:{overlapping}, dependent_task.start :{dependent_task.start},'
+            logging.debug(f'overlapping:{overlapping}, dependent_task.start :{dependent_task.start},'
                   f'duration: {self.task_execution["Human"]["Duration"]}, time: {current_time}')
             if overlapping > self.task_execution[agent.name]['Duration'][1]:
                 self.task_execution[agent.name]['Duration'][0] += overlapping - \
