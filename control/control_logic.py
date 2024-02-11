@@ -72,7 +72,6 @@ class ControlLogic:
         """
         output = []
         for agent in self.agents:
-            pass
             if agent.state == AgentState.REJECT:
                 pass
             elif agent.state == AgentState.DONE:
@@ -129,11 +128,13 @@ class ControlLogic:
             # ask planner to decide about next actions for robot and human
             selected_task = self.schedule_model.decide(self.agents, self.current_time)
             for agent, task in selected_task:
-                if task is not None:
-                    coworker = self.agents[self.agents.index(agent) - 1]
-                    agent.execute_task(task=task, job=self.job, current_time=self.current_time, coworker=coworker)
-                    if online_plot:
-                        self.plot.update_info(agent, start=True)
+                if task is None:
+                    continue
+                
+                coworker = self.agents[self.agents.index(agent) - 1]
+                agent.execute_task(task=task, job=self.job, current_time=self.current_time, coworker=coworker)
+                if online_plot:
+                    self.plot.update_info(agent, start=True)
 
             self.current_time += 1
             # self.shift_schedule()
