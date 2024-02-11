@@ -44,13 +44,21 @@ class Job:
         """
         Returns the percentage of completed tasks in the job.
         """
-        return round((len(self.completed_tasks) / self.task_number) * 100, 2)
+        completed_tasks = sum( 1 for task in self.task_sequence if task.status == 2)
+        return round((completed_tasks / self.task_number) * 100, 2)
 
     def get_current_makespan(self):
         """
         Returns the current makespan of the job.
         """
         return max(task.finish[0] for task in self.task_sequence)
+
+    def get_completed_and_in_progress_task_list(self):
+        output = []
+        for task in self.task_sequence:
+            if task.status == 2 or task.status == 1:
+                output.append(task.id)
+        return output
 
     def task_duration(self,  rand_gen: Optional[np.random.Generator] = None,  seed=None):
         if rand_gen is None:
@@ -90,6 +98,9 @@ class Job:
             if (another_task.id in task.conditions) & (another_task.status == 1):
                 return another_task
         return None
+
+    def get_universal_task_number(self):
+        return sum(1 for task in self.task_sequence if task.universal)
 
 class Task:
     """

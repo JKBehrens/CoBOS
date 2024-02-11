@@ -1,2 +1,1 @@
 from scheduling.scheduling_split_tasks import Schedule
-from scheduling.scheduling_split_tasks import print_schedule
