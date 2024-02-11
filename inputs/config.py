@@ -7,3 +7,5 @@ mean_max = 15
 
 deviation_min = 20  # as a percentage of the mean value
 deviation_max = 60
+
+response_time_max, response_time_min = (20, 3)
