@@ -392,7 +392,7 @@ class Schedule:
     def find_task(self, agent, current_time):
         # find allocated task
         for task in self.schedule[agent.name]:
-            if task.status == 0:
+            if task.status == 0:  # TODO: make this more readible by introducing TaskState.AVAILABLE, TaskState.FINISHED, etc
                 return task
 
         # If the agent has run out of available tasks in his list, he looks for
