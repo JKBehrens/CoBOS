@@ -6,7 +6,7 @@
 """
 from visualization import Vis, initial_and_final_schedule, Web_vis
 from scheduling import Schedule
-from control.agent_states import AgentState
+from control.agent_and_task_states import AgentState, TaskState
 from control.agents import Agent
 from control.jobs import Job
 import logging
@@ -64,7 +64,7 @@ class ControlLogic:
         Sets the status of tasks for each agent.
         """
         for i, task in enumerate(self.job.task_sequence):
-            task.status = -1 if len(task.conditions) != 0 else 0
+            task.state = TaskState.UNAVAILABLE if len(task.conditions) != 0 else 0
 
     def get_observation_data(self):
         """
@@ -90,10 +90,10 @@ class ControlLogic:
         # for agent in self.agents:
             shift = False
             # for task in agent.tasks:
-            if task.status == 1 and task.finish[0] < self.current_time:
+            if task.state == TaskState.InProgress and task.finish[0] < self.current_time:
                 task.finish[0] = self.current_time
                 shift = True
-            elif shift and (task.status == -1 or task.status == 0):
+            elif shift and (task.state == TaskState.UNAVAILABLE or task.state == TaskState.InProgress):
                 task.start += 1
                 task.finish[0] += 1
 

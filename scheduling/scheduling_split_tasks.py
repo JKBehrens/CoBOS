@@ -5,7 +5,7 @@ This class create model and solve scheduling problem.
 @contact: marina.ionova@cvut.cz
 """
 import numpy as np
-from control.agent_states import AgentState
+from control.agent_and_task_states import AgentState, TaskState
 from ortools.sat.python import cp_model
 import collections
 import logging
@@ -177,8 +177,8 @@ class Schedule:
         Changes the variable domains according to what is happening to update the schedule.
         """
         for i, task in enumerate(self.job.task_sequence):
-            if (task.id not in self.tasks_with_final_var) and (task.status in [1, 2]):
-                if task.status == 2:
+            if (task.id not in self.tasks_with_final_var) and (task.state in [TaskState.InProgress, TaskState.COMPLETED]):
+                if task.state == TaskState.COMPLETED:
                     task_duration = int(task.finish[0]) - int(task.start)
                     self.model.Proto().variables[self.end_var[i].Index()].domain[:] = []
                     self.model.Proto().variables[self.end_var[i].Index()].domain.extend(
@@ -215,7 +215,7 @@ class Schedule:
                     cp_model.Domain(int(task.start), int(task.start)).FlattenedIntervals())
                 # logging.debug(f'Task {task.id}, new var: start {task.start}')
 
-            elif task.status == 0 or task.status == -1:
+            elif task.state == TaskState.AVAILABLE or task.state == TaskState.UNAVAILABLE:
                 # Change start var
                 self.model.Proto().variables[self.start_var[i].Index()].domain[:] = []
                 self.model.Proto().variables[self.start_var[i].Index()].domain.extend(
@@ -269,10 +269,10 @@ class Schedule:
 
                     task = self.job.task_sequence[assigned_task.task_id]
                     self.job.task_sequence[assigned_task.task_id].agent = agent
-                    if (task.status == -1) or (task.status == 0) or (task.status is None):
+                    if (task.state == TaskState.UNAVAILABLE) or (task.state == TaskState.AVAILABLE) or (task.state is None):
                         self.job.task_sequence[assigned_task.task_id].start = start
                         self.job.task_sequence[assigned_task.task_id].finish = end
-                    elif task.status == 1:
+                    elif task.state == TaskState.InProgress:
                         self.job.task_sequence[assigned_task.task_id].finish = \
                             [task.start + self.task_duration[task.agent][task.id][0],
                              self.task_duration[task.agent][task.id][1],
@@ -391,7 +391,7 @@ class Schedule:
     def find_task(self, agent_name, agent_rejection_tasks, current_time):
         # find allocated task
         for task in self.schedule[agent_name]:
-            if task.status == 0:  # TODO: make this more readible by introducing TaskState.AVAILABLE, TaskState.FINISHED, etc
+            if task.state == TaskState.AVAILABLE:
                 return task
 
         # If the agent has run out of available tasks in his list, he looks for
@@ -401,7 +401,7 @@ class Schedule:
         for worker in self.schedule.keys():
             if worker != agent_name:
                 for task in self.schedule[worker]:
-                    if task.status == 0 and task.universal:
+                    if task.state == TaskState.AVAILABLE and task.universal:
                         possible_tasks.append(task)
 
         # rescheduling estimation
@@ -418,9 +418,9 @@ class Schedule:
         """
         tasks_list = self.job.get_completed_and_in_progress_task_list()
         for task in self.job.task_sequence:
-            if len(task.conditions) != 0 and task.status == -1:
+            if len(task.conditions) != 0 and task.state == TaskState.UNAVAILABLE:
                 if set(task.conditions).issubset(tasks_list):
-                    task.status = 0
+                    task.state = TaskState.AVAILABLE
 
     def change_agent(self, task, coworker_name, current_time):
         """

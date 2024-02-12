@@ -6,7 +6,7 @@
 """
 from typing import Optional
 from simulation.task_execution_time_const import get_approximated_task_duration
-from control.agent_states import AgentState
+from control.agent_and_task_states import AgentState
 from numpy.random import Generator
 from inputs.config import response_time_max, response_time_min
 import numpy as np

@@ -285,7 +285,7 @@ class Vis:
 
         G = nx.DiGraph()
         labels = {}
-        status = {None: [], -1: [], 0: [], 1: [], 2: []}
+        status = {None: [], 'UNAVAILABLE': [], 'AVAILABLE': [], 'InProgress': [], 'COMPLETED': []}
         allocability = {True: [], False: []}
         for agent in local_data:
             for task in local_data[agent]:
