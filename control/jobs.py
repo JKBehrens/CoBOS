@@ -94,8 +94,10 @@ class Job:
         self.in_progress_tasks.remove(task_id)
 
     def get_in_process_dependent_task(self, task):
-        for another_task in self.task_sequence:
-            if (another_task.id in task.conditions) & (another_task.status == 1):
+        for other_task_id in task.conditions:
+            another_task = self.task_sequence[other_task_id]
+            assert other_task_id == another_task.id
+            if another_task.status == 1:
                 return another_task
         return None
 

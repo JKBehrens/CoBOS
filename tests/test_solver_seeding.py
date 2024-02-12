@@ -162,4 +162,51 @@ def test_seed_solver_2():
     assert val1 == val2
 
 
-    
+
+
+def test_find_infeasible_explanation():
+    from ortools.sat.python import cp_model
+    model = cp_model.CpModel()
+
+    x = model.NewIntVar(0,10, 'x')
+    y = model.NewIntVar(0,10, 'y')
+    z = model.NewIntVar(0,10, 'z')
+
+    a1 = model.NewBoolVar('a1')
+    a2 = model.NewBoolVar('a2')
+    a3 = model.NewBoolVar('a3')
+
+    v1 = model.Add(x>=11).OnlyEnforceIf(a1) #not possible because of x's bound
+    v2 = model.Add(x>5).OnlyEnforceIf(a2)
+    v3 = model.Add(x>6).OnlyEnforceIf(a3)
+
+    vars = [a1,a2,a3]
+    model.AddAssumptions(vars)
+
+    #this is the variable we will maximaize.
+    solver = cp_model.CpSolver()
+
+    #If we were to set a maximization objective here, we would receive a1, a2, and a3 as the minimal set
+    status = solver.Solve(model)
+
+    if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+        print(f"Maximum of objective function: {solver.ObjectiveValue()}\n")
+        print(f"x = {solver.Value(x)}")
+        print(f"y = {solver.Value(y)}")
+        #Only maximize once we know that the model is solvable 
+        model.Maximize(z) #some maximization or minimization
+
+        status = solver.Solve(model)
+
+        print(f"Maximum of objective function: {solver.ObjectiveValue()}\n")
+        print(f"x = {solver.Value(x)}")
+        print(f"y = {solver.Value(y)}")
+        print(f"z = {solver.Value(z)}")
+
+
+
+    else:
+        print("No solution found. Minimal infeasible conditions: ")
+        #We haven't set any maximization objective yet so we can get the minimal result
+        for i in solver.SufficientAssumptionsForInfeasibility():
+            print(model.VarIndexToVarProto(i).name)

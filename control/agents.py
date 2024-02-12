@@ -121,7 +121,7 @@ class Agent(Sim):
         job.in_progress_tasks.append(task.id)
 
         logging.info(f'{task.agent} is doing the task {task.id}. Place object {task.action["Object"]}'
-                     f'to {task.action["Place"]}. TIME {current_time}')
+                     f' to {task.action["Place"]}. TIME {current_time}')
 
     def _handle_rejected_task(self, task, current_time):
         logging.info(f'Human reject the task {task.id}. Place object {task.action["Object"]}'
