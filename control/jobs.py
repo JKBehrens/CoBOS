@@ -94,14 +94,6 @@ class Job:
         self.completed_tasks.append(task_id)
         self.in_progress_tasks.remove(task_id)
 
-    def get_in_process_dependent_task(self, task):
-        for other_task_id in task.conditions:
-            another_task = self.task_sequence[other_task_id]
-            assert other_task_id == another_task.id
-            if another_task.state == TaskState.InProgress:
-                return another_task
-        return None
-
     def get_universal_task_number(self):
         return sum(1 for task in self.task_sequence if task.universal)
 

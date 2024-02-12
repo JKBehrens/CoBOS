@@ -140,13 +140,13 @@ class Schedule:
 
                     # If conditions and not same agents
                     k = self.model.NewIntVar(0, 1000, f'overlap_offset_{i}_{j}')
-                    # k1 = self.task_duration["Human"][task.id][1] + self.task_duration["Human"][task.id][2] - \
-                    #      self.task_duration["Robot"][dependent_task_id][1]
-                    # k2 = self.task_duration["Robot"][task.id][1] + self.task_duration["Robot"][task.id][2] - \
-                    #      self.task_duration["Human"][dependent_task_id][1]
+                    k1 = self.task_duration["Human"][task.id][1] + self.task_duration["Human"][task.id][2] - \
+                         self.task_duration["Robot"][dependent_task_id][1]
+                    k2 = self.task_duration["Robot"][task.id][1] + self.task_duration["Robot"][task.id][2] - \
+                         self.task_duration["Human"][dependent_task_id][1]
 
-                    k1 = self.task_duration["Human"][task.id][3] + self.task_duration["Robot"][dependent_task_id][1]
-                    k2 = self.task_duration["Robot"][task.id][3] + self.task_duration["Human"][dependent_task_id][1]
+                    # k1 = self.task_duration["Human"][task.id][3] + self.task_duration["Robot"][dependent_task_id][1]
+                    # k2 = self.task_duration["Robot"][task.id][3] + self.task_duration["Human"][dependent_task_id][1]
 
                     if k1 < 0:
                         k1 = 0
@@ -157,13 +157,13 @@ class Schedule:
                     self.model.Add(k == k2).OnlyEnforceIf([self.human_task_bool[i].Not(), condition])
                     logging.debug(f'task i {i}, dt j {j}, k = {k2}')
                     self.border_constraints[i][j][3] = self.model.Add(
-                        self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].end - k) \
+                    self.all_tasks[dependent_task_id].end >= self.all_tasks[task.id].end + k) \
                         .OnlyEnforceIf([condition, same_agent.Not()])
-                    # self.all_tasks[dependent_task_id].end >= self.all_tasks[task.id].end + k) \
+                    # self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].end - k) \
 
                     self.border_constraints[i][j][4] = self.model.Add(
-                        self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].start) \
-                        .OnlyEnforceIf([condition, same_agent.Not()])
+                    self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].start) \
+                    .OnlyEnforceIf([condition, same_agent.Not()])
 
         # Makespan objective.
         obj_var = self.model.NewIntVar(0, self.horizon, 'makespan')
@@ -408,6 +408,7 @@ class Schedule:
         self.refresh_variables(current_time)
         makespan_and_task = self.set_list_of_possible_changes(possible_tasks, agent_name, agent_rejection_tasks)
         if makespan_and_task and makespan_and_task[0][0] < self.current_makespan:
+            self.change_agent(task=makespan_and_task[0][1], coworker_name=agent_name, current_time=current_time)
             return makespan_and_task[0][1]
 
         return None
