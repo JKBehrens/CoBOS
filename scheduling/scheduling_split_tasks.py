@@ -340,15 +340,15 @@ class Schedule:
         self.print_info()
         return self.schedule
 
-    def set_list_of_possible_changes(self, available_tasks, agent):
+    def set_list_of_possible_changes(self, available_tasks, agent_name, agent_rejection_tasks):
         makespans = []
         for available_task in available_tasks:
-            if available_task.id not in agent.rejection_tasks:
+            if available_task.id not in agent_rejection_tasks:
                 test_model = copy.deepcopy(self.model)
                 human_task_bool_copy = copy.deepcopy(self.human_task_bool)
                 idx = self.job.get_task_idx(available_task)
                 test_model.Proto().constraints.remove(self.fix_agent[idx].Proto())
-                if agent.name == "Human":
+                if agent_name == "Human":
                     test_model.Add(human_task_bool_copy[idx] == True)
                 else:
                     test_model.Add(human_task_bool_copy[idx] == False)
@@ -371,27 +371,26 @@ class Schedule:
         else:
             return makespans
 
-    def decide(self, agents, current_time):
-        decision = []
+    def decide(self, observation_data, current_time):
+        decision = {}
         self.update_tasks_status()
-        for agent in agents:
-            logging.debug(f'TIME: {current_time}. Is {agent.name} available? {agent.state}')
-            if agent.state == AgentState.IDLE:
-                decision.append([agent, self.find_task(agent, current_time)])
-            elif agent.state == AgentState.REJECT:
-                coworker = agents[agents.index(agent) - 1]
-                agent.current_task.agent = coworker.name
-                self.change_agent(agent.current_task, coworker, current_time)
-                decision.append([agent, self.find_task(agent, current_time)])
-            elif agent.state == AgentState.DONE:
-                decision.append([agent, self.find_task(agent, current_time)])
+        for index, [agent_name, agent_state, agent_current_task, agent_rejection_tasks] in enumerate(observation_data):
+            logging.debug(f'TIME: {current_time}. Is {agent_name} available? {agent_state}')
+            if agent_state == AgentState.IDLE:
+                decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
+            elif agent_state == AgentState.REJECT:
+                coworker = observation_data[index - 1]
+                self.change_agent(task=agent_current_task, coworker_name=coworker[0], current_time=current_time)
+                decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
+            elif agent_state == AgentState.DONE:
+                decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
             else:
-                decision.append([agent, None])
+                decision[agent_name] = None
         return decision
 
-    def find_task(self, agent, current_time):
+    def find_task(self, agent_name, agent_rejection_tasks, current_time):
         # find allocated task
-        for task in self.schedule[agent.name]:
+        for task in self.schedule[agent_name]:
             if task.status == 0:  # TODO: make this more readible by introducing TaskState.AVAILABLE, TaskState.FINISHED, etc
                 return task
 
@@ -400,19 +399,16 @@ class Schedule:
         # of him to speed up the process.
         possible_tasks = []
         for worker in self.schedule.keys():
-            if worker != agent:
+            if worker != agent_name:
                 for task in self.schedule[worker]:
                     if task.status == 0 and task.universal:
                         possible_tasks.append(task)
 
         # rescheduling estimation
         self.refresh_variables(current_time)
-        makespan_and_task = self.set_list_of_possible_changes(possible_tasks, agent)
+        makespan_and_task = self.set_list_of_possible_changes(possible_tasks, agent_name, agent_rejection_tasks)
         if makespan_and_task and makespan_and_task[0][0] < self.current_makespan:
-            for coworker_task in makespan_and_task:
-                if (agent.name == 'Human' and coworker_task[1].id not in agent.rejection_tasks) \
-                        or agent.name == 'Robot':
-                    return coworker_task[1]
+            return makespan_and_task[0][1]
 
         return None
 
@@ -426,7 +422,7 @@ class Schedule:
                 if set(task.conditions).issubset(tasks_list):
                     task.status = 0
 
-    def change_agent(self, task, coworker, current_time):
+    def change_agent(self, task, coworker_name, current_time):
         """
         Changes the agent assigned to a task.
 
@@ -434,12 +430,13 @@ class Schedule:
         :type task: Task
         :type current_agent: Agent
         """
-        task.agent = coworker.name
+        assert isinstance(coworker_name, str)
+        self.job.change_agent(task.id, new_agent_name=coworker_name)
+
         self.set_new_agent(task)
         self.refresh_variables(current_time)
         self.schedule, self.current_makespan = self.solve()
         self.print_info()
-
 
         logging.info('____RESCHEDULING______')
         self.print_schedule()

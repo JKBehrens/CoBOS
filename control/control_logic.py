@@ -66,7 +66,7 @@ class ControlLogic:
         for i, task in enumerate(self.job.task_sequence):
             task.status = -1 if len(task.conditions) != 0 else 0
 
-    def set_observation_data(self):
+    def get_observation_data(self):
         """
         Checks the progress of each agent's current task and updates the schedule accordingly.
         """
@@ -79,6 +79,8 @@ class ControlLogic:
             elif not agent.state == AgentState.IDLE:
                 coworker = self.agents[self.agents.index(agent) - 1]
                 agent.get_feedback(self.job, self.current_time, coworker=coworker)
+            output.append([agent.name, agent.state, agent.current_task, agent.rejection_tasks])
+        return output
 
     def shift_schedule(self):
         """
@@ -123,16 +125,18 @@ class ControlLogic:
                 break
             logging.debug(f'TIME: {self.current_time}. Progress {self.job.progress()}')
 
-            self.set_observation_data()
+            observation_data = self.get_observation_data()
 
             # ask planner to decide about next actions for robot and human
-            selected_task = self.schedule_model.decide(self.agents, self.current_time)
-            for agent, task in selected_task:
-                if task is None:
+            selected_task = self.schedule_model.decide(observation_data, self.current_time)
+            for agent in self.agents:
+                if agent.state == AgentState.REJECT:
+                    agent.state = AgentState.IDLE
+                if selected_task[agent.name] is None:
                     continue
                 
                 coworker = self.agents[self.agents.index(agent) - 1]
-                agent.execute_task(task=task, job=self.job, current_time=self.current_time, coworker=coworker)
+                agent.execute_task(task=selected_task[agent.name], job=self.job, current_time=self.current_time, coworker=coworker)
                 if online_plot:
                     self.plot.update_info(agent, start=True)
 

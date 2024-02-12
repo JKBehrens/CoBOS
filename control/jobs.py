@@ -104,6 +104,13 @@ class Job:
     def get_universal_task_number(self):
         return sum(1 for task in self.task_sequence if task.universal)
 
+    def change_agent(self, task_id, new_agent_name):
+        # Find the task with the given task_id
+        matching_task = next((task for task in self.task_sequence if task.id == task_id), None)
+
+        if matching_task:
+            matching_task.agent = new_agent_name
+
 class Task:
     """
     Represents a task to be completed.
