@@ -144,7 +144,7 @@ class Vis:
 
     def set_horizon(self, data):
         # Flatten the nested dictionary to get all "Finish" values
-        finish_times = [task["Finish"][0] for agent_tasks in data for task in data[agent_tasks]]
+        finish_times = [task["Finish"][0] for schedule in data for agent_tasks in schedule for task in schedule[agent_tasks]]
 
         # Find the maximum "Finish" time
         return max(finish_times)
@@ -154,18 +154,16 @@ class Vis:
             title = ['Gantt Chart: initial', 'Gantt Chart: final']
             gs = gridspec.GridSpec(3, 3, height_ratios=[1, 1, 2])
             positions = [[311, 312], [313]]
-            index_offset = 0
         else:
             title = ['Gantt Chart']
             gs = gridspec.GridSpec(2, 1, height_ratios=[1, 1])
             positions = [[211], [212]]
-            index_offset = 0
         local_data = self.data if self.from_file and 'simulation' in file_name else [self.data]
+        horizon = self.set_horizon(local_data)
         for i, position in enumerate(positions[0]):
-            horizon = self.set_horizon(local_data[i + index_offset])
-            self.set_plot_param( title[i], gs[i, :], lim=horizon)  # [0]
-            for agent in local_data[i + index_offset]:
-                for task in local_data[i + index_offset][agent]:
+            self.set_plot_param(title[i], gs[i, :], lim=horizon)  # [0]
+            for agent in local_data[i]:
+                for task in local_data[i][agent]:
                     position_y, task_name_y, action_y = self.y_pos_and_text[task["Universal"]][agent]
 
                     if self.from_file:
