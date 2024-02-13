@@ -37,8 +37,10 @@ class Job:
         """
         logging.info("Task list")
         logging.info("____________________________")
-        for task in self.task_sequence:
-            task.__str__()
+        for agent in self.agents:
+            for task in self.task_sequence:
+                if task.agent == agent:
+                    task.__str__()
         logging.info("____________________________")
 
     def progress(self):

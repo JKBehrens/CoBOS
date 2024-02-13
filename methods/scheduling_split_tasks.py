@@ -1,5 +1,5 @@
 """
-This class create model and solve scheduling problem.
+This class create model and solve methods problem.
 
 @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
 @contact: marina.ionova@cvut.cz
@@ -7,6 +7,7 @@ This class create model and solve scheduling problem.
 import numpy as np
 from control.agent_and_task_states import AgentState, TaskState
 from ortools.sat.python import cp_model
+from methods.solver import Solver
 import collections
 import logging
 import copy
@@ -14,7 +15,7 @@ import copy
 LAMBDA = 1
 
 
-class Schedule:
+class Schedule(Solver):
     """
     A class for generating and managing schedules for a given job.
 
@@ -327,7 +328,7 @@ class Schedule:
                 self.horizon += self.task_duration[task.agent][task.id][0]
         self.horizon = int(self.horizon)
 
-    def set_schedule(self, **kwargs):
+    def prepare(self, **kwargs):
         """
         Creates variables, their domains and constraints in model, then solves it.
         """
@@ -442,6 +443,9 @@ class Schedule:
         logging.info('____RESCHEDULING______')
         self.print_schedule()
         logging.info('______________________')
+
+    def get_statistics(self):
+        return [self.rescheduling_run_time, self.evaluation_run_time]
 
     def print_schedule(self):
         logging.info("____________________________")

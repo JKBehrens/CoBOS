@@ -5,7 +5,7 @@
     @contact: marina.ionova@cvut.cz
 """
 from visualization import Vis, initial_and_final_schedule, Web_vis
-from scheduling import Schedule
+from methods import Schedule
 from control.agent_and_task_states import AgentState, TaskState
 from control.agents import Agent
 from control.jobs import Job
@@ -16,7 +16,7 @@ import copy
 
 class ControlLogic:
     """
-    Class that controls the scheduling and execution of tasks by agents.
+    Class that controls the methods and execution of tasks by agents.
 
     :param case: Case to be executed.
     :type case: str
@@ -28,7 +28,7 @@ class ControlLogic:
         self.current_time = 0
         self.start_time = time.time()
         self.task_finish_time = []
-        self.schedule_model = None
+        self.solving_method = None
         self.available_tasks = []
         self.output_data = []
 
@@ -39,17 +39,17 @@ class ControlLogic:
         self.job = Job(self.case, seed=self.distribution_seed)
         self.set_schedule()
 
-        # self.plot = Vis(horizon=self.schedule_model.horizon)
+        # self.plot = Vis(horizon=self.solving_method.horizon)
         self.plot = None
 
     def set_schedule(self):
         """
         Sets the schedule for task execution by agents.
         """
-        self.schedule_model = Schedule(self.job, seed=self.schedule_seed)
-        schedule = self.schedule_model.set_schedule()
-        if not schedule:
-            logging.error(f'Scheduling failed. Case {self.case}. Distribution seed {self.distribution_seed}, sim seed {self.sim_seed}, '
+        self.solving_method = Schedule(self.job, seed=self.schedule_seed)
+        done = self.solving_method.prepare()
+        if not done:
+            logging.error(f'Solving method preparation failed. Case {self.case}. Distribution seed {self.distribution_seed}, sim seed {self.sim_seed}, '
                           f'schedule seed {self.schedule_seed}')
             self.job.__str__()
             exit()
@@ -110,12 +110,12 @@ class ControlLogic:
 
     def run(self, animation=False, online_plot=False, experiments=False):
         """
-        Run the scheduling simulation.
+        Run the methods simulation.
         """
         self.output_data.append(self.schedule_as_dict(hierarchy=True))
 
         if animation:
-            self.plot = Vis(horizon=self.schedule_model.horizon)
+            self.plot = Vis(horizon=self.solving_method.horizon)
             self.plot.delete_existing_file()
         if online_plot:
             self.plot = Web_vis(data=self.schedule_as_dict())
@@ -128,7 +128,7 @@ class ControlLogic:
             observation_data = self.get_observation_data()
 
             # ask planner to decide about next actions for robot and human
-            selected_task = self.schedule_model.decide(observation_data, self.current_time)
+            selected_task = self.solving_method.decide(observation_data, self.current_time)
             for agent in self.agents:
                 if agent.state == AgentState.REJECT:
                     agent.state = AgentState.IDLE
@@ -158,7 +158,7 @@ class ControlLogic:
                     self.plot.save_data()
 
         logging.info('__________FINAL SCHEDULE___________')
-        self.schedule_model.print_schedule()
+        self.job.__str__()
         logging.info('___________________________________')
         logging.info(f'SIMULATION TOTAL TIME: {time.time() - self.start_time}')
         self.output_data.append(self.schedule_as_dict(hierarchy=True))
@@ -169,7 +169,7 @@ class ControlLogic:
             statistics = {}
             statistics['makespan'] = [self.job.predicted_makespan, self.job.get_current_makespan()]
             statistics['rejection number'] = len(self.agents[1].rejection_tasks)
-            statistics['runtime'] = [self.schedule_model.rescheduling_run_time, self.schedule_model.evaluation_run_time]
+            statistics['solver'] = self.solving_method.get_statistics()
             return self.output_data, statistics
 
     def schedule_as_dict(self, hierarchy=False):

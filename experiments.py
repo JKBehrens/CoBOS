@@ -79,7 +79,7 @@ def run_test_with_random():
     output = []
     for case in range(1, 6):
         for j in range(5): # distrib seed for job generation
-            for i in range(5): # seed for scheduling and simulation
+            for i in range(5): # seed for methods and simulation
                 execute_job = ControlLogic(str(case), distribution_seed=j, sim_seed=i, schedule_seed=i)
                 schedule, stat = execute_job.run(experiments=True)
                 if schedule:
