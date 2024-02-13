@@ -1,4 +1,4 @@
-from scheduling.scheduling_split_tasks import Schedule, schedule_as_dict
+from methods.scheduling_split_tasks import Schedule, schedule_as_dict
 from control.control_logic import ControlLogic
 from visualization.json_2_video import video_parser
 from visualization import schedule, Vis
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         raise SystemExit(1)
 
     if not args.only_schedule:
-        execute_job = ControlLogic(case, distribution_seed=1, schedule_seed=0, sim_seed=0)
+        execute_job = ControlLogic(case, distribution_seed=4, schedule_seed=0, sim_seed=0)
         if args.offline:
             execute_job.run(animation=True)
         else:

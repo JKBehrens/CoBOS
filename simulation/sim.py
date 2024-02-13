@@ -6,7 +6,7 @@
 """
 from typing import Optional
 from simulation.task_execution_time_const import get_approximated_task_duration
-from control.agent_states import AgentState
+from control.agent_and_task_states import AgentState
 from numpy.random import Generator
 from inputs.config import response_time_max, response_time_min
 import numpy as np
@@ -26,13 +26,14 @@ class Sim:
     def __init__(self, agent_name, job, **kwargs):
         self.agent_name = agent_name
         self.job = job
-        self.task_duration = {"Human": {}, "Robot": {}}
+        self.agent_list = ['Human', 'Robot']
+        self.task_duration = {agent: {} for agent in self.agent_list}
         self.prob = None
         if "seed" in kwargs:
             self.seed = int(kwargs["seed"])
         self.rand = np.random.default_rng(seed=self.seed)
         self.fail_probability = []
-        self.task_execution = {'Human': {'Start': 0, 'Duration': []}, 'Robot': {'Start': 0, 'Duration': []}}
+        self.task_execution = {agent: {'Start': 0, 'Duration': []} for agent in self.agent_list}
         self.start_time = time.time()
 
         self.set_tasks_duration(**kwargs)
@@ -95,11 +96,12 @@ class Sim:
         """
         self.task_execution[agent.name]['Start'] = current_time
         self.task_execution[agent.name]['Duration'] = self.task_duration[agent.name][agent.current_task.id]
-        dependent_task = job.get_in_process_dependent_task(agent.current_task)
-        if dependent_task:
-            overlapping = dependent_task.start + sum(
-                self.task_execution[dependent_task.agent]['Duration'][1:3]) - current_time
-            logging.debug(f'overlapping:{overlapping}, dependent_task.start :{dependent_task.start},'
+
+        coworker_name = self.agent_list[self.agent_list.index(agent.name)-1]
+        if self.task_execution[coworker_name]['Duration'] != [0, 0, 0, 0]:
+            overlapping = self.task_execution[coworker_name]['Start'] + sum(
+                self.task_execution[coworker_name]['Duration'][1:3]) - current_time
+            logging.debug(f'overlapping:{overlapping}, dependent_task.start :{self.task_execution[coworker_name]["Start"]},'
                   f'duration: {self.task_execution["Human"]["Duration"]}, time: {current_time}')
             if overlapping > self.task_execution[agent.name]['Duration'][1]:
                 self.task_execution[agent.name]['Duration'][0] += overlapping - \
@@ -141,9 +143,11 @@ class Sim:
                 return AgentState.PREPARATION, -1
             elif current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][0] -
                                  self.task_execution['Robot']['Duration'][3]):
-                dependent_task = job.get_in_process_dependent_task(task)
+                # dependent_task = job.get_in_process_dependent_task(task)
+                coworker_name = self.agent_list[self.agent_list.index(task.agent) - 1]
 
-                if dependent_task and current_time < (self.task_execution['Human']['Start'] +
+                if self.task_execution[coworker_name]['Duration'] != [0, 0, 0, 0] and \
+                        current_time < (self.task_execution['Human']['Start'] +
                                                       (self.task_execution['Human']['Duration'][0] -
                                                        self.task_execution['Human']['Duration'][3])):
                     return AgentState.WAITING, current_time - (self.task_execution['Robot']['Start'] +
@@ -180,8 +184,11 @@ class Sim:
 
             if (self.task_execution['Human']['Start'] + self.task_execution['Human']['Duration'][0]) \
                     > current_time:
-                dependent_task = job.get_in_process_dependent_task(task)
-                if dependent_task and current_time < (self.task_execution['Robot']['Start'] +
+                # dependent_task = job.get_in_process_dependent_task(task)
+                coworker_name = self.agent_list[self.agent_list.index(task.agent) - 1]
+
+                if self.task_execution[coworker_name]['Duration'] != [0, 0, 0, 0]\
+                        and current_time < (self.task_execution['Robot']['Start'] +
                                                       (self.task_execution['Robot']['Duration'][0] -
                                                        self.task_execution['Robot']['Duration'][3])):
                     return AgentState.WAITING, current_time - (self.task_execution['Human']['Start'] +

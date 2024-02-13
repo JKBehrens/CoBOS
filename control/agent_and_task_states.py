@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum, auto, IntEnum
 
 
 class AgentState(Enum):
@@ -11,3 +11,10 @@ class AgentState(Enum):
     DONE = auto()
     InPROGRESS = auto()
     ANSWERING = auto()
+
+
+class TaskState(IntEnum):
+    UNAVAILABLE = -1
+    AVAILABLE = 0
+    InProgress = 1
+    COMPLETED = 2

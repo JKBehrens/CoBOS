@@ -4,7 +4,7 @@
     @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
     @contact: marina.ionova@cvut.cz
 """
-from control.agent_states import AgentState
+from control.agent_and_task_states import AgentState, TaskState
 from simulation.sim import Sim
 import logging
 class Agent(Sim):
@@ -37,7 +37,7 @@ class Agent(Sim):
         self.state = AgentState.PREPARATION
         self.current_task = task
         task.start = start
-        task.status = 1
+        task.state = TaskState.InProgress
 
     def finish_task(self, time_info):
         """
@@ -47,7 +47,7 @@ class Agent(Sim):
         :type time_info: list
         """
         self.current_task.finish = time_info
-        self.current_task.status = 2
+        self.current_task.state = TaskState.COMPLETED
         self.waiting = 0
 
     def print_current_state(self):
@@ -72,7 +72,7 @@ class Agent(Sim):
         :rtype: Task
         """
         if not self.state == AgentState.IDLE:
-            self.current_task.status = -1
+            self.current_task.state = TaskState.UNAVAILABLE
             # self.refresh_task_idle()
         for i, task in enumerate(self.available_tasks):
             if task.universal and self.name == 'Human':
@@ -87,7 +87,7 @@ class Agent(Sim):
                 return task
 
         if not self.state == AgentState.IDLE:
-            self.current_task.status = 0
+            self.current_task.state = TaskState.AVAILABLE
         return None
 
     def execute_task(self, task, job, current_time, **kwargs):
@@ -106,6 +106,7 @@ class Agent(Sim):
         if task.universal and self.name == 'Human':
             if self.ask_human('execute_task', task):
                 self._handle_accepted_task(task, job, current_time, coworker)
+                logging.info(f'Human accept task. Task in progress...')
             else:
                 self.state = AgentState.REJECT
                 self._handle_rejected_task(task, current_time)

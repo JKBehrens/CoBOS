@@ -1,12 +1,13 @@
 """
-This class create model and solve scheduling problem.
+This class create model and solve methods problem.
 
 @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
 @contact: marina.ionova@cvut.cz
 """
 import numpy as np
-from control.agent_states import AgentState
+from control.agent_and_task_states import AgentState, TaskState
 from ortools.sat.python import cp_model
+from methods.solver import Solver
 import collections
 import logging
 import copy
@@ -14,7 +15,7 @@ import copy
 LAMBDA = 1
 
 
-class Schedule:
+class Schedule(Solver):
     """
     A class for generating and managing schedules for a given job.
 
@@ -140,13 +141,13 @@ class Schedule:
 
                     # If conditions and not same agents
                     k = self.model.NewIntVar(0, 1000, f'overlap_offset_{i}_{j}')
-                    # k1 = self.task_duration["Human"][task.id][1] + self.task_duration["Human"][task.id][2] - \
-                    #      self.task_duration["Robot"][dependent_task_id][1]
-                    # k2 = self.task_duration["Robot"][task.id][1] + self.task_duration["Robot"][task.id][2] - \
-                    #      self.task_duration["Human"][dependent_task_id][1]
+                    k1 = self.task_duration["Human"][task.id][1] + self.task_duration["Human"][task.id][2] - \
+                         self.task_duration["Robot"][dependent_task_id][1]
+                    k2 = self.task_duration["Robot"][task.id][1] + self.task_duration["Robot"][task.id][2] - \
+                         self.task_duration["Human"][dependent_task_id][1]
 
-                    k1 = self.task_duration["Human"][task.id][3] + self.task_duration["Robot"][dependent_task_id][1]
-                    k2 = self.task_duration["Robot"][task.id][3] + self.task_duration["Human"][dependent_task_id][1]
+                    # k1 = self.task_duration["Human"][task.id][3] + self.task_duration["Robot"][dependent_task_id][1]
+                    # k2 = self.task_duration["Robot"][task.id][3] + self.task_duration["Human"][dependent_task_id][1]
 
                     if k1 < 0:
                         k1 = 0
@@ -157,13 +158,13 @@ class Schedule:
                     self.model.Add(k == k2).OnlyEnforceIf([self.human_task_bool[i].Not(), condition])
                     logging.debug(f'task i {i}, dt j {j}, k = {k2}')
                     self.border_constraints[i][j][3] = self.model.Add(
-                        self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].end - k) \
+                    self.all_tasks[dependent_task_id].end >= self.all_tasks[task.id].end + k) \
                         .OnlyEnforceIf([condition, same_agent.Not()])
-                    # self.all_tasks[dependent_task_id].end >= self.all_tasks[task.id].end + k) \
+                    # self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].end - k) \
 
                     self.border_constraints[i][j][4] = self.model.Add(
-                        self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].start) \
-                        .OnlyEnforceIf([condition, same_agent.Not()])
+                    self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].start) \
+                    .OnlyEnforceIf([condition, same_agent.Not()])
 
         # Makespan objective.
         obj_var = self.model.NewIntVar(0, self.horizon, 'makespan')
@@ -177,8 +178,8 @@ class Schedule:
         Changes the variable domains according to what is happening to update the schedule.
         """
         for i, task in enumerate(self.job.task_sequence):
-            if (task.id not in self.tasks_with_final_var) and (task.status in [1, 2]):
-                if task.status == 2:
+            if (task.id not in self.tasks_with_final_var) and (task.state in [TaskState.InProgress, TaskState.COMPLETED]):
+                if task.state == TaskState.COMPLETED:
                     task_duration = int(task.finish[0]) - int(task.start)
                     self.model.Proto().variables[self.end_var[i].Index()].domain[:] = []
                     self.model.Proto().variables[self.end_var[i].Index()].domain.extend(
@@ -215,7 +216,7 @@ class Schedule:
                     cp_model.Domain(int(task.start), int(task.start)).FlattenedIntervals())
                 # logging.debug(f'Task {task.id}, new var: start {task.start}')
 
-            elif task.status == 0 or task.status == -1:
+            elif task.state == TaskState.AVAILABLE or task.state == TaskState.UNAVAILABLE:
                 # Change start var
                 self.model.Proto().variables[self.start_var[i].Index()].domain[:] = []
                 self.model.Proto().variables[self.start_var[i].Index()].domain.extend(
@@ -269,10 +270,10 @@ class Schedule:
 
                     task = self.job.task_sequence[assigned_task.task_id]
                     self.job.task_sequence[assigned_task.task_id].agent = agent
-                    if (task.status == -1) or (task.status == 0) or (task.status is None):
+                    if (task.state == TaskState.UNAVAILABLE) or (task.state == TaskState.AVAILABLE) or (task.state is None):
                         self.job.task_sequence[assigned_task.task_id].start = start
                         self.job.task_sequence[assigned_task.task_id].finish = end
-                    elif task.status == 1:
+                    elif task.state == TaskState.InProgress:
                         self.job.task_sequence[assigned_task.task_id].finish = \
                             [task.start + self.task_duration[task.agent][task.id][0],
                              self.task_duration[task.agent][task.id][1],
@@ -327,7 +328,7 @@ class Schedule:
                 self.horizon += self.task_duration[task.agent][task.id][0]
         self.horizon = int(self.horizon)
 
-    def set_schedule(self, **kwargs):
+    def prepare(self, **kwargs):
         """
         Creates variables, their domains and constraints in model, then solves it.
         """
@@ -391,7 +392,7 @@ class Schedule:
     def find_task(self, agent_name, agent_rejection_tasks, current_time):
         # find allocated task
         for task in self.schedule[agent_name]:
-            if task.status == 0:  # TODO: make this more readible by introducing TaskState.AVAILABLE, TaskState.FINISHED, etc
+            if task.state == TaskState.AVAILABLE:
                 return task
 
         # If the agent has run out of available tasks in his list, he looks for
@@ -401,13 +402,14 @@ class Schedule:
         for worker in self.schedule.keys():
             if worker != agent_name:
                 for task in self.schedule[worker]:
-                    if task.status == 0 and task.universal:
+                    if task.state == TaskState.AVAILABLE and task.universal:
                         possible_tasks.append(task)
 
         # rescheduling estimation
         self.refresh_variables(current_time)
         makespan_and_task = self.set_list_of_possible_changes(possible_tasks, agent_name, agent_rejection_tasks)
         if makespan_and_task and makespan_and_task[0][0] < self.current_makespan:
+            self.change_agent(task=makespan_and_task[0][1], coworker_name=agent_name, current_time=current_time)
             return makespan_and_task[0][1]
 
         return None
@@ -418,9 +420,9 @@ class Schedule:
         """
         tasks_list = self.job.get_completed_and_in_progress_task_list()
         for task in self.job.task_sequence:
-            if len(task.conditions) != 0 and task.status == -1:
+            if len(task.conditions) != 0 and task.state == TaskState.UNAVAILABLE:
                 if set(task.conditions).issubset(tasks_list):
-                    task.status = 0
+                    task.state = TaskState.AVAILABLE
 
     def change_agent(self, task, coworker_name, current_time):
         """
@@ -441,6 +443,9 @@ class Schedule:
         logging.info('____RESCHEDULING______')
         self.print_schedule()
         logging.info('______________________')
+
+    def get_statistics(self):
+        return [self.rescheduling_run_time, self.evaluation_run_time]
 
     def print_schedule(self):
         logging.info("____________________________")

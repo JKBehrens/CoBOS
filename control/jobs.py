@@ -5,6 +5,7 @@
     @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
     @contact: marina.ionova@cvut.cz
 """
+from control.agent_and_task_states import TaskState
 from inputs import case_generator
 from typing import Optional
 import numpy as np
@@ -36,15 +37,17 @@ class Job:
         """
         logging.info("Task list")
         logging.info("____________________________")
-        for task in self.task_sequence:
-            task.__str__()
+        for agent in self.agents:
+            for task in self.task_sequence:
+                if task.agent == agent:
+                    task.__str__()
         logging.info("____________________________")
 
     def progress(self):
         """
         Returns the percentage of completed tasks in the job.
         """
-        completed_tasks = sum( 1 for task in self.task_sequence if task.status == 2)
+        completed_tasks = sum( 1 for task in self.task_sequence if task.state == TaskState.COMPLETED)
         return round((completed_tasks / self.task_number) * 100, 2)
 
     def get_current_makespan(self):
@@ -56,7 +59,7 @@ class Job:
     def get_completed_and_in_progress_task_list(self):
         output = []
         for task in self.task_sequence:
-            if task.status == 2 or task.status == 1:
+            if task.state == TaskState.COMPLETED or task.state == TaskState.InProgress:
                 output.append(task.id)
         return output
 
@@ -93,14 +96,6 @@ class Job:
         self.completed_tasks.append(task_id)
         self.in_progress_tasks.remove(task_id)
 
-    def get_in_process_dependent_task(self, task):
-        for other_task_id in task.conditions:
-            another_task = self.task_sequence[other_task_id]
-            assert other_task_id == another_task.id
-            if another_task.status == 1:
-                return another_task
-        return None
-
     def get_universal_task_number(self):
         return sum(1 for task in self.task_sequence if task.universal)
 
@@ -122,7 +117,7 @@ class Task:
     def __init__(self, task_description):
         self.id = task_description['ID']
         self.action = {'Object': task_description['Object'], 'Place': task_description['Place']}
-        self.status = None
+        self.state = None
         self.conditions = task_description['Conditions']
         self.universal = task_description['Agent'] == 'Both'
         self.agent = task_description['Agent']
@@ -139,9 +134,14 @@ class Task:
         :return: String representation of task.
         :rtype: str
         """
-        logging.info(f"ID: {self.id}, agent: {self.agent}, status: {self.status}, "
-                     f"task action: {self.action}, conditions: {self.conditions}, universal: {self.universal}, "
-                     f"start: {self.start}, finish: {self.finish}")
+        try:
+            logging.info(f"ID: {self.id}, agent: {self.agent}, status: {TaskState(self.state).name}, "
+                         f"task action: {self.action}, conditions: {self.conditions}, universal: {self.universal}, "
+                         f"start: {self.start}, finish: {self.finish}")
+        except ValueError:
+            logging.info(f"ID: {self.id}, agent: {self.agent}, state: {self.state}, "
+                         f"task action: {self.action}, conditions: {self.conditions}, universal: {self.universal}, "
+                         f"start: {self.start}, finish: {self.finish}")
 
     def progress(self, current_time, duration):
         """
@@ -167,7 +167,7 @@ class Task:
             'Agent': copy.deepcopy(self.agent),
             'ID': copy.deepcopy(self.id),
             'Action': copy.deepcopy(self.action),
-            'Status': copy.deepcopy(self.status),
+            'Status': copy.deepcopy(TaskState(self.state).name),
             'Conditions': copy.deepcopy(self.conditions),
             'Universal': copy.deepcopy(self.universal),
             'Start': copy.deepcopy(self.start),
