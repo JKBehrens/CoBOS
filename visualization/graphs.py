@@ -156,7 +156,7 @@ class Vis:
             positions = [[311, 312], [313]]
         else:
             title = ['Gantt Chart']
-            gs = gridspec.GridSpec(2, 1, height_ratios=[1, 1])
+            gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1])
             positions = [[211], [212]]
         local_data = self.data if self.from_file and 'simulation' in file_name else [self.data]
         horizon = self.set_horizon(local_data)
@@ -198,7 +198,12 @@ class Vis:
             self.gnt.annotate("", xy=(self.current_time, 0), xytext=(self.current_time, 13),
                               arrowprops=dict(arrowstyle="-", lw=2, color="red"))
 
-        self.plot_dependency_graph(local_data[0], gs=gs[2:, :-1])
+        try:
+            self.plot_dependency_graph(local_data[0], gs=gs[2:, :-1])
+        except IndexError:
+            # pass
+            self.plot_dependency_graph(local_data[0], gs=gs[1, :-1])
+
         # ------ create the legend
 
         plt.tight_layout()

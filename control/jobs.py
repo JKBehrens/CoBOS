@@ -68,10 +68,14 @@ class Job:
             rand_gen = np.random.default_rng(seed)
         assert isinstance(rand_gen, np.random.Generator)
 
-        task_duration = {"Human": {}, "Robot": {}}
+        task_duration = {0: {}, 1: {}, 'Robot': {}, 'Human': {}}
         for task in self.task_sequence:
-            task_duration["Human"][task.id] = task.get_duration(rand_gen=rand_gen)
-            task_duration["Robot"][task.id] = task.get_duration(rand_gen=rand_gen)
+            robot = task.get_duration(rand_gen=rand_gen)
+            task_duration['Robot'][task.id] = robot
+            task_duration[0][task.id] = robot
+            human = task.get_duration(rand_gen=rand_gen)
+            task_duration[1][task.id] = human
+            task_duration['Human'][task.id] = human
 
         return task_duration
 
@@ -163,11 +167,12 @@ class Task:
         :return: Task details as a dictionary.
         :rtype: dict
         """
+        state = TaskState(self.state).name if self.state is not None else None
         return {
             'Agent': copy.deepcopy(self.agent),
             'ID': copy.deepcopy(self.id),
             'Action': copy.deepcopy(self.action),
-            'Status': copy.deepcopy(TaskState(self.state).name),
+            'Status': copy.deepcopy(state),
             'Conditions': copy.deepcopy(self.conditions),
             'Universal': copy.deepcopy(self.universal),
             'Start': copy.deepcopy(self.start),

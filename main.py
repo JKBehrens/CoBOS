@@ -1,4 +1,5 @@
 from methods.scheduling_split_tasks import Schedule, schedule_as_dict
+from methods.nooverlap_method import NoOverlapSchedule
 from control.control_logic import ControlLogic
 from visualization.json_2_video import video_parser
 from visualization import schedule, Vis
@@ -46,8 +47,8 @@ if __name__ == '__main__':
 
     else:
         job = Job(case, seed=0)
-        schedule_model = Schedule(job, seed=0)
-        output = schedule_model.set_schedule()
+        schedule_model = NoOverlapSchedule(job, seed=0)
+        output = schedule_model.prepare()
         with open(schedule, "w") as outfile:
             json.dump(schedule_as_dict(output), outfile)
             logging.info(f'Save data to {schedule}')
