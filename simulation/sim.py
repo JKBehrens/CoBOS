@@ -200,7 +200,9 @@ class Sim:
                 time_info[0] += self.task_execution['Human']['Start']
                 self.task_execution['Human']['Start'] = 0
                 self.task_execution['Human']['Duration'] = [0, 0, 0, 0]
-                return AgentState.DONE, time_info
+                return AgentState.DONE, time_info 
+        else:
+            raise NotImplementedError("is this case relevant? DO we ever go here?")
 
     def sample_human_response(self):
         nameList = [True, False]
