@@ -58,7 +58,10 @@ class Schedule(Solver):
         self.solver.parameters.random_seed = self.seed
         self.solver.parameters.max_time_in_seconds = 10.0
         self.solver.parameters.enumerate_all_solutions = True
+        self.solver.parameters.log_search_progress = True
         self.solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
+
+        self.assumptions = {}
 
     def set_variables(self):
         """
@@ -135,9 +138,11 @@ class Schedule(Solver):
                         OnlyEnforceIf([condition.Not(), same_agent, after.Not()])
 
                     # If conditions and same agents
-                    self.border_constraints[i][j][2] = self.model.Add(
-                        self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].end). \
+                    self.border_constraints[i][j][2] = self.model.Add(after == True). \
                         OnlyEnforceIf([condition, same_agent])
+                    # self.border_constraints[i][j][2] = self.model.Add(
+                    #     self.all_tasks[dependent_task_id].start >= self.all_tasks[task.id].end). \
+                    #     OnlyEnforceIf([condition, same_agent])
 
                     # If conditions and not same agents
                     k = self.model.NewIntVar(0, 1000, f'overlap_offset_{i}_{j}')
@@ -290,6 +295,12 @@ class Schedule(Solver):
             logging.error(f"Scheduling failed, max self.horizon: {self.horizon} \n")
             exit(2)
 
+    def make_enforcement_assumption(self, name):
+        a1 = self.model.NewBoolVar(name)
+        self.assumptions[name] = a1
+
+        return a1
+
     def fix_agents_var(self):
         """
         Sets allocated agents variable as hard constraints.
@@ -301,7 +312,7 @@ class Schedule(Solver):
                 else:
                     self.fix_agent[i] = self.model.Add(self.human_task_bool[i] == False)
 
-    def set_new_agent(self, task):
+    def change_agent_in_model(self, task):
         """
         Changes agent variable domain.
 
@@ -433,9 +444,10 @@ class Schedule(Solver):
         :type current_agent: Agent
         """
         assert isinstance(coworker_name, str)
+
+        self.change_agent_in_model(task)
         self.job.change_agent(task.id, new_agent_name=coworker_name)
 
-        self.set_new_agent(task)
         self.refresh_variables(current_time)
         self.schedule, self.current_makespan = self.solve()
         self.print_info()

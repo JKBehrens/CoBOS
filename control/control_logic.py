@@ -5,7 +5,7 @@
     @contact: marina.ionova@cvut.cz
 """
 from visualization import Vis, initial_and_final_schedule, Web_vis
-from methods import Schedule
+from methods import Schedule, NoOverlapSchedule
 from control.agent_and_task_states import AgentState, TaskState
 from control.agents import Agent
 from control.jobs import Job
@@ -46,7 +46,7 @@ class ControlLogic:
         """
         Sets the schedule for task execution by agents.
         """
-        self.solving_method = Schedule(self.job, seed=self.schedule_seed)
+        self.solving_method = NoOverlapSchedule(self.job, seed=self.schedule_seed)
         done = self.solving_method.prepare()
         if not done:
             logging.error(f'Solving method preparation failed. Case {self.case}. Distribution seed {self.distribution_seed}, sim seed {self.sim_seed}, '
@@ -156,7 +156,9 @@ class ControlLogic:
                     self.plot.current_time = self.current_time
                     self.plot.data = self.schedule_as_dict(hierarchy=True)
                     self.plot.save_data()
-
+        self.solving_method.update_tasks_status()
+        self.solving_method.refresh_variables(self.current_time)
+        self.solving_method.solve()
         logging.info('__________FINAL SCHEDULE___________')
         self.job.__str__()
         logging.info('___________________________________')
