@@ -44,7 +44,7 @@ class NoOverlapSchedule(Schedule):
         task_info = collections.namedtuple('task_info', 'start end agent interval')
 
 
-        number_agents = len(self.task_duration)
+        number_agents = len(self.all_agents)
         no_overlap_task_intervals = []
         PAIRWISE = False
 
@@ -216,7 +216,7 @@ class NoOverlapSchedule(Schedule):
         """
         for task in self.job.task_sequence:
             if task.universal:
-                self.model.Proto().constraints.remove(self.allowedAgents[task.id] .Proto())
+                # self.model.Proto().constraints.remove(self.allowedAgents[task.id] .Proto())
                 self.allowedAgents[task.id] = self.model.AddAllowedAssignments(
                     variables=[self.task_assignment_var[task.id]],
                     tuples_list=[tuple([self.agent_mapping[task.agent]])])

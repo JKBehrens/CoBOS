@@ -25,7 +25,7 @@ class Schedule(Solver):
     def __init__(self, job, seed):
         self.COUNTER = 0
         self.job = job
-        self.model = cp_model.CpModel()
+        self.model: cp_model.CpModel = cp_model.CpModel()
         self.schedule = {}
         self.current_makespan = None
         self.solver = 0
@@ -357,6 +357,7 @@ class Schedule(Solver):
         for available_task in available_tasks:
             if available_task.id not in agent_rejection_tasks:
                 test_model = copy.deepcopy(self.model)
+                # test_model = self.model.Clone()
                 human_task_bool_copy = copy.deepcopy(self.human_task_bool)
                 idx = self.job.get_task_idx(available_task)
                 test_model.Proto().constraints.remove(self.fix_agent[idx].Proto())

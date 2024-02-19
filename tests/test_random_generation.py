@@ -1,7 +1,7 @@
 from control.jobs import Job
 from simulation.sim import Sim
 from typing import Optional
-from scheduling.scheduling_split_tasks import Schedule
+from methods.scheduling_split_tasks import Schedule
 import numpy as np
 
 
