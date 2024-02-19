@@ -162,11 +162,12 @@ class NoOverlapSchedule(Schedule):
         else:
             print(self.model.Validate())
             logging.error(f"Something is wrong, status {self.solver.StatusName(self.status)} and the log of the solve")
+            exit(2)
 
         makespan = 0
         output = {'Human': [], 'Robot': []}
         for task in self.job.task_sequence:
-            task.agent = 'Robot' if self.solver.Value(self.task_assignment_var[task.id]) == 0 else 'Human'
+            task.agent = self.agent_mapping[self.solver.Value(self.task_assignment_var[task.id])]
 
             if (task.state == TaskState.UNAVAILABLE) or (task.state == TaskState.AVAILABLE) or (task.state is None):
                 task.start = self.solver.Value(self.task_intervals[task.id].StartExpr())

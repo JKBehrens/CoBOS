@@ -9,7 +9,8 @@ TASK_NUM = 8
 CASES_LENGTH = 16
 HUMAN_TASKS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8']
 ROBOT_TASKS = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8']
-ALLOCABLE_TASKS = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8']
+ALLOCATABLE_TASKS = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8']
+TEST_CASE_DATA = ['r4', 'h7', 'a1', 'r5']
 
 CONDITIONS = {'2': [[4], [5], [6], [7],
                     [8], [9], [10], [11],
@@ -36,6 +37,8 @@ def set_random_sequence(case, rand_gen:Optional[np.random.Generator], length=CAS
         weights = (0.5, 0.5, 0)
     else:
         weights = allocation_weights
+    if case == '0':
+        return TEST_CASE_DATA
     weights_for_each_task = []
     for weight in weights:
         if weight != 0:
@@ -48,7 +51,7 @@ def set_random_sequence(case, rand_gen:Optional[np.random.Generator], length=CAS
     elif weights[2] == 0:
         cubes = HUMAN_TASKS + ROBOT_TASKS
     else:
-        cubes = HUMAN_TASKS + ROBOT_TASKS + ALLOCABLE_TASKS
+        cubes = HUMAN_TASKS + ROBOT_TASKS + ALLOCATABLE_TASKS
     sequence = rand_gen.choice(cubes, size=length, replace=False, p=weights_for_each_task)
     return sequence.astype(dtype=str)
 
@@ -86,7 +89,10 @@ def set_input(case, seed):
         for y in Y:
             task_description = {}
             task_description['ID'] = ID_counter
-            task_description['Object'] = cubes_sequence[ID_counter]
+            try:
+                task_description['Object'] = cubes_sequence[ID_counter]
+            except IndexError as e:
+                return job_description
             if 'h' in cubes_sequence[ID_counter]:
                 task_description['Agent'] = 'Human'
             elif 'r' in cubes_sequence[ID_counter]:
@@ -94,7 +100,7 @@ def set_input(case, seed):
             else:
                 task_description['Agent'] = 'Both'
             task_description['Place'] = x + y
-            if case in ('1', '4'):
+            if case in ('1', '4', '0'):
                 task_description['Conditions'] = []
             else:
                 task_description['Conditions'] = CONDITIONS[case][ID_counter]
@@ -104,6 +110,7 @@ def set_input(case, seed):
             task_description['Rejection_prob'] = set_rejection_prob(np.random.default_rng(seed+ID_counter))
             ID_counter += 1
             job_description.append(task_description)
+
     return job_description
 
 
