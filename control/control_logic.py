@@ -64,7 +64,7 @@ class ControlLogic:
         Sets the status of tasks for each agent.
         """
         for i, task in enumerate(self.job.task_sequence):
-            task.state = TaskState.UNAVAILABLE if len(task.conditions) != 0 else 0
+            task.state = TaskState.UNAVAILABLE if len(task.conditions) != 0 else TaskState.AVAILABLE
 
     def get_observation_data(self):
         """

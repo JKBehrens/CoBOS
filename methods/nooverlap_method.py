@@ -44,7 +44,7 @@ class NoOverlapSchedule(Schedule):
         task_info = collections.namedtuple('task_info', 'start end agent interval')
 
 
-        number_agents = len(self.task_duration)
+        number_agents = len(self.all_agents)
         no_overlap_task_intervals = []
         PAIRWISE = False
 
@@ -111,7 +111,7 @@ class NoOverlapSchedule(Schedule):
         if self.status == cp_model.OPTIMAL or self.status == cp_model.FEASIBLE:
             for task, interval in self.task_intervals.items():
                 agent = self.solver.Value(self.task_assignment_var[task])
-                # assert self.task_duration[agent][task][0] == self.solver.Value(interval.SizeExpr()), f"Duration of task {task} is wrong."
+                assert self.task_duration[agent][task][0] == self.solver.Value(interval.SizeExpr()), f"Duration of task {task} is wrong."
             logging.info("All intervals have the correct duration.")
 
             for task, agents in self.task_assignment.items():
@@ -130,7 +130,7 @@ class NoOverlapSchedule(Schedule):
 
         elif self.status == cp_model.INFEASIBLE:
             self.job.__str__()
-            new_model = self.model.Clone()
+            new_model = copy.deepcopy(self.model)
             new_model.ClearObjective()
 
             new_model.AddAssumptions(self.assumptions.values())
@@ -217,9 +217,7 @@ class NoOverlapSchedule(Schedule):
         """
         for task in self.job.task_sequence:
             if task.universal:
-                idx = self.allowedAgents[task.id].Index()
-                self.model.Proto().constraints[idx].Clear()
-                # self.model.Proto().constraints[idx].remove(self.allowedAgents[task.id].Proto())
+                # self.model.Proto().constraints.remove(self.allowedAgents[task.id] .Proto())
                 self.allowedAgents[task.id] = self.model.AddAllowedAssignments(
                     variables=[self.task_assignment_var[task.id]],
                     tuples_list=[tuple([self.agent_mapping[task.agent]])])
@@ -233,32 +231,53 @@ class NoOverlapSchedule(Schedule):
 
                 if task.state == TaskState.COMPLETED:
                     task_duration = int(task.finish[0]) - int(task.start)
+                    #
+                    # self.duration_constraints[task.id] = self.model.AddElement(index=0,
+                    #                                                            variables=[task_duration],
+                    #                                                            target=self.task_intervals[task.id].SizeExpr())
+                    #
+                    # self.model.Proto().variables[self.task_intervals[task.id].EndExpr().Index()].domain[:] = []
+                    # self.model.Proto().variables[self.task_intervals[task.id].EndExpr().Index()].domain.extend(
+                    #     cp_model.Domain(int(task.finish[0]), int(task.finish[0])).FlattenedIntervals())
 
-                    idx = self.duration_constraints[task.id].Index()
-                    self.model.Proto().constraints[idx].Clear()
-
-                    self.model.Proto().variables[self.task_intervals[task.id].EndExpr().Index()].domain[:] = []
-                    self.model.Proto().variables[self.task_intervals[task.id].EndExpr().Index()].domain.extend(
-                        cp_model.Domain(int(task.finish[0]), int(task.finish[0])).FlattenedIntervals())
+                    #
+                    # Change duration var
+                    # self.duration_constraints[task.id][self.agent_mapping[task.agent]] = self.model.Add(
+                    #     self.task_intervals[task.id].SizeExpr() == task_duration)
+                    # self.model.Proto().variables[self.task_intervals[task.id].SizeExpr().Index()].domain[:] = []
+                    # self.model.Proto().variables[self.task_intervals[task.id].SizeExpr().Index()].domain.extend(
+                    #     cp_model.Domain(task_duration, task_duration).FlattenedIntervals())
 
                     self.tasks_with_final_var.append(task.id)
                     logging.debug(f'Task {task.id}, new var: finish {task.finish[0]}, duration {task_duration}')
                 else:
                     # Change start var
                     if task.finish[0] < current_time:
-                        task_duration = current_time - task.start
-                        idx = self.duration_constraints[task.id].Index()
-                        self.model.Proto().constraints[idx].Clear()
+                        pass
+                        # task_duration = current_time - task.start
+                        # Change duration var
 
-                        self.duration_constraints[task.id] = self.model.AddElement(index=0,
-                                                                                   variables=[task_duration],
-                                                                                   target=self.task_intervals[
-                                                                                       task.id].SizeExpr())
+                        # self.duration_constraints[task.id] = self.model.AddElement(index=0,
+                        #                                                            variables=[task_duration],
+                        #                                                            target=self.task_intervals[
+                        #                                                                task.id].SizeExpr())
+                        # self.duration_constraints[task.id][self.agent_mapping[task.agent]] = self.model.Add(
+                        #     self.task_intervals[task.id].SizeExpr() == task_duration)
+                        # self.model.Proto().variables[self.task_intervals[task.id].SizeExpr().Index()].domain[:] = []
+                        # self.model.Proto().variables[self.task_intervals[task.id].SizeExpr().Index()].domain.extend(
+                        #     cp_model.Domain(task_duration, task_duration).FlattenedIntervals())
+                        # logging.debug(f'Task {task.id}, new var: duration {task_duration}')
 
-                self.model.Proto().variables[self.task_intervals[task.id].StartExpr().Index()].domain[:] = []
-                self.model.Proto().variables[self.task_intervals[task.id].StartExpr().Index()].domain.extend(
-                    cp_model.Domain(int(task.start), int(task.start)).FlattenedIntervals())
-                logging.debug(f'Task {task.id}, new var: start {task.start}')
+
+                # # Cancel constraints
+                # for j, dependent_task in enumerate(self.job.task_sequence):
+                #     for k in range(5):
+                #         self.border_constraints[i][j][k].Proto().Clear()
+
+                # self.model.Proto().variables[self.task_intervals[task.id].StartExpr().Index()].domain[:] = []
+                # self.model.Proto().variables[self.task_intervals[task.id].StartExpr().Index()].domain.extend(
+                #     cp_model.Domain(int(task.start), int(task.start)).FlattenedIntervals())
+                # logging.debug(f'Task {task.id}, new var: start {task.start}')
 
             elif task.state == TaskState.AVAILABLE or task.state == TaskState.UNAVAILABLE:
                 # Change start var
@@ -273,45 +292,9 @@ class NoOverlapSchedule(Schedule):
         :param task: Task to be redirected to another agent.
         :type task: Task
         """
-        idx = self.allowedAgents[task.id].Index()
-        self.model.Proto().constraints[idx].Clear()
-        # self.model.Proto().constraints.remove(self.allowedAgents[task.id].Proto())
+        self.model.Proto().constraints.remove(self.allowedAgents[task.id].Proto())
         self.allowedAgents[task.id] = self.model.AddAllowedAssignments(
             variables=[self.task_assignment_var[task.id]],
             tuples_list=[tuple([v]) for v in self.task_assignment[task.id] if v != self.agent_mapping[task.agent]])
-        # self.model.Proto().constraints.remove(self.allowedAgents[task.id].Proto())
-        # self.model.Proto().constraints.insert(idx, self.allowedAgents[task.id].Proto())
-
-    def set_list_of_possible_changes(self, available_tasks, agent_name, agent_rejection_tasks):
-        makespans = []
-        for available_task in available_tasks:
-            if available_task.id not in agent_rejection_tasks:
-                test_model = self.model.Clone()
-                task_assignment_var = copy.deepcopy(self.task_assignment_var)
-                idx = self.allowedAgents[available_task.id].Index()
-                test_model.Proto().constraints[idx].Clear()
-                test_model.AddAllowedAssignments(
-                    variables=[task_assignment_var[available_task.id]],
-                    tuples_list=[tuple([self.agent_mapping[agent_name]])])
-
-                solver = cp_model.CpSolver()
-                solver.parameters.num_search_workers = 1
-                solver.parameters.random_seed = self.seed
-                solver.parameters.max_time_in_seconds = 10.0
-                solver.parameters.enumerate_all_solutions = True
-                solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
-                status = solver.Solve(test_model)
-                if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-                    makespans.append([solver.ObjectiveValue(), available_task])
-                    self.evaluation_run_time.append(solver.WallTime())
-
-        if len(makespans) == 0:
-            return None
-        elif len(makespans) > 1:
-            makespans.sort(key=lambda x: x[0])
-            return makespans
-        else:
-            return makespans
-
 
 

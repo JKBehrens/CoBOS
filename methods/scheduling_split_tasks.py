@@ -25,7 +25,7 @@ class Schedule(Solver):
     def __init__(self, job, seed):
         self.COUNTER = 0
         self.job = job
-        self.model = cp_model.CpModel()
+        self.model: cp_model.CpModel = cp_model.CpModel()
         self.schedule = {}
         self.current_makespan = None
         self.solver = 0
@@ -389,7 +389,6 @@ class Schedule(Solver):
         for index, [agent_name, agent_state, agent_current_task, agent_rejection_tasks] in enumerate(observation_data):
             logging.debug(f'TIME: {current_time}. Is {agent_name} available? {agent_state}')
             if agent_state == AgentState.IDLE:
-
                 decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
             elif agent_state == AgentState.REJECT:
                 coworker = observation_data[index - 1]
