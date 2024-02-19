@@ -356,7 +356,7 @@ class Schedule(Solver):
         makespans = []
         for available_task in available_tasks:
             if available_task.id not in agent_rejection_tasks:
-                test_model = copy.deepcopy(self.model)
+                test_model = self.model.Clone()
                 human_task_bool_copy = copy.deepcopy(self.human_task_bool)
                 idx = self.job.get_task_idx(available_task)
                 test_model.Proto().constraints.remove(self.fix_agent[idx].Proto())
@@ -389,6 +389,7 @@ class Schedule(Solver):
         for index, [agent_name, agent_state, agent_current_task, agent_rejection_tasks] in enumerate(observation_data):
             logging.debug(f'TIME: {current_time}. Is {agent_name} available? {agent_state}')
             if agent_state == AgentState.IDLE:
+
                 decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
             elif agent_state == AgentState.REJECT:
                 coworker = observation_data[index - 1]
@@ -416,12 +417,13 @@ class Schedule(Solver):
                     if task.state == TaskState.AVAILABLE and task.universal:
                         possible_tasks.append(task)
 
-        # rescheduling estimation
-        self.refresh_variables(current_time)
-        makespan_and_task = self.set_list_of_possible_changes(possible_tasks, agent_name, agent_rejection_tasks)
-        if makespan_and_task and makespan_and_task[0][0] < self.current_makespan:
-            self.change_agent(task=makespan_and_task[0][1], coworker_name=agent_name, current_time=current_time)
-            return makespan_and_task[0][1]
+        if len(possible_tasks) != 0:
+            # rescheduling estimation
+            self.refresh_variables(current_time)
+            makespan_and_task = self.set_list_of_possible_changes(possible_tasks, agent_name, agent_rejection_tasks)
+            if makespan_and_task and makespan_and_task[0][0] < self.current_makespan:
+                self.change_agent(task=makespan_and_task[0][1], coworker_name=agent_name, current_time=current_time)
+                return makespan_and_task[0][1]
 
         return None
 
