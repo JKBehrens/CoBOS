@@ -9,7 +9,7 @@ import logging
 import json
 
 if __name__ == '__main__':
-    cases = ['1', '2', '3', '4', '5', '6']
+    cases = ['1', '2', '3', '4', '5', '6', '0']
     # execute_job = ControlLogic('5')
     # execute_job.run(online_plot=True)
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
         raise SystemExit(1)
 
     if not args.only_schedule:
-        execute_job = ControlLogic(case, distribution_seed=4, schedule_seed=0, sim_seed=0)
+        execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=0)
         if args.offline:
             execute_job.run(animation=True)
         else:
