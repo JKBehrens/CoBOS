@@ -58,7 +58,7 @@ class Schedule(Solver):
         self.solver.parameters.random_seed = self.seed
         self.solver.parameters.max_time_in_seconds = 10.0
         self.solver.parameters.enumerate_all_solutions = True
-        self.solver.parameters.log_search_progress = True
+        self.solver.parameters.log_search_progress = True if logging.getLogger().level == 10 else False
         self.solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
 
         self.assumptions = {}

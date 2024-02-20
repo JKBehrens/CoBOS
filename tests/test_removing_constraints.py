@@ -1,7 +1,7 @@
 from ortools.sat.python import cp_model
 
 
-def test_delete_constraints():
+def test_remove_constraints():
     model = cp_model.CpModel()
 
     x = model.NewIntVar(0, 10, 'x')
@@ -32,6 +32,30 @@ def test_delete_constraints():
     # model has a new unnamed variable from the True constraint.
 
     model.Proto().constraints.insert(idx, constr.Proto())
+
+    print(model.Proto().constraints)
+    solver = cp_model.CpSolver()
+    solver.Solve(model)
+    print(solver.Value(x))
+
+
+def test_clear_constraints():
+    model = cp_model.CpModel()
+
+    x = model.NewIntVar(0, 10, 'x')
+    y = model.NewIntVar(0, 10, 'y')
+    constr = model.Add(x+y == 15)
+    constr2 = model.Add(x >4)
+    constr3 = model.Add(True)
+
+    print(model.Proto().constraints)
+    idx = constr.Index()
+    model.Proto().constraints[idx].Clear()
+    print(model.Proto().constraints)
+    idx = constr.Index()
+    model.Proto().constraints[idx].Clear()
+    # model.Proto().constraints.remove(constr.Proto())
+    # model.Proto().constraints.insert(idx, constr3.Proto())
 
     print(model.Proto().constraints)
     solver = cp_model.CpSolver()
