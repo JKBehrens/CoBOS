@@ -10,11 +10,27 @@ def test_delete_constraints():
     constr2 = model.Add(x >4)
     # constr3 = model.Add(True)
 
+    assert len(model.Proto().constraints) == 2
+
+    new_model = model.Clone()
+
     print(model.Proto().constraints)
     idx = constr.Index()
     model.Proto().constraints.remove(constr.Proto())
+    assert len(model.Proto().constraints) == 1
+
+    del new_model.Proto().constraints[idx]
+
+    assert model.Proto() == new_model.Proto()
+
     constr = model.Add(True)
-    model.Proto().constraints.remove(constr.Proto())
+    del model.Proto().constraints[-1]
+    # model.Proto().constraints.remove(constr.Proto())
+
+    assert model.Proto().constraints == new_model.Proto().constraints
+
+    # model has a new unnamed variable from the True constraint.
+
     model.Proto().constraints.insert(idx, constr.Proto())
 
     print(model.Proto().constraints)
