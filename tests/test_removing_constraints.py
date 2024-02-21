@@ -63,6 +63,58 @@ def test_clear_constraints():
     print(solver.Value(x))
 
 
+def test_interval_constraints():
+    model = cp_model.CpModel()
+
+    s1 = model.NewIntVar(0, 10, 's1')
+    e1 = model.NewIntVar(0, 20, 'e1')
+    d1 = model.NewIntVar(0, 10, 'd1')
+    duration_constrains = model.Add(d1 > 3)
+    interval1 = model.NewIntervalVar(s1, d1, e1, f"interval_1")
+
+    s2 = model.NewIntVar(0, 10, 's2')
+    e2 = model.NewIntVar(0, 20, 'e2')
+    d2 = model.NewIntVar(0, 10, 'd2')
+    model.Add(d2 > 6)
+    interval2 = model.NewIntervalVar(s2, d2, e2, f"interval_2")
+    no_overlap = model.AddNoOverlap([interval1, interval2])
+    makespan = model.NewIntVar(0, 10000, 'makespan')
+    model.AddMaxEquality(makespan, [interval1.EndExpr(), interval2.EndExpr()])
+
+    solver = set_solver()
+    solver.Solve(model)
+    print(f'Interval1: start {solver.Value(interval1.StartExpr())}, end {solver.Value(interval1.EndExpr())}, duration {solver.Value(interval1.SizeExpr())}')
+    print(f'Interval2: start {solver.Value(interval2.StartExpr())}, end {solver.Value(interval2.EndExpr())}, duration {solver.Value(interval2.SizeExpr())}')
+
+    idx = duration_constrains.Index()
+    model.Proto().constraints[idx].Clear()
+    model.Proto().variables[interval1.StartExpr().Index()].domain[:] = []
+    model.Proto().variables[interval1.StartExpr().Index()].domain.extend(
+        cp_model.Domain(int(1), int(1)).FlattenedIntervals())
+
+    model.Proto().variables[interval1.EndExpr().Index()].domain[:] = []
+    model.Proto().variables[interval1.EndExpr().Index()].domain.extend(
+        cp_model.Domain(int(3), int(3)).FlattenedIntervals())
+
+    solver = set_solver()
+    solver.Solve(model)
+    print(
+        f'Interval1: start {solver.Value(interval1.StartExpr())}, end {solver.Value(interval1.EndExpr())}, duration {solver.Value(interval1.SizeExpr())}')
+    print(
+        f'Interval2: start {solver.Value(interval2.StartExpr())}, end {solver.Value(interval2.EndExpr())}, duration {solver.Value(interval2.SizeExpr())}')
+
+
+def set_solver():
+    # Creates the solver and solve.
+    solver = cp_model.CpSolver()
+    solver.parameters.num_search_workers = 1
+    solver.parameters.random_seed = 0
+    solver.parameters.max_time_in_seconds = 10.0
+    solver.parameters.enumerate_all_solutions = True
+    solver.parameters.log_search_progress = False
+    solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
+    return solver
+
 def test_removing_constraints():
     model = cp_model.CpModel()
     
