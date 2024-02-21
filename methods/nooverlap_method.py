@@ -106,6 +106,7 @@ class NoOverlapSchedule(Schedule):
         pass
 
     def solve(self):
+        self.solver = self.set_solver()
         self.status = self.solver.Solve(self.model)
 
         if self.status == cp_model.OPTIMAL or self.status == cp_model.FEASIBLE:

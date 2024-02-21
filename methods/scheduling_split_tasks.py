@@ -52,14 +52,7 @@ class Schedule(Solver):
         self.rand = np.random.default_rng(seed=self.seed)
         self.task_duration = self.job.task_duration(rand_gen=self.rand)
 
-        # Creates the solver and solve.
-        self.solver = cp_model.CpSolver()
-        self.solver.parameters.num_search_workers = 1
-        self.solver.parameters.random_seed = self.seed
-        self.solver.parameters.max_time_in_seconds = 10.0
-        self.solver.parameters.enumerate_all_solutions = True
-        self.solver.parameters.log_search_progress = True if logging.getLogger().level == 10 else False
-        self.solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
+        self.solver = None
 
         self.assumptions = {}
 
@@ -227,6 +220,17 @@ class Schedule(Solver):
                 self.model.Proto().variables[self.start_var[i].Index()].domain.extend(
                     cp_model.Domain(int(current_time), self.horizon).FlattenedIntervals())
 
+    def set_solver(self):
+        # Creates the solver and solve.
+        solver = cp_model.CpSolver()
+        solver.parameters.num_search_workers = 1
+        solver.parameters.random_seed = self.seed
+        solver.parameters.max_time_in_seconds = 10.0
+        solver.parameters.enumerate_all_solutions = True
+        solver.parameters.log_search_progress = True if logging.getLogger().level == 10 else False
+        solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
+        return solver
+
     def solve(self):
         """
         Finds schedula and parsers it.
@@ -235,6 +239,7 @@ class Schedule(Solver):
         :rtype agent: dictionary
         """
         self.assigned_jobs = collections.defaultdict(list)
+        self.solver = self.set_solver()
         self.status = self.solver.Solve(self.model)
 
         # Named tuple to manipulate solution information.
