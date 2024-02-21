@@ -249,8 +249,8 @@ class OverlapSchedule(Schedule):
                         cp_model.Domain(int(task.finish[0]-task.finish[2]-task.finish[3]),
                                         int(task.finish[0]-task.finish[2]-task.finish[3])).FlattenedIntervals())
 
-                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
-                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
+                    self.model.Proto().variables[self.task_intervals[task.id][1].EndExpr().Index()].domain[:] = []
+                    self.model.Proto().variables[self.task_intervals[task.id][1].EndExpr().Index()].domain.extend(
                         cp_model.Domain(int(task.finish[0]-task.finish[3]),
                                         int(task.finish[0]-task.finish[3])).FlattenedIntervals())
 
