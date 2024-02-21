@@ -4,13 +4,10 @@ This class create model and solve methods problem.
 @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
 @contact: marina.ionova@cvut.cz
 """
-import numpy as np
 from typing import Dict
 from methods.scheduling_split_tasks import Schedule
-from control.agent_and_task_states import AgentState, TaskState
+from control.agent_and_task_states import TaskState
 from ortools.sat.python import cp_model
-from methods.solver import Solver
-import collections
 import logging
 import copy
 
@@ -70,7 +67,7 @@ class OverlapSchedule(Schedule):
                 # set phase duration based on the agent
                 phase_durations = []
                 for agent in self.all_agents:
-                    phase_durations.append(self.task_duration[agent][task.id][phase])
+                    phase_durations.append(self.task_duration[agent][task.id][phase+1])
                 self.duration_constraints[task.id].append(
                     self.model.AddElement(index=self.task_assignment_var[task.id],
                                           variables=phase_durations,
@@ -139,9 +136,18 @@ class OverlapSchedule(Schedule):
         self.status = self.solver.Solve(self.model)
 
         if self.status == cp_model.OPTIMAL or self.status == cp_model.FEASIBLE:
-            for task, interval in self.task_intervals.items():
-                if task.start:
-                   assert (task.finish[0] - task.start) == self.solver.Value(interval.SizeExpr()), f"Duration of task {task} is wrong."
+            for task in self.job.task_sequence:
+                if task.start is not None:
+                    assert (self.job.task_sequence[task.id].finish[0] - self.job.task_sequence[task.id].start) ==\
+                           self.solver.Value(self.task_intervals[task.id][2].EndExpr()) - \
+                           self.solver.Value(self.task_intervals[task.id][0].StartExpr()), \
+                        f"Duration of task {task} is wrong."
+                else:
+                    agent = self.solver.Value(self.task_assignment_var[task.id])
+                    assert self.task_duration[agent][task.id][0] == \
+                           self.solver.Value(self.task_intervals[task.id][2].EndExpr()) - \
+                           self.solver.Value(self.task_intervals[task.id][0].StartExpr()),\
+                        f"Duration of task {task.id} is wrong."
             logging.info("All intervals have the correct duration.")
 
             for task, agents in self.task_assignment.items():
@@ -149,13 +155,13 @@ class OverlapSchedule(Schedule):
             assert len(self.task_assignment_var) == len(self.task_assignment)
             logging.info("All task assignments are valid.")
 
-            for task, deps in self.dependencies.items():
-                start = self.solver.Value(self.task_intervals[task][1].StartExpr())
-                ends = [self.solver.Value(self.task_intervals[dep][1].EndExpr()) for dep in self.dependencies[task]]
+            for task in self.job.task_sequence:
+                start = self.solver.Value(self.task_intervals[task.id][1].StartExpr())
+                ends = [self.solver.Value(self.task_intervals[dep][1].EndExpr()) for dep in task.conditions]
 
                 if len(ends) == 0:
                     continue
-                assert start > max(ends), f"dependency graph violation for task {task}."
+                assert start >= max(ends), f"dependency graph violation for task {task.id}."
             logging.info("The solution is valid. No dependency violation")
 
         elif self.status == cp_model.INFEASIBLE:
@@ -187,7 +193,6 @@ class OverlapSchedule(Schedule):
             else:
                 task.start = self.solver.Value(self.task_intervals[task.id][0].StartExpr())
                 task.finish[0] = self.solver.Value(self.task_intervals[task.id][2].EndExpr())
-
 
             output[task.agent].append(task)
             makespan = task.finish[0] if task.finish[0] > makespan else makespan
@@ -239,6 +244,16 @@ class OverlapSchedule(Schedule):
 
                 if task.state == TaskState.COMPLETED:
                     # set end of interval to current end time of task
+                    self.model.Proto().variables[self.task_intervals[task.id][0].EndExpr().Index()].domain[:] = []
+                    self.model.Proto().variables[self.task_intervals[task.id][0].EndExpr().Index()].domain.extend(
+                        cp_model.Domain(int(task.finish[0]-task.finish[2]-task.finish[3]),
+                                        int(task.finish[0]-task.finish[2]-task.finish[3])).FlattenedIntervals())
+
+                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
+                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
+                        cp_model.Domain(int(task.finish[0]-task.finish[3]),
+                                        int(task.finish[0]-task.finish[3])).FlattenedIntervals())
+
                     self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
                     self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
                         cp_model.Domain(int(task.finish[0]), int(task.finish[0])).FlattenedIntervals())
