@@ -11,6 +11,8 @@ HUMAN_TASKS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8']
 ROBOT_TASKS = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8']
 ALLOCATABLE_TASKS = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8']
 TEST_CASE_DATA = ['r4', 'h7', 'a1', 'r5']
+TEST_CASE_CONDITIONS = [[], [], [], []]
+# TEST_CASE_CONDITIONS = [[], [0], [], [0, 1]]
 
 CONDITIONS = {'2': [[4], [5], [6], [7],
                     [8], [9], [10], [11],
@@ -100,8 +102,10 @@ def set_input(case, seed):
             else:
                 task_description['Agent'] = 'Both'
             task_description['Place'] = x + y
-            if case in ('1', '4', '0'):
+            if case in ('1', '4'):
                 task_description['Conditions'] = []
+            elif case == '0':
+                task_description['Conditions'] = TEST_CASE_CONDITIONS[ID_counter]
             else:
                 task_description['Conditions'] = CONDITIONS[case][ID_counter]
 
