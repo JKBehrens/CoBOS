@@ -90,7 +90,7 @@ class OverlapSchedule(Schedule):
                 presence = []
 
                 for agent in self.all_agents:
-                    offset = 1000 * agent
+                    offset = self.horizon_ceil_1000 * agent
                     is_present = self.model.NewBoolVar(f"is_present_task_{task.id}_agent_{agent}")
                     presence.append(is_present)
                     # define the optional interval using the same integer vars as the main task interval

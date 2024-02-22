@@ -33,6 +33,7 @@ class Schedule(Solver):
         self.all_tasks = {}
         self.current_capacity = {}
         self.horizon = 0
+        self.horizon_ceil_1000 = 1000
         self.duration = [0] * self.job.task_number
         self.model_agent = [0] * self.job.task_number
         self.human_task_bool = [True] * self.job.task_number
@@ -343,6 +344,8 @@ class Schedule(Solver):
             else:
                 self.horizon += self.task_duration[task.agent][task.id][0]
         self.horizon = int(self.horizon)
+
+        self.horizon_ceil_1000 = int(np.ceil(self.horizon*0.001)*1000)
 
     def prepare(self, **kwargs):
         """
