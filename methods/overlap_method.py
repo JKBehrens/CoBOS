@@ -4,7 +4,7 @@ This class create model and solve methods problem.
 @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
 @contact: marina.ionova@cvut.cz
 """
-from typing import Dict
+from typing import Dict, Tuple
 from methods.scheduling_split_tasks import Schedule
 from control.agent_and_task_states import TaskState
 from ortools.sat.python import cp_model
@@ -24,7 +24,7 @@ class OverlapSchedule(Schedule):
     def __init__(self, job, seed):
         super().__init__(job, seed)
         self.all_agents = [0, 1]
-        self.task_intervals: Dict[int, ()] = {}
+        self.task_intervals: Dict[int, Tuple] = {}
         self.task_assignment_var: Dict[int, cp_model.IntVar] = {}
         self.task_assignment = self.get_task_assignment_list()
         self.duration_constraints = {}
@@ -141,7 +141,7 @@ class OverlapSchedule(Schedule):
                     assert (self.job.task_sequence[task.id].finish[0] - self.job.task_sequence[task.id].start) ==\
                            self.solver.Value(self.task_intervals[task.id][2].EndExpr()) - \
                            self.solver.Value(self.task_intervals[task.id][0].StartExpr()), \
-                        f"Duration of task {task} is wrong."
+                        f"Duration of task {task.id} is wrong."
                 else:
                     agent = self.solver.Value(self.task_assignment_var[task.id])
                     assert self.task_duration[agent][task.id][0] == \
