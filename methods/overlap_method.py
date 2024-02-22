@@ -262,10 +262,10 @@ class OverlapSchedule(Schedule):
                     logging.debug(f'Task {task.id}, new var: finish {task.finish[0]}')
                 else:
                     # set end of interval to current time if the expected end has not come
-                    if task.finish[0] < current_time:
-                        self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
-                        self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
-                            cp_model.Domain(int(current_time), int(current_time)).FlattenedIntervals())
+                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
+                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
+                        cp_model.Domain(int(task.start+self.task_duration[task.agent][task.id][0]),
+                                        int(task.start+self.task_duration[task.agent][task.id][0])).FlattenedIntervals())
 
                 # set start of interval to current start time of task
                 self.model.Proto().variables[self.task_intervals[task.id][0].StartExpr().Index()].domain[:] = []
