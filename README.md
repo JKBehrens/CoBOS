@@ -68,14 +68,17 @@ positional arguments: <br />
 [//]: # (*-h, --help* show this help message and exit)
 ## Change settings
 
-`sim/config.json`
+`inputs/config.py`
 
-Simulation has 3 paramters. Two of them use the random function, so to be able to repeat the result, use the seed.
+* allocation_weights - for case 4-6 you can choose task ration (% of human's task, % of robot's task, % of allocatable tasks)
+* n - number of mode in a distribution of phase duration 
+* mean_min (mean_max) - boundaries for a distribution mean value of phase duration  
+* deviation_min (deviation_max) - boundaries for a distribution deviation value of phase duration
 
-* *Seed* - ramdom seed
-* *Allocation weights* - Weights determining with what probability there will be a task only for a person P(human), only for a robot P(robot), for both P(both).
-* *Fail probability* - Probability of long delay due to fail or error.
+* ## Plot comparison
 
-
-
-
+In `main.py` change seeds, then run
+```
+python main.py [case] --comparison
+python main_plot.py comparison
+```
