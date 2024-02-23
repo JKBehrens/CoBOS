@@ -53,7 +53,7 @@ def get_task_from_id(ID, data):
 
 class Vis:
     def __init__(self, horizon=None, data=None, from_file=False):
-        self.fig = plt.figure(figsize=(12, 8))
+        self.fig = plt.figure(figsize=(12, 10))
         self.data4video = './visualization/data_for_visualization/sim_2_video.json'
         self.gnt1 = None
         self.gnt2 = None
@@ -144,21 +144,31 @@ class Vis:
 
     def set_horizon(self, data):
         # Flatten the nested dictionary to get all "Finish" values
-        finish_times = [task["Finish"][0] for schedule in data for agent_tasks in schedule for task in schedule[agent_tasks]]
+        finish_time = 0
+        for schedule in data:
+            for agent in schedule:
+                for task in schedule[agent]:
+                    if task["Finish"][0] > finish_time:
+                        finish_time = task['Finish'][0]
 
         # Find the maximum "Finish" time
-        return max(finish_times)
+        return finish_time
 
     def plot_schedule(self, file_name='', video=False):
         if 'simulation' in file_name:
             title = ['Gantt Chart: initial', 'Gantt Chart: final']
             gs = gridspec.GridSpec(3, 3, height_ratios=[1, 1, 2])
             positions = [[311, 312], [313]]
+        elif 'comparison' in file_name:
+            title = ['Gantt Chart: initial', 'Gantt Chart: final (same sampling seed)',
+                     'Gantt Chart: final (different sampling seed)']
+            gs = gridspec.GridSpec(4, 3, height_ratios=[1, 1, 1, 2])
+            positions = [[311, 312, 313], [314]]
         else:
             title = ['Gantt Chart']
             gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1])
             positions = [[211], [212]]
-        local_data = self.data if self.from_file and 'simulation' in file_name else [self.data]
+        local_data = self.data if self.from_file and ('simulation' in file_name or 'comparison' in file_name) else [self.data]
         horizon = self.set_horizon(local_data)
         for i, position in enumerate(positions[0]):
             self.set_plot_param(title[i], gs[i, :], lim=horizon)  # [0]
@@ -199,7 +209,10 @@ class Vis:
                               arrowprops=dict(arrowstyle="-", lw=2, color="red"))
 
         try:
-            self.plot_dependency_graph(local_data[0], gs=gs[2:, :-1])
+            if 'comparison' in file_name:
+                self.plot_dependency_graph(local_data[0], gs=gs[3:, :-1])
+            else:
+                self.plot_dependency_graph(local_data[0], gs=gs[2:, :-1])
         except IndexError:
             # pass
             self.plot_dependency_graph(local_data[0], gs=gs[1, :-1])

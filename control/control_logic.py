@@ -4,7 +4,7 @@
     @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
     @contact: marina.ionova@cvut.cz
 """
-from visualization import Vis, initial_and_final_schedule, Web_vis
+from visualization import Vis, initial_and_final_schedule_save_file_name, Web_vis
 from methods import Schedule, NoOverlapSchedule, OverlapSchedule
 from control.agent_and_task_states import AgentState, TaskState
 from control.agents import Agent
@@ -164,7 +164,7 @@ class ControlLogic:
         logging.info('___________________________________')
         logging.info(f'SIMULATION TOTAL TIME: {time.time() - self.start_time}')
         self.output_data.append(self.schedule_as_dict(hierarchy=True))
-        with open(initial_and_final_schedule, 'w') as f:
+        with open(initial_and_final_schedule_save_file_name, 'w') as f:
             json.dump(self.output_data, f, indent=4)
 
         if experiments:

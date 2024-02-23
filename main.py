@@ -3,7 +3,7 @@ from methods.nooverlap_method import NoOverlapSchedule
 from methods.overlap_method import OverlapSchedule
 from control.control_logic import ControlLogic
 from visualization.json_2_video import video_parser
-from visualization import schedule, Vis
+from visualization import schedule_save_file_name, Vis, comparison_save_file_name
 from control.jobs import Job
 import argparse
 import logging
@@ -20,6 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('--offline', action=argparse.BooleanOptionalAction)
     parser.add_argument('--log_error', action=argparse.BooleanOptionalAction)
     parser.add_argument('--log_debug', action=argparse.BooleanOptionalAction)
+    parser.add_argument('--comparison', action=argparse.BooleanOptionalAction)
 
 
     args = parser.parse_args()
@@ -39,6 +40,17 @@ if __name__ == '__main__':
         logging.error("The case does not exist")
         raise SystemExit(1)
 
+    if args.comparison:
+        execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=0)
+        schedule1, stat1 = execute_job.run(animation=True, experiments=True)
+        execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=7)
+        schedule2, stat2 = execute_job.run(animation=True, experiments=True)
+
+        with open(comparison_save_file_name, "w") as outfile:
+            json.dump(schedule1+[schedule2[1]], outfile)
+            logging.info(f'Save data to {comparison_save_file_name}')
+
+
     if not args.only_schedule:
         execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=7)
         if args.offline:
@@ -50,9 +62,9 @@ if __name__ == '__main__':
         job = Job(case, seed=0)
         schedule_model = OverlapSchedule(job, seed=0)
         output = schedule_model.prepare()
-        with open(schedule, "w") as outfile:
+        with open(schedule_save_file_name, "w") as outfile:
             json.dump(schedule_as_dict(output), outfile)
-            logging.info(f'Save data to {schedule}')
+            logging.info(f'Save data to {schedule_save_file_name}')
         save_file_name = 'schedule.png'
 
         gantt = Vis(data=schedule_as_dict(output), from_file=True)
