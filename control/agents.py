@@ -34,7 +34,6 @@ class Agent(Sim):
         :param start: Start time of the task.
         :type start: int
         """
-        self.state = AgentState.PREPARATION
         self.current_task = task
         task.start = start
         task.state = TaskState.InProgress
@@ -62,34 +61,6 @@ class Agent(Sim):
         else:
             return f'is doing {self.current_task.action}'
 
-    def find_your_task(self, cl):
-        """
-        Finds the next available task for the agent.
-
-        :param cl: ControlLogic class.
-        :type cl: ControlLogic
-        :return: Assigned task
-        :rtype: Task
-        """
-        if not self.state == AgentState.IDLE:
-            self.current_task.state = TaskState.UNAVAILABLE
-            # self.refresh_task_idle()
-        for i, task in enumerate(self.available_tasks):
-            if task.universal and self.name == 'Human':
-                if self.ask_human('execute_task', task):
-                    logging.info(f'Human accept task. Task in progress...')
-                    return task
-                else:
-                    logging.info(f'Human reject task.')
-                    self.rejection_tasks.append(task.id)
-                    cl.change_agent(task=task, current_agent=self)
-            else:
-                return task
-
-        if not self.state == AgentState.IDLE:
-            self.current_task.state = TaskState.AVAILABLE
-        return None
-
     def execute_task(self, task, job, current_time, **kwargs):
         """
         Executes a task and logs the action.
@@ -107,11 +78,13 @@ class Agent(Sim):
             if self.ask_human('execute_task', task):
                 self._handle_accepted_task(task, job, current_time, coworker)
                 logging.info(f'Human accept task. Task in progress...')
+                self.state = AgentState.ACCEPTANCE
             else:
-                self.state = AgentState.REJECT
+                self.state = AgentState.REJECTION
                 self._handle_rejected_task(task, current_time)
         else:
             self._handle_accepted_task(task, job, current_time, coworker)
+            self.state = AgentState.PREPARATION
 
     def _handle_accepted_task(self, task, job, current_time, coworker):
         coworker_task_execution = coworker.task_execution.get(coworker.name)

@@ -3,7 +3,8 @@ from enum import Enum, auto, IntEnum
 
 class AgentState(Enum):
     IDLE = auto()
-    REJECT = auto()
+    REJECTION = auto()
+    ACCEPTANCE = auto()
     PREPARATION = auto()
     WAITING = auto()
     EXECUTION = auto()

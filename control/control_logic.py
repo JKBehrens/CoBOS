@@ -72,7 +72,7 @@ class ControlLogic:
         """
         output = []
         for agent in self.agents:
-            if agent.state == AgentState.REJECT:
+            if agent.state == AgentState.REJECTION or agent.state == AgentState.ACCEPTANCE:
                 pass
             elif agent.state == AgentState.DONE:
                 agent.state = AgentState.IDLE
@@ -130,8 +130,10 @@ class ControlLogic:
             # ask planner to decide about next actions for robot and human
             selected_task = self.solving_method.decide(observation_data, self.current_time)
             for agent in self.agents:
-                if agent.state == AgentState.REJECT:
+                if agent.state == AgentState.REJECTION:
                     agent.state = AgentState.IDLE
+                elif agent.state == AgentState.ACCEPTANCE:
+                    agent.state = AgentState.PREPARATION
                 if selected_task[agent.name] is None:
                     continue
                 
@@ -156,9 +158,6 @@ class ControlLogic:
                     self.plot.current_time = self.current_time
                     self.plot.data = self.schedule_as_dict(hierarchy=True)
                     self.plot.save_data()
-        self.solving_method.update_tasks_status()
-        self.solving_method.refresh_variables(self.current_time)
-        self.solving_method.solve()
         logging.info('__________FINAL SCHEDULE___________')
         self.job.__str__()
         logging.info('___________________________________')

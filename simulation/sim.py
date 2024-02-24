@@ -42,16 +42,6 @@ class Sim:
         self.response_time = []
         self.set_response_time()
 
-    def set_param(self):
-        """
-        Sets simulation parameters from config file.
-        """
-        with open('./simulation/config.json') as f:
-            param = json.load(f)
-        self.seed = param['Seed']
-        self.weights = param['Allocation weights']
-        self.fail_probability = param['Fail probability']
-
     def set_tasks_duration(self, **kwargs):
         for task in self.job.task_sequence:
             if SIM_MODE == 'NORMAL':
