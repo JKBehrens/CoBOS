@@ -86,12 +86,27 @@ class Vis:
             with open(self.data4video, "w") as json_file:
                 json.dump({}, json_file)
 
-    def set_plot_param(self, title, gs, lim=None):
+    def set_plot_param(self, title, gs, lim=None, reschedule_num=False):
         self.gnt = self.fig.add_subplot(gs)  # 211
         self.gnt.set_title(title)
 
-        # Setting Y-axis limits
-        self.gnt.set_ylim(0, 13)
+        if not reschedule_num:
+            # Setting Y-axis limits
+            self.gnt.set_ylim(0, 13)
+            # Setting ticks on y-axis
+            self.gnt.set_yticks([1.5, 4.5, 7.5, 10.5])
+            # Labelling tickes of y-axis
+            self.gnt.set_yticklabels(
+                ['Robot', 'Allocatable\n for robot', 'Allocatable\n for human', 'Human'])
+        else:
+            # Setting Y-axis limits
+            self.gnt.set_ylim(0, 16.5)
+            # Setting ticks on y-axis
+            self.gnt.set_yticks([1.5, 4.5, 7.5, 10.5, 14, 15.5])
+            # Labelling tickes of y-axis
+            self.gnt.set_yticklabels(
+                ['Robot', 'Allocatable\n for robot', 'Allocatable\n for human',
+                 'Human', 'Rescheduling', 'Evaluation'])
 
         # Setting X-axis limits
         if lim:
@@ -99,13 +114,6 @@ class Vis:
 
         # Setting labels for x-axis and y-axis
         self.gnt.set_xlabel('Time [s]')
-
-        # Setting ticks on y-axis
-        self.gnt.set_yticks([1.5, 4.5, 7.5, 10.5])
-
-        # Labelling tickes of y-axis
-        self.gnt.set_yticklabels(
-            ['Robot', 'Allocatable\n for robot', 'Allocatable\n for human', 'Human'])
 
         # Setting graph attribute
         self.gnt.grid(True)
@@ -136,6 +144,15 @@ class Vis:
         self.h.append(MulticolorPatch(colors5))
         self.l.append("Completion")
 
+        # if reschedule_num:
+        #     colors6 = ['blue']
+        #     colors7 = ['red']
+        #
+        #     self.h.append(MulticolorPatch(colors6))
+        #     self.l.append("Possible rescheduling")
+        #     self.h.append(MulticolorPatch(colors7))
+        #     self.l.append("Main rescheduling")
+
         self.labels = []
         self.labels.append(mpatches.Patch(color='lightcoral', label='Not available'))
         self.labels.append(mpatches.Patch(color='gold', label='Available'))
@@ -159,19 +176,35 @@ class Vis:
             title = ['Gantt Chart: initial', 'Gantt Chart: final']
             gs = gridspec.GridSpec(3, 3, height_ratios=[1, 1, 2])
             positions = [[311, 312], [313]]
+            local_data = self.data
         elif 'comparison' in file_name:
             title = ['Gantt Chart: initial', 'Gantt Chart: final (same sampling seed)',
                      'Gantt Chart: final (different sampling seed)']
             gs = gridspec.GridSpec(4, 3, height_ratios=[1, 1, 1, 2])
             positions = [[311, 312, 313], [314]]
+            local_data = self.data['schedule']
         else:
             title = ['Gantt Chart']
             gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1])
             positions = [[211], [212]]
-        local_data = self.data if self.from_file and ('simulation' in file_name or 'comparison' in file_name) else [self.data]
+            local_data = [self.data]
         horizon = self.set_horizon(local_data)
         for i, position in enumerate(positions[0]):
-            self.set_plot_param(title[i], gs[i, :], lim=horizon)  # [0]
+            if'comparison' in file_name:
+                if i != 0:
+                    self.set_plot_param(title[i], gs[i, :], lim=horizon, reschedule_num=True)
+                    colors = {0: 'red', 1: 'blue'}
+                    position = {0: 14, 1: 15.5}
+                    for idx, solver_info in enumerate(self.data['statistics'][i-1]['solver']):
+                        for data in solver_info:
+                            self.gnt.broken_barh([(data[0], 0.5)], [position[idx]-0.5, 1],
+                                                 facecolors=colors[idx])
+                else:
+                    self.set_plot_param(title[i], gs[i, :], lim=horizon)
+            else:
+                self.set_plot_param(title[i], gs[i, :], lim=horizon)
+
+
             for agent in local_data[i]:
                 for task in local_data[i][agent]:
                     position_y, task_name_y, action_y = self.y_pos_and_text[task["Universal"]][agent]
@@ -205,8 +238,9 @@ class Vis:
                         self.gnt.text(task["Start"] + 0.5, task_name_y, task["Action"]['Object'], fontsize=9,
                                       rotation='horizontal')
 
-            self.gnt.annotate("", xy=(self.current_time, 0), xytext=(self.current_time, 13),
-                              arrowprops=dict(arrowstyle="-", lw=2, color="red"))
+            if not self.from_file:
+                self.gnt.annotate("", xy=(self.current_time, 0), xytext=(self.current_time, 13),
+                                  arrowprops=dict(arrowstyle="-", lw=2, color="red"))
 
         try:
             if 'comparison' in file_name:

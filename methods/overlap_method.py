@@ -131,7 +131,7 @@ class OverlapSchedule(Schedule):
     def set_constraints(self):
         pass
 
-    def solve(self):
+    def solve(self, current_time):
         self.solver = self.set_solver()
         self.status = self.solver.Solve(self.model)
 
@@ -197,6 +197,8 @@ class OverlapSchedule(Schedule):
             output[task.agent].append(task)
             makespan = task.finish[0] if task.finish[0] > makespan else makespan
 
+        self.rescheduling_run_time.append([current_time, self.solver.StatusName(self.status),
+                                           self.solver.ObjectiveValue(), self.solver.WallTime()])
         output['Human'].sort(key=lambda x: x.start)
         output['Robot'].sort(key=lambda x: x.start)
 
@@ -263,12 +265,11 @@ class OverlapSchedule(Schedule):
                     self.tasks_with_final_var.append(task.id)
                     logging.debug(f'Task {task.id}, new var: finish {task.finish[0]}')
                 else:
-                    pass
                     # # set end of interval to current time if the expected end has not come
-                    # self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
-                    # self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
-                    #     cp_model.Domain(int(task.start+self.task_duration[task.agent][task.id][0]),
-                    #                     int(task.start+self.task_duration[task.agent][task.id][0])).FlattenedIntervals())
+                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
+                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
+                        cp_model.Domain(int(task.start+self.task_duration[task.agent][task.id][0]),
+                                        int(task.start+self.task_duration[task.agent][task.id][0])).FlattenedIntervals())
 
                 # set start of interval to current start time of task
                 self.model.Proto().variables[self.task_intervals[task.id][0].StartExpr().Index()].domain[:] = []
@@ -305,7 +306,7 @@ class OverlapSchedule(Schedule):
             variables=[self.task_assignment_var[task.id]],
             tuples_list=[tuple([v]) for v in self.task_assignment[task.id] if v != self.agent_mapping[task.agent]])
 
-    def set_list_of_possible_changes(self, available_tasks, agent_name, agent_rejection_tasks):
+    def set_list_of_possible_changes(self, available_tasks, agent_name, agent_rejection_tasks, current_time):
         makespans = []
         for available_task in available_tasks:
             if available_task.id not in agent_rejection_tasks:
@@ -323,7 +324,7 @@ class OverlapSchedule(Schedule):
                 status = solver.Solve(test_model)
                 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
                     makespans.append([solver.ObjectiveValue(), available_task])
-                    self.evaluation_run_time.append(solver.WallTime())
+                    self.evaluation_run_time.append([current_time, solver.WallTime()])
 
         if len(makespans) == 0:
             return None

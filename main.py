@@ -47,11 +47,9 @@ if __name__ == '__main__':
         schedule2, stat2 = execute_job.run(animation=True, experiments=True)
 
         with open(comparison_save_file_name, "w") as outfile:
-            json.dump(schedule1+[schedule2[1]], outfile)
+            json.dump({'schedule': schedule1+[schedule2[1]], 'statistics': [stat1, stat2]}, outfile)
             logging.info(f'Save data to {comparison_save_file_name}')
-
-
-    if not args.only_schedule:
+    elif not args.only_schedule:
         execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=7)
         if args.offline:
             execute_job.run(animation=True)

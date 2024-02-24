@@ -232,7 +232,7 @@ class Schedule(Solver):
         solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
         return solver
 
-    def solve(self):
+    def solve(self, current_time):
         """
         Finds schedula and parsers it.
 
@@ -291,7 +291,7 @@ class Schedule(Solver):
                              self.task_duration[task.agent][task.id][2], self.task_duration[task.agent][task.id][3]]
 
                     output[agent].append(self.job.task_sequence[assigned_task.task_id])
-            self.rescheduling_run_time.append([self.solver.StatusName(self.status),
+            self.rescheduling_run_time.append([current_time, self.solver.StatusName(self.status),
                                                self.solver.ObjectiveValue(), self.solver.WallTime()])
 
             return output, makespan
@@ -354,13 +354,13 @@ class Schedule(Solver):
         self.set_max_horizon(**kwargs)
         self.set_variables()
         self.set_constraints()
-        self.schedule, self.current_makespan = self.solve()
+        self.schedule, self.current_makespan = self.solve(current_time=0)
         self.print_schedule()
         self.fix_agents_var()
         self.print_info()
         return self.schedule
 
-    def set_list_of_possible_changes(self, available_tasks, agent_name, agent_rejection_tasks):
+    def set_list_of_possible_changes(self, available_tasks, agent_name, agent_rejection_tasks, current_time):
         makespans = []
         for available_task in available_tasks:
             if available_task.id not in agent_rejection_tasks:
@@ -381,7 +381,7 @@ class Schedule(Solver):
                 status = solver.Solve(test_model)
                 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
                     makespans.append([solver.ObjectiveValue(), available_task])
-                    self.evaluation_run_time.append(solver.WallTime())
+                    self.evaluation_run_time.append([current_time, solver.WallTime()])
 
         if len(makespans) == 0:
             return None
@@ -398,7 +398,7 @@ class Schedule(Solver):
             logging.debug(f'TIME: {current_time}. Is {agent_name} available? {agent_state}')
             if agent_state == AgentState.IDLE:
                 decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
-            elif agent_state == AgentState.REJECT:
+            elif agent_state == AgentState.REJECTION:
                 coworker = observation_data[index - 1]
                 self.change_agent(task=agent_current_task, coworker_name=coworker[0], current_time=current_time)
                 decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
@@ -427,7 +427,7 @@ class Schedule(Solver):
         if len(possible_tasks) != 0:
             # rescheduling estimation
             self.refresh_variables(current_time)
-            makespan_and_task = self.set_list_of_possible_changes(possible_tasks, agent_name, agent_rejection_tasks)
+            makespan_and_task = self.set_list_of_possible_changes(possible_tasks, agent_name, agent_rejection_tasks, current_time)
             if makespan_and_task and makespan_and_task[0][0] < self.current_makespan:
                 self.change_agent(task=makespan_and_task[0][1], coworker_name=agent_name, current_time=current_time)
                 return makespan_and_task[0][1]
@@ -458,7 +458,7 @@ class Schedule(Solver):
         self.job.change_agent(task.id, new_agent_name=coworker_name)
 
         self.refresh_variables(current_time)
-        self.schedule, self.current_makespan = self.solve()
+        self.schedule, self.current_makespan = self.solve(current_time)
         self.print_info()
 
         logging.info('____RESCHEDULING______')
