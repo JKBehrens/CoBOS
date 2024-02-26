@@ -15,6 +15,8 @@ import copy
 LAMBDA = 1
 
 
+START_AVAILABLE_TASKS = True
+
 class Schedule(Solver):
     """
     A class for generating and managing schedules for a given job.
@@ -412,7 +414,11 @@ class Schedule(Solver):
         # find allocated task
         for task in self.schedule[agent_name]:
             if task.state == TaskState.AVAILABLE:
-                return task
+                if START_AVAILABLE_TASKS:
+                    return task
+                else:
+                    if task.start <= current_time:
+                        return task
 
         # If the agent has run out of available tasks in his list, he looks for
         # universal tasks in the list of a colleague that he can perform instead
