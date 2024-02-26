@@ -48,6 +48,14 @@ if __name__ == '__main__':
         schedule2, stat2 = execute_job.run(animation=True, experiments=True)
 
         file_name = args.file_name if args.file_name else comparison_save_file_name
+
+        # save original schedule, simulation with the same seed as in schedule, simulation with the another seed
+        # statistics is saved for each simulation:
+        # - predicted makespan, final makespan,
+        # - list of the rejection tasks with time, when it was rejected
+        # - list with the rescheduling info: when, status of solver, makespan, calculation time
+        # - list with the rescheduling evaluation info: when, makespan, calculation time
+
         with open(file_name, "w") as outfile:
             json.dump({'schedule': schedule1+[schedule2[1]], 'statistics': [stat1, stat2]}, outfile)
             logging.info(f'Save data to {file_name}')
