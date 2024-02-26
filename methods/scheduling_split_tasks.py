@@ -421,7 +421,7 @@ class Schedule(Solver):
         for worker in self.schedule.keys():
             if worker != agent_name:
                 for task in self.schedule[worker]:
-                    if task.state == TaskState.AVAILABLE and task.universal:
+                    if task.state == TaskState.AVAILABLE and task.universal and task.id not in agent_rejection_tasks:
                         possible_tasks.append(task)
 
         if len(possible_tasks) != 0:
