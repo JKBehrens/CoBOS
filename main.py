@@ -11,17 +11,15 @@ import json
 
 if __name__ == '__main__':
     cases = ['1', '2', '3', '4', '5', '6', '0']
-    # execute_job = ControlLogic('5')
-    # execute_job.run(online_plot=True)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("case", type=str, help='Choose one of this: 1, 2, 3, 4, 5, 6')
+    parser.add_argument("file_name", nargs="?", help="File name (required if -f is set)")
     parser.add_argument('--only_schedule', action=argparse.BooleanOptionalAction)
     parser.add_argument('--offline', action=argparse.BooleanOptionalAction)
     parser.add_argument('--log_error', action=argparse.BooleanOptionalAction)
     parser.add_argument('--log_debug', action=argparse.BooleanOptionalAction)
     parser.add_argument('--comparison', action=argparse.BooleanOptionalAction)
-
 
     args = parser.parse_args()
     if args.log_error:
@@ -46,9 +44,11 @@ if __name__ == '__main__':
         execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=7)
         schedule2, stat2 = execute_job.run(animation=True, experiments=True)
 
-        with open(comparison_save_file_name, "w") as outfile:
+        file_name = args.file_name if args.file_name else comparison_save_file_name
+        with open(file_name, "w") as outfile:
             json.dump({'schedule': schedule1+[schedule2[1]], 'statistics': [stat1, stat2]}, outfile)
-            logging.info(f'Save data to {comparison_save_file_name}')
+            logging.info(f'Save data to {file_name}')
+
     elif not args.only_schedule:
         execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=7)
         if args.offline:
