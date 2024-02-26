@@ -178,6 +178,4 @@ pyrightconfig.json
 simulation/config.json
 
 visualization/data_for_visualization/
-img/
-img/simulation.png
-img/simulation1.png
+img/*
