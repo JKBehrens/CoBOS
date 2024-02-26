@@ -240,7 +240,6 @@ class OverlapSchedule(Schedule):
         for i, task in enumerate(self.job.task_sequence):
             if (task.id not in self.tasks_with_final_var) and (task.state in [TaskState.InProgress, TaskState.COMPLETED]):
 
-
                 if task.state == TaskState.COMPLETED:
                     # delete duration constraints
                     for phase in range(3):
@@ -265,11 +264,11 @@ class OverlapSchedule(Schedule):
                     self.tasks_with_final_var.append(task.id)
                     logging.debug(f'Task {task.id}, new var: finish {task.finish[0]}')
                 else:
-                    # # set end of interval to current time if the expected end has not come
+                    end_value = max(current_time, int(task.start+self.task_duration[task.agent][task.id][0]))
+                    # set end of interval to predictit from actual start time
                     self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
                     self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
-                        cp_model.Domain(int(task.start+self.task_duration[task.agent][task.id][0]),
-                                        int(task.start+self.task_duration[task.agent][task.id][0])).FlattenedIntervals())
+                        cp_model.Domain(end_value, end_value).FlattenedIntervals())
 
                 # set start of interval to current start time of task
                 self.model.Proto().variables[self.task_intervals[task.id][0].StartExpr().Index()].domain[:] = []
@@ -306,25 +305,23 @@ class OverlapSchedule(Schedule):
             variables=[self.task_assignment_var[task.id]],
             tuples_list=[tuple([v]) for v in self.task_assignment[task.id] if v != self.agent_mapping[task.agent]])
 
-    def set_list_of_possible_changes(self, available_tasks, agent_name, agent_rejection_tasks, current_time):
+    def set_list_of_possible_changes(self, available_tasks, agent_name, current_time, **kwargs):
         makespans = []
         for available_task in available_tasks:
-            if available_task.id not in agent_rejection_tasks:
-                # copy model
-                test_model = self.model.Clone()
-                task_assignment_var = copy.deepcopy(self.task_assignment_var)
-                # set index of possible task and change constraint in the model
-                idx = self.allowedAgents[available_task.id].Index()
-                test_model.Proto().constraints[idx].Clear()
-                test_model.AddAllowedAssignments(
-                    variables=[task_assignment_var[available_task.id]],
-                    tuples_list=[tuple([self.agent_mapping[agent_name]])])
+            # copy model
+            test_model = self.model.Clone()
+            # set index of possible task and change constraint in the model
+            idx = self.allowedAgents[available_task.id].Index()
+            test_model.Proto().constraints[idx].Clear()
+            test_model.AddAllowedAssignments(
+                variables=[self.task_assignment_var[available_task.id]],
+                tuples_list=[tuple([self.agent_mapping[agent_name]])])
 
-                solver = self.set_solver()
-                status = solver.Solve(test_model)
-                if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-                    makespans.append([solver.ObjectiveValue(), available_task])
-                    self.evaluation_run_time.append([current_time, solver.WallTime()])
+            solver = self.set_solver()
+            status = solver.Solve(test_model)
+            if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+                makespans.append([solver.ObjectiveValue(), available_task])
+                self.evaluation_run_time.append([current_time, solver.ObjectiveValue(), solver.WallTime()])
 
         if len(makespans) == 0:
             return None

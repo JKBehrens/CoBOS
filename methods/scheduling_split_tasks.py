@@ -362,28 +362,27 @@ class Schedule(Solver):
         self.print_info()
         return self.schedule
 
-    def set_list_of_possible_changes(self, available_tasks, agent_name, agent_rejection_tasks, current_time):
+    def set_list_of_possible_changes(self, available_tasks, agent_name, current_time, **kwargs):
         makespans = []
         for available_task in available_tasks:
-            if available_task.id not in agent_rejection_tasks:
-                test_model = self.model.Clone()
-                human_task_bool_copy = copy.deepcopy(self.human_task_bool)
-                idx = self.job.get_task_idx(available_task)
-                test_model.Proto().constraints.remove(self.fix_agent[idx].Proto())
-                if agent_name == "Human":
-                    test_model.Add(human_task_bool_copy[idx] == True)
-                else:
-                    test_model.Add(human_task_bool_copy[idx] == False)
-                solver = cp_model.CpSolver()
-                solver.parameters.num_search_workers = 1
-                solver.parameters.random_seed = self.seed
-                solver.parameters.max_time_in_seconds = 10.0
-                solver.parameters.enumerate_all_solutions = True
-                solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
-                status = solver.Solve(test_model)
-                if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-                    makespans.append([solver.ObjectiveValue(), available_task])
-                    self.evaluation_run_time.append([current_time, solver.WallTime()])
+            test_model = self.model.Clone()
+            human_task_bool_copy = copy.deepcopy(self.human_task_bool)
+            idx = self.job.get_task_idx(available_task)
+            test_model.Proto().constraints.remove(self.fix_agent[idx].Proto())
+            if agent_name == "Human":
+                test_model.Add(human_task_bool_copy[idx] == True)
+            else:
+                test_model.Add(human_task_bool_copy[idx] == False)
+            solver = cp_model.CpSolver()
+            solver.parameters.num_search_workers = 1
+            solver.parameters.random_seed = self.seed
+            solver.parameters.max_time_in_seconds = 10.0
+            solver.parameters.enumerate_all_solutions = True
+            solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
+            status = solver.Solve(test_model)
+            if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+                makespans.append([solver.ObjectiveValue(), available_task])
+                self.evaluation_run_time.append([current_time, solver.WallTime()])
 
         if len(makespans) == 0:
             return None
@@ -427,13 +426,13 @@ class Schedule(Solver):
         for worker in self.schedule.keys():
             if worker != agent_name:
                 for task in self.schedule[worker]:
-                    if task.state == TaskState.AVAILABLE and task.universal:
+                    if task.state == TaskState.AVAILABLE and task.universal and task.id not in agent_rejection_tasks:
                         possible_tasks.append(task)
 
         if len(possible_tasks) != 0:
             # rescheduling estimation
             self.refresh_variables(current_time)
-            makespan_and_task = self.set_list_of_possible_changes(possible_tasks, agent_name, agent_rejection_tasks, current_time)
+            makespan_and_task = self.set_list_of_possible_changes(possible_tasks, agent_name, current_time)
             if makespan_and_task and makespan_and_task[0][0] < self.current_makespan:
                 self.change_agent(task=makespan_and_task[0][1], coworker_name=agent_name, current_time=current_time)
                 return makespan_and_task[0][1]

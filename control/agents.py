@@ -100,7 +100,7 @@ class Agent(Sim):
     def _handle_rejected_task(self, task, current_time):
         logging.info(f'Human rejects the task {task.id}. Place object {task.action["Object"]} '
                      f'to {task.action["Place"]}. TIME {current_time}')
-        self.rejection_tasks.append(task.id)
+        self.rejection_tasks.append([task.id, current_time])
 
     def get_feedback(self, job, current_time, **kwargs):
         """

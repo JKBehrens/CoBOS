@@ -9,6 +9,7 @@ from methods import Schedule, NoOverlapSchedule, OverlapSchedule
 from control.agent_and_task_states import AgentState, TaskState
 from control.agents import Agent
 from control.jobs import Job
+import numpy as np
 import logging
 import json
 import time
@@ -36,7 +37,7 @@ class ControlLogic:
         self.sim_seed = kwargs.get('sim_seed', 0)
         self.schedule_seed = kwargs.get('schedule_seed', 0)
 
-        self.job = Job(self.case, seed=self.distribution_seed)
+        self.job = kwargs.get('job', Job(self.case, seed=self.distribution_seed))
         self.set_schedule()
 
         # self.plot = Vis(horizon=self.solving_method.horizon)
@@ -55,7 +56,7 @@ class ControlLogic:
             exit()
         else:
             for agent_name in self.agent_list:
-                self.agents.append(Agent(agent_name, self.job, seed=self.sim_seed))
+                self.agents.append(Agent(agent_name, copy.deepcopy(self.job), seed=self.sim_seed))
             self.job.predicted_makespan = self.job.get_current_makespan()
         self.set_task_status()
 
@@ -79,7 +80,11 @@ class ControlLogic:
             elif not agent.state == AgentState.IDLE:
                 coworker = self.agents[self.agents.index(agent) - 1]
                 agent.get_feedback(self.job, self.current_time, coworker=coworker)
-            output.append([agent.name, agent.state, agent.current_task, agent.rejection_tasks])
+            try:
+                output.append([agent.name, agent.state, agent.current_task, np.array(agent.rejection_tasks)[:, 0]])
+            except IndexError:
+                output.append([agent.name, agent.state, agent.current_task, []])
+
         return output
 
     def shift_schedule(self):
@@ -169,7 +174,7 @@ class ControlLogic:
         if experiments:
             statistics = {}
             statistics['makespan'] = [self.job.predicted_makespan, self.job.get_current_makespan()]
-            statistics['rejection number'] = len(self.agents[1].rejection_tasks)
+            statistics['rejection tasks'] = self.agents[1].rejection_tasks
             statistics['solver'] = self.solving_method.get_statistics()
             return self.output_data, statistics
 
