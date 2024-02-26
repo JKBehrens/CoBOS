@@ -1,3 +1,5 @@
+import copy
+
 from methods.scheduling_split_tasks import Schedule, schedule_as_dict
 from methods.nooverlap_method import NoOverlapSchedule
 from methods.overlap_method import OverlapSchedule
@@ -39,9 +41,10 @@ if __name__ == '__main__':
         raise SystemExit(1)
 
     if args.comparison:
-        execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=0)
+        job = Job(case, seed=0)
+        execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
         schedule1, stat1 = execute_job.run(animation=True, experiments=True)
-        execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=7)
+        execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=7)
         schedule2, stat2 = execute_job.run(animation=True, experiments=True)
 
         file_name = args.file_name if args.file_name else comparison_save_file_name

@@ -36,7 +36,7 @@ class ControlLogic:
         self.sim_seed = kwargs.get('sim_seed', 0)
         self.schedule_seed = kwargs.get('schedule_seed', 0)
 
-        self.job = Job(self.case, seed=self.distribution_seed)
+        self.job = kwargs.get('job', Job(self.case, seed=self.distribution_seed))
         self.set_schedule()
 
         # self.plot = Vis(horizon=self.solving_method.horizon)
