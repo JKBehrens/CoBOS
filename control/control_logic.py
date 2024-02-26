@@ -55,7 +55,7 @@ class ControlLogic:
             exit()
         else:
             for agent_name in self.agent_list:
-                self.agents.append(Agent(agent_name, self.job, seed=self.sim_seed))
+                self.agents.append(Agent(agent_name, copy.deepcopy(self.job), seed=self.sim_seed))
             self.job.predicted_makespan = self.job.get_current_makespan()
         self.set_task_status()
 
