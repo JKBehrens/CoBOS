@@ -98,7 +98,7 @@ class Agent(Sim):
                      f' to {task.action["Place"]}. TIME {current_time}')
 
     def _handle_rejected_task(self, task, current_time):
-        logging.info(f'Human reject the task {task.id}. Place object {task.action["Object"]}'
+        logging.info(f'Human rejects the task {task.id}. Place object {task.action["Object"]} '
                      f'to {task.action["Place"]}. TIME {current_time}')
         self.rejection_tasks.append(task.id)
 
