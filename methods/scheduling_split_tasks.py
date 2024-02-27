@@ -358,7 +358,7 @@ class Schedule(Solver):
         self.set_constraints()
         self.schedule, self.current_makespan = self.solve(current_time=0)
         self.print_schedule()
-        self.fix_agents_var()
+        # self.fix_agents_var()
         self.print_info()
         return self.schedule
 

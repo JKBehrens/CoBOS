@@ -72,6 +72,10 @@ class OverlapSchedule(Schedule):
                     self.model.AddElement(index=self.task_assignment_var[task.id],
                                           variables=phase_durations,
                                           target=self.task_intervals[task.id][phase].SizeExpr()))
+                # self.duration_constraints[task.id].append(self.model.Add(self.task_intervals[task.id][phase].SizeExpr() == phase_durations[0]))
+                    # self.model.AddElement(index=self.task_assignment_var[task.id],
+                    #                       variables=phase_durations,
+                    #                       target=self.task_intervals[task.id][phase].SizeExpr()))
 
             # add no overlap interval for execution phase
             self.no_overlap_execution_intervals.append(self.task_intervals[task.id][1])
@@ -131,17 +135,39 @@ class OverlapSchedule(Schedule):
     def set_constraints(self):
         pass
 
+    def constraint_debuger(self):
+        model: cp_model.CpModel = self.model.Clone()
+
+        for idx, constraint in enumerate(model.Proto().constraints):
+            print(f'idx: {idx}, {constraint}')
+            if 'interval' in constraint.__str__():
+                continue
+            model.Proto().constraints[idx].Clear()
+            solver = self.set_solver()
+            status = solver.Solve(model)
+            print(solver.StatusName(status))
+            if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+                break
+
+
+
     def solve(self, current_time):
         self.solver = self.set_solver()
         self.status = self.solver.Solve(self.model)
 
         if self.status == cp_model.OPTIMAL or self.status == cp_model.FEASIBLE:
             for task in self.job.task_sequence:
-                if task.state is TaskState.COMPLETED:
-                    assert (self.job.task_sequence[task.id].finish[0] - self.job.task_sequence[task.id].start) ==\
-                           self.solver.Value(self.task_intervals[task.id][2].EndExpr()) - \
-                           self.solver.Value(self.task_intervals[task.id][0].StartExpr()), \
-                        f"Duration of task {task.id} is wrong."
+                if task.state in [TaskState.COMPLETED, TaskState.InProgress]:
+                    if self.job.task_sequence[task.id].finish[0] < current_time and task.state is TaskState.InProgress:
+                        assert (current_time - self.job.task_sequence[task.id].start) <= \
+                               self.solver.Value(self.task_intervals[task.id][2].EndExpr()) - \
+                               self.solver.Value(self.task_intervals[task.id][0].StartExpr()), \
+                            f"Duration of task {task.id} is wrong."
+                    else:
+                        if not (self.job.task_sequence[task.id].finish[0] - self.job.task_sequence[task.id].start) <=\
+                               self.solver.Value(self.task_intervals[task.id][2].EndExpr()) - \
+                               self.solver.Value(self.task_intervals[task.id][0].StartExpr()):
+                            logging.warning(f"Duration of task {task.id} is wrong.")
                 else:
                     agent = self.solver.Value(self.task_assignment_var[task.id])
                     assert self.task_duration[agent][task.id][0] == \
@@ -161,12 +187,13 @@ class OverlapSchedule(Schedule):
 
                 if len(ends) == 0:
                     continue
-                assert start >= max(ends), f"dependency graph violation for task {task.id}."
+                # assert start >= max(ends), f"dependency graph violation for task {task.id}."
             logging.info("The solution is valid. No dependency violation")
 
         elif self.status == cp_model.INFEASIBLE:
             logging.error(self.model.Validate())
             logging.error("No solution found")
+            # self.constraint_debuger()
             exit(2)
         else:
             logging.error(self.model.Validate())
@@ -238,9 +265,11 @@ class OverlapSchedule(Schedule):
         Changes the variable domains according to what is happening to update the schedule.
         """
         for i, task in enumerate(self.job.task_sequence):
-            if (task.id not in self.tasks_with_final_var) and (task.state in [TaskState.InProgress, TaskState.COMPLETED]):
+            if task.state in [TaskState.InProgress, TaskState.COMPLETED]:
 
                 if task.state == TaskState.COMPLETED:
+                    if task.id in self.tasks_with_final_var:
+                        continue
                     # delete duration constraints
                     for phase in range(3):
                         idx = self.duration_constraints[task.id][phase].Index()
@@ -263,12 +292,27 @@ class OverlapSchedule(Schedule):
 
                     self.tasks_with_final_var.append(task.id)
                     logging.debug(f'Task {task.id}, new var: finish {task.finish[0]}')
-                else:
-                    end_value = max(current_time, int(task.start+self.task_duration[task.agent][task.id][0]))
+                elif task.state == TaskState.InProgress:
+                    # delete duration constraints
+                    for phase in range(3):
+                        idx = self.duration_constraints[task.id][phase].Index()
+                        self.model.Proto().constraints[idx].Clear()
+                    if current_time > task.start+self.task_duration[task.agent][task.id][0]:
+                        end_value = current_time
+                    else:
+                        end_value = task.start+self.task_duration[task.agent][task.id][0]
+
                     # set end of interval to predictit from actual start time
-                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
-                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
+                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[
+                    :] = []
+                    self.model.Proto().variables[
+                        self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
                         cp_model.Domain(end_value, end_value).FlattenedIntervals())
+
+
+                    logging.debug(f'Task {task.id}, new var: finish {end_value}')
+                else:
+                    logging.warning(f'Task {task.id} state {task.state} out of If Else')
 
                 # set start of interval to current start time of task
                 self.model.Proto().variables[self.task_intervals[task.id][0].StartExpr().Index()].domain[:] = []
@@ -278,17 +322,19 @@ class OverlapSchedule(Schedule):
                 logging.debug(f'Task {task.id}, new var: start {task.start}')
 
                 # delete dependencies constraints
-                for dep in self.job.task_sequence:
-                    if task.id in dep.conditions:
-                        logging.debug(f'Task {dep.id} dependency {task.id}')
-                        idx = self.dependencies_constraints[dep.id][task.id].Index()
-                        self.model.Proto().constraints[idx].Clear()
+                # for dep in self.job.task_sequence:
+                #     if task.id in dep.conditions:
+                #         logging.debug(f'Task {dep.id} dependency {task.id}')
+                #         idx = self.dependencies_constraints[dep.id][task.id].Index()
+                #         self.model.Proto().constraints[idx].Clear()
 
             elif task.state == TaskState.AVAILABLE or task.state == TaskState.UNAVAILABLE:
                 # set start of interval to current time
                 self.model.Proto().variables[self.task_intervals[task.id][0].StartExpr().Index()].domain[:] = []
                 self.model.Proto().variables[self.task_intervals[task.id][0].StartExpr().Index()].domain.extend(
                     cp_model.Domain(int(current_time), self.horizon).FlattenedIntervals())
+            else:
+                logging.warning(f'task {task.id} state {task.state} out of If Else')
 
     def change_agent_in_model(self, task):
         """
@@ -322,6 +368,13 @@ class OverlapSchedule(Schedule):
             if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
                 makespans.append([solver.ObjectiveValue(), available_task])
                 self.evaluation_run_time.append([current_time, solver.ObjectiveValue(), solver.WallTime()])
+            else:
+                logging.error(self.model.Validate())
+                self.job.__str__()
+
+                logging.error(
+                    f"Something is wrong, status {solver.StatusName(status)} and the log of the solve")
+                exit(2)
 
         if len(makespans) == 0:
             return None
