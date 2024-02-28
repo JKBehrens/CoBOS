@@ -43,7 +43,6 @@ class OverlapSchedule(Schedule):
 
         number_agents = len(self.all_agents)
         no_overlap_task_intervals = []
-        PAIRWISE = False
 
         for i, task in enumerate(self.job.task_sequence):
 
@@ -84,36 +83,35 @@ class OverlapSchedule(Schedule):
             self.model.Add(self.task_intervals[task.id][0].EndExpr() == self.task_intervals[task.id][1].StartExpr())
             self.model.Add(self.task_intervals[task.id][1].EndExpr() == self.task_intervals[task.id][2].StartExpr())
 
-            if not PAIRWISE:
-                # set duration of the task
-                duration = self.model.NewIntVar(0, self.horizon, f"task_{task.id}_duration")
-                self.model.Add(duration == self.task_intervals[task.id][0].SizeExpr() +
-                               self.task_intervals[task.id][1].SizeExpr() +
-                               self.task_intervals[task.id][2].SizeExpr())
-                # make an optional interval per task and agent.
-                presence = []
+            # set duration of the task
+            duration = self.model.NewIntVar(0, self.horizon, f"task_{task.id}_duration")
+            self.model.Add(duration == self.task_intervals[task.id][0].SizeExpr() +
+                            self.task_intervals[task.id][1].SizeExpr() +
+                            self.task_intervals[task.id][2].SizeExpr())
+            # make an optional interval per task and agent.
+            presence = []
 
-                for agent in self.all_agents:
-                    offset = self.horizon_ceil_1000 * agent
-                    is_present = self.model.NewBoolVar(f"is_present_task_{task.id}_agent_{agent}")
-                    presence.append(is_present)
-                    # define the optional interval using the same integer vars as the main task interval
-                    # + an offset that sets intervals assigned to different agents appart.
-                    no_overlap_task_intervals.append(
-                        self.model.NewOptionalIntervalVar(self.task_intervals[task.id][0].StartExpr() + offset,
-                                                          duration, self.task_intervals[task.id][2].EndExpr() + offset,
-                                                          is_present=is_present,
-                                                          name=f"phantom_task_interval_{task.id}_agent_{agent}"))
+            for agent in self.all_agents:
+                offset = self.horizon_ceil_1000 * agent
+                is_present = self.model.NewBoolVar(f"is_present_task_{task.id}_agent_{agent}")
+                presence.append(is_present)
+                # define the optional interval using the same integer vars as the main task interval
+                # + an offset that sets intervals assigned to different agents appart.
+                no_overlap_task_intervals.append(
+                    self.model.NewOptionalIntervalVar(self.task_intervals[task.id][0].StartExpr() + offset,
+                                                        duration, self.task_intervals[task.id][2].EndExpr() + offset,
+                                                        is_present=is_present,
+                                                        name=f"phantom_task_interval_{task.id}_agent_{agent}"))
 
-                # enforce that exactly one of the optional intervals is present according to the task assignment var
-                self.model.Add(sum(presence) == 1)
-                self.model.AddElement(index=self.task_assignment_var[task.id], variables=presence, target=True)
+            # enforce that exactly one of the optional intervals is present according to the task assignment var
+            self.model.Add(sum(presence) == 1)
+            self.model.AddElement(index=self.task_assignment_var[task.id], variables=presence, target=True)
 
-        if not PAIRWISE:
-            # use the global NoOverlap constraint on all these intervals
-            # to prevent tasks assigned to the same agent from overlapping.
-            self.model.AddNoOverlap(no_overlap_task_intervals)
-            self.model.AddNoOverlap(self.no_overlap_execution_intervals)
+
+        # use the global NoOverlap constraint on all these intervals
+        # to prevent tasks assigned to the same agent from overlapping.
+        self.model.AddNoOverlap(no_overlap_task_intervals)
+        self.model.AddNoOverlap(self.no_overlap_execution_intervals)
 
         # add task dependency constraints
         for task, dependency_lst in self.dependencies.items():
