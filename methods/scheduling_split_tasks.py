@@ -395,6 +395,7 @@ class Schedule(Solver):
     def decide(self, observation_data, current_time):
         decision = {}
         self.update_tasks_status()
+        self.update_schedule(current_time)
         for index, [agent_name, agent_state, agent_current_task, agent_rejection_tasks] in enumerate(observation_data):
             logging.debug(f'TIME: {current_time}. Is {agent_name} available? {agent_state}')
             if agent_state == AgentState.IDLE:
@@ -448,6 +449,18 @@ class Schedule(Solver):
             if len(task.conditions) != 0 and task.state == TaskState.UNAVAILABLE:
                 if set(task.conditions).issubset(tasks_list):
                     task.state = TaskState.AVAILABLE
+
+    def update_schedule(self, current_time):
+        for agent in self.schedule:
+            shift = False
+            for task in self.schedule[agent]:
+                if task.state == TaskState.InProgress and task.finish[0] < current_time:
+                    task.finish[0] = current_time
+                    shift = True
+                elif shift and (task.state == TaskState.UNAVAILABLE or task.state == TaskState.InProgress):
+                    task.start += 1
+                    task.finish[0] += 1
+
 
     def change_agent(self, task, coworker_name, current_time):
         """

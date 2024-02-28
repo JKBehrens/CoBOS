@@ -5,10 +5,11 @@ This class create model and solve methods problem.
 @contact: marina.ionova@cvut.cz
 """
 from typing import Dict, Tuple
-from methods.scheduling_split_tasks import Schedule
+from methods.scheduling_split_tasks import Schedule, START_AVAILABLE_TASKS
 from control.agent_and_task_states import TaskState
 from ortools.sat.python import cp_model
 import logging
+import statistics
 import copy
 
 LAMBDA = 1
@@ -72,10 +73,6 @@ class OverlapSchedule(Schedule):
                     self.model.AddElement(index=self.task_assignment_var[task.id],
                                           variables=phase_durations,
                                           target=self.task_intervals[task.id][phase].SizeExpr()))
-                # self.duration_constraints[task.id].append(self.model.Add(self.task_intervals[task.id][phase].SizeExpr() == phase_durations[0]))
-                    # self.model.AddElement(index=self.task_assignment_var[task.id],
-                    #                       variables=phase_durations,
-                    #                       target=self.task_intervals[task.id][phase].SizeExpr()))
 
             # add no overlap interval for execution phase
             self.no_overlap_execution_intervals.append(self.task_intervals[task.id][1])
@@ -148,8 +145,6 @@ class OverlapSchedule(Schedule):
             print(solver.StatusName(status))
             if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
                 break
-
-
 
     def solve(self, current_time):
         self.solver = self.set_solver()
@@ -383,6 +378,58 @@ class OverlapSchedule(Schedule):
             return makespans
         else:
             return makespans
+
+    def find_task(self, agent_name, agent_rejection_tasks, current_time):
+        # find allocated task
+        available_tasks = self.are_there_available_tasks()
+        a = [task.id  for agent in available_tasks.keys() for task in available_tasks[agent]]
+        if available_tasks[agent_name]:
+            for task in available_tasks[agent_name]:
+                if task.id not in agent_rejection_tasks:
+                    if START_AVAILABLE_TASKS:
+                        return available_tasks[agent_name][0]
+                    else:
+                        if available_tasks[agent_name][0].start <= current_time:
+                            return available_tasks[agent_name][0]
+        elif any(available_tasks[key] for key in available_tasks):
+            available_tasks.pop(agent_name)
+            available_tasks_id = set([task.id for agent in available_tasks.keys() for task in available_tasks[agent]])
+            # if not isinstance(agent_rejection_tasks, np.ndarray):
+            agent_rejection_tasks = set(agent_rejection_tasks)
+            if not available_tasks_id.issubset(agent_rejection_tasks):
+                self.refresh_variables(current_time)
+                # copy model
+                test_model = self.model.Clone()
+                solver = self.set_solver()
+                status = solver.Solve(test_model)
+                # offset = self.get_mean_of_task_duration()/2
+                if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+                    self.evaluation_run_time.append([current_time, solver.ObjectiveValue(), solver.WallTime()])
+                    if solver.ObjectiveValue() < self.job.get_current_makespan():
+                        self.schedule, self.current_makespan = self.solve(current_time=current_time)
+                        return self.find_task(agent_name, agent_rejection_tasks, current_time)
+                    else:
+                        return None
+                else:
+                    logging.error(self.model.Validate())
+                    self.job.__str__()
+
+                    logging.error(
+                        f"Something is wrong, status {solver.StatusName(status)} and the log of the solve")
+                    exit(2)
+        return None
+
+    def are_there_available_tasks(self):
+        available_tasks = {}
+        for agent in self.schedule.keys():
+            available_tasks[agent] = []
+            for task in self.schedule[agent]:
+                if task.state is TaskState.AVAILABLE:
+                    available_tasks[agent].append(task)
+        return available_tasks
+
+    def get_mean_of_task_duration(self):
+        return statistics.mean([v[0] for v in self.task_duration.values()])
 
 
 
