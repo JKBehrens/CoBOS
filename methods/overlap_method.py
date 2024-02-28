@@ -130,7 +130,7 @@ class OverlapSchedule(Schedule):
     def set_constraints(self):
         pass
 
-    def constraint_debuger(self):
+    def constraint_debugger(self):
         model: cp_model.CpModel = self.model.Clone()
 
         for idx, constraint in enumerate(model.Proto().constraints):
@@ -186,7 +186,7 @@ class OverlapSchedule(Schedule):
         elif self.status == cp_model.INFEASIBLE:
             logging.error(self.model.Validate())
             logging.error("No solution found")
-            # self.constraint_debuger()
+            # self.constraint_debugger()
             exit(2)
         else:
             logging.error(self.model.Validate())
