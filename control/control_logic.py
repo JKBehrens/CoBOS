@@ -5,7 +5,7 @@
     @contact: marina.ionova@cvut.cz
 """
 from visualization import Vis, initial_and_final_schedule_save_file_name, Web_vis
-from methods import Schedule, NoOverlapSchedule, OverlapSchedule
+from methods import Schedule, NoOverlapSchedule, OverlapSchedule, RandomAllocation
 from control.agent_and_task_states import AgentState, TaskState
 from control.agents import Agent
 from control.jobs import Job
@@ -22,7 +22,8 @@ class ControlLogic:
     :param case: Case to be executed.
     :type case: str
     """
-    def __init__(self, case, **kwargs):
+    def __init__(self, method, case, **kwargs):
+        self.method = method
         self.case = case
         self.agent_list = ['Robot', 'Human']
         self.agents = []
@@ -47,7 +48,7 @@ class ControlLogic:
         """
         Sets the schedule for task execution by agents.
         """
-        self.solving_method = OverlapSchedule(self.job, seed=self.schedule_seed)
+        self.solving_method = self.method(self.job, seed=self.schedule_seed)
         done = self.solving_method.prepare()
         if not done:
             logging.error(f'Solving method preparation failed. Case {self.case}. Distribution seed {self.distribution_seed}, sim seed {self.sim_seed}, '
@@ -55,11 +56,11 @@ class ControlLogic:
             self.job.__str__()
             exit()
         else:
-            self.job.__str__()
             for agent_name in self.agent_list:
                 answer_seed = kwargs.get('answer_seed', None)
                 self.agents.append(Agent(name=agent_name, job=copy.deepcopy(self.job), seed=self.sim_seed, answer_seed=answer_seed))
-            self.job.predicted_makespan = self.job.get_current_makespan()
+            if self.method != RandomAllocation:
+                self.job.predicted_makespan = self.job.get_current_makespan()
         self.set_task_status()
 
     def set_task_status(self):
@@ -119,7 +120,8 @@ class ControlLogic:
         """
         Run the methods simulation.
         """
-        self.output_data.append(self.schedule_as_dict(hierarchy=True))
+        if self.method != RandomAllocation:
+            self.output_data.append(self.schedule_as_dict(hierarchy=True))
 
         if animation:
             self.plot = Vis(horizon=self.solving_method.horizon)

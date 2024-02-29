@@ -1,8 +1,7 @@
 import copy
 
 from methods.scheduling_split_tasks import Schedule, schedule_as_dict
-from methods.nooverlap_method import NoOverlapSchedule
-from methods.overlap_method import OverlapSchedule
+from methods import OverlapSchedule, NoOverlapSchedule, RandomAllocation
 from control.control_logic import ControlLogic
 from visualization.json_2_video import video_parser
 from visualization import schedule_save_file_name, Vis, comparison_save_file_name
@@ -11,6 +10,9 @@ import numpy as np
 import argparse
 import logging
 import json
+
+METHOD = OverlapSchedule
+
 
 if __name__ == '__main__':
     cases = ['1', '2', '3', '4', '5', '6', '0']
@@ -45,8 +47,8 @@ if __name__ == '__main__':
     if args.comparison:
         job = Job(case, seed=0)
         if args.change_job:
-            execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0, answer_seed=None)
-            schedule1, stat1 = execute_job.run(animation=True, experiments=True)
+            execute_job = ControlLogic(method=METHOD, case=case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0, answer_seed=None)
+            schedule1, stat1 = execute_job.run(animation=False, experiments=True)
             seed = 9
             nameList = [True, False]
             rand = np.random.default_rng(seed=seed)
@@ -57,13 +59,13 @@ if __name__ == '__main__':
                 if not answer and task.universal:
                     task.universal = False
                     task.agent = 'Robot'
-            execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0,  answer_seed=seed)
-            schedule2, stat2 = execute_job.run(animation=True, experiments=True)
+            execute_job = ControlLogic(method=METHOD, case=case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0,  answer_seed=seed)
+            schedule2, stat2 = execute_job.run(animation=False, experiments=True)
         else:
-            execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
-            schedule1, stat1 = execute_job.run(animation=True, experiments=True)
-            execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
-            schedule2, stat2 = execute_job.run(animation=True, experiments=True)
+            execute_job = ControlLogic(method=OverlapSchedule, case=case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
+            schedule1, stat1 = execute_job.run(animation=False, experiments=True)
+            execute_job = ControlLogic(method=RandomAllocation, case=case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
+            schedule2, stat2 = execute_job.run(animation=False, experiments=True)
 
         file_name = args.file_name if args.file_name else comparison_save_file_name
 
@@ -74,14 +76,19 @@ if __name__ == '__main__':
         # - list with the rescheduling info: when, status of solver, makespan, calculation time
         # - list with the rescheduling evaluation info: when, makespan, calculation time
 
-        with open(file_name, "w") as outfile:
-            json.dump({'schedule': schedule1+[schedule2[1]], 'statistics': [stat1, stat2]}, outfile)
-            logging.info(f'Save data to {file_name}')
+        try:
+            with open(file_name, "w") as outfile:
+                json.dump({'schedule': schedule1+[schedule2[1]], 'statistics': [stat1, stat2]}, outfile)
+                logging.info(f'Save data to {file_name}')
+        except IndexError:
+            with open(file_name, "w") as outfile:
+                json.dump({'schedule': schedule1+schedule2, 'statistics': [stat1, stat2]}, outfile)
+                logging.info(f'Save data to {file_name}')
 
     elif not args.only_schedule:
-        execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=0)
+        execute_job = ControlLogic(method=METHOD, case=case, distribution_seed=0, schedule_seed=0, sim_seed=0)
         if args.offline:
-            execute_job.run(animation=True)
+            execute_job.run(animation=False)
         else:
             execute_job.run(online_plot=True)
 

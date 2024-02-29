@@ -195,10 +195,13 @@ class Vis:
                     self.set_plot_param(title[i], gs[i, :], lim=horizon, reschedule_num=True)
                     colors = {0: 'red', 1: 'blue'}
                     position = {0: 14, 1: 15.5}
-                    for idx, solver_info in enumerate(self.data['statistics'][i-1]['solver']):
-                        for data in solver_info:
-                            self.gnt.broken_barh([(data[0], 0.5)], [position[idx]-0.5, 1],
-                                                 facecolors=colors[idx])
+                    try:
+                        for idx, solver_info in enumerate(self.data['statistics'][i-1]['solver']):
+                            for data in solver_info:
+                                self.gnt.broken_barh([(data[0], 0.5)], [position[idx]-0.5, 1],
+                                                     facecolors=colors[idx])
+                    except TypeError:
+                        pass
                 else:
                     self.set_plot_param(title[i], gs[i, :], lim=horizon)
             else:

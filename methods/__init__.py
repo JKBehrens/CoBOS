@@ -1,3 +1,4 @@
 from methods.scheduling_split_tasks import Schedule
 from methods.nooverlap_method import NoOverlapSchedule
 from methods.overlap_method import OverlapSchedule
+from methods.random_task_allocation import RandomAllocation

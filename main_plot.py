@@ -24,8 +24,12 @@ if __name__ == '__main__':
             data = json.load(json_file)
         save_file_name = 'comparison.png'
     else:
-        with open(schedule_save_file_name, "r+") as json_file:
+        with open(initial_and_final_schedule_save_file_name, "r+") as json_file:
             data = json.load(json_file)
+            if len(data) == 2:
+                data = data[1]
+            elif len(data) == 1:
+                data = data[0]
         save_file_name = 'schedule.png'
 
     gantt = Vis(data=data, from_file=True)
