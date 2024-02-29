@@ -117,6 +117,9 @@ class OverlapSchedule(Schedule):
                 logging.debug(f'Task {task} dependency {dep}')
                 self.dependencies_constraints[task][dep] = self.model.Add(
                     self.task_intervals[task][1].StartExpr() >= self.task_intervals[dep][1].EndExpr())
+                self.dependencies_constraints[task][dep] = self.model.Add(
+                    self.task_intervals[task][0].StartExpr() >= self.task_intervals[dep][0].StartExpr())
+
 
         # formulate objective
         self.makespan = self.model.NewIntVar(0, self.horizon, "makespan")
