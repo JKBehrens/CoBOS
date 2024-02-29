@@ -4,7 +4,7 @@ This class create model and solve methods problem.
 @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
 @contact: marina.ionova@cvut.cz
 """
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 from methods.scheduling_split_tasks import Schedule, START_AVAILABLE_TASKS
 from control.agent_and_task_states import TaskState
 from ortools.sat.python import cp_model
@@ -25,7 +25,7 @@ class OverlapSchedule(Schedule):
     def __init__(self, job, seed):
         super().__init__(job, seed)
         self.all_agents = [0, 1]
-        self.task_intervals: Dict[int, Tuple] = {}
+        self.task_intervals: Dict[int, List[cp_model.IntervalVar]] = {}
         self.task_assignment_var: Dict[int, cp_model.IntVar] = {}
         self.task_assignment = self.get_task_assignment_list()
         self.duration_constraints = {}
