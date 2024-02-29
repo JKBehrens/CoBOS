@@ -215,7 +215,7 @@ class Vis:
                         else:
                             color = ['lightsteelblue', 'cornflowerblue', 'royalblue']
 
-                        self.gnt.text(task["Start"] + 0.5, task_name_y, task['Action']['Object'], fontsize=9,
+                        self.gnt.text(task["Start"] + 0.5, task_name_y, task['ID'], fontsize=9,
                                       rotation='horizontal')
                         preps_duration = task['Finish'][0]-task['Start'] - task['Finish'][2] - task['Finish'][3]
                         self.gnt.broken_barh([(task['Start'], preps_duration)], [position_y - 1.2, 2.4],
@@ -235,7 +235,7 @@ class Vis:
                         self.gnt.broken_barh([(task['Start'] + duration - 0.2, 0.2)], [position_y - 1.2, 2.4],
                                              facecolors='black')
 
-                        self.gnt.text(task["Start"] + 0.5, task_name_y, task["Action"]['Object'], fontsize=9,
+                        self.gnt.text(task["Start"] + 0.5, task_name_y, task['ID'], fontsize=9,
                                       rotation='horizontal')
 
             if not self.from_file:
@@ -343,7 +343,8 @@ class Vis:
             for task in local_data[agent]:
                 G.add_node(task["Action"]["Place"])
                 status[task["Status"]].append(task["Action"]["Place"])
-                labels[task["Action"]["Place"]] = task["Action"]['Object']
+                labels[task["Action"]["Place"]] = task['ID']
+                # labels[task["Action"]["Place"]] = task["Action"]['Object']
                 allocability[task['Universal']].append(task['Action']['Place'])
         for agent in local_data:
             for task in local_data[agent]:
