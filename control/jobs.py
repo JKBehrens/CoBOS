@@ -7,7 +7,7 @@
 """
 from control.agent_and_task_states import TaskState
 from inputs import case_generator
-from typing import Optional
+from typing import List, Optional
 import numpy as np
 import logging
 import copy
@@ -24,7 +24,7 @@ class Job:
     def __init__(self, case, seed):
         self.case = str(case)
         self.job_description = case_generator.set_input(self.case, seed)
-        self.task_sequence = [Task(task) for task in self.job_description]
+        self.task_sequence: List[Task] = [Task(task) for task in self.job_description]
         self.in_progress_tasks = []
         self.completed_tasks = []
         self.agents = ["Human", "Robot"]
