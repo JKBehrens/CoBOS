@@ -5,7 +5,7 @@
     @contact: marina.ionova@cvut.cz
 """
 from visualization import Vis, initial_and_final_schedule_save_file_name, Web_vis
-from methods import Schedule, NoOverlapSchedule, OverlapSchedule, RandomAllocation
+from methods import Schedule, NoOverlapSchedule, OverlapSchedule, RandomAllocation, MaxDuration
 from control.agent_and_task_states import AgentState, TaskState
 from control.agents import Agent
 from control.jobs import Job
@@ -59,7 +59,7 @@ class ControlLogic:
             for agent_name in self.agent_list:
                 answer_seed = kwargs.get('answer_seed', None)
                 self.agents.append(Agent(name=agent_name, job=copy.deepcopy(self.job), seed=self.sim_seed, answer_seed=answer_seed))
-            if self.method != RandomAllocation:
+            if self.method != RandomAllocation and self.method != MaxDuration:
                 self.job.predicted_makespan = self.job.get_current_makespan()
         self.set_task_status()
 
@@ -120,7 +120,7 @@ class ControlLogic:
         """
         Run the methods simulation.
         """
-        if self.method != RandomAllocation:
+        if self.method != RandomAllocation and self.method != MaxDuration:
             self.output_data.append(self.schedule_as_dict(hierarchy=True))
 
         if animation:

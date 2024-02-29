@@ -1,7 +1,7 @@
 import copy
 
 from methods.scheduling_split_tasks import Schedule, schedule_as_dict
-from methods import OverlapSchedule, NoOverlapSchedule, RandomAllocation
+from methods import OverlapSchedule, NoOverlapSchedule, RandomAllocation, MaxDuration
 from control.control_logic import ControlLogic
 from visualization.json_2_video import video_parser
 from visualization import schedule_save_file_name, Vis, comparison_save_file_name
@@ -64,7 +64,7 @@ if __name__ == '__main__':
         else:
             execute_job = ControlLogic(method=OverlapSchedule, case=case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
             schedule1, stat1 = execute_job.run(animation=False, experiments=True)
-            execute_job = ControlLogic(method=RandomAllocation, case=case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
+            execute_job = ControlLogic(method=MaxDuration, case=case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
             schedule2, stat2 = execute_job.run(animation=False, experiments=True)
 
         file_name = args.file_name if args.file_name else comparison_save_file_name
