@@ -119,7 +119,8 @@ class OverlapSchedule(Schedule):
                     self.task_intervals[task][1].StartExpr() >= self.task_intervals[dep][1].EndExpr())
 
         # formulate objective
-        makespan = self.model.NewIntVar(0, self.horizon, "makespan")
+        self.makespan = self.model.NewIntVar(0, self.horizon, "makespan")
+        makespan = self.makespan
         intervals = []
         for task in self.job.task_sequence:
             intervals.append(self.task_intervals[task.id][2].EndExpr())
