@@ -38,12 +38,12 @@ class ControlLogic:
         self.schedule_seed = kwargs.get('schedule_seed', 0)
 
         self.job = kwargs.get('job', Job(self.case, seed=self.distribution_seed))
-        self.set_schedule()
+        self.set_schedule(kwargs)
 
         # self.plot = Vis(horizon=self.solving_method.horizon)
         self.plot = None
 
-    def set_schedule(self):
+    def set_schedule(self, kwargs):
         """
         Sets the schedule for task execution by agents.
         """
@@ -55,8 +55,10 @@ class ControlLogic:
             self.job.__str__()
             exit()
         else:
+            self.job.__str__()
             for agent_name in self.agent_list:
-                self.agents.append(Agent(agent_name, copy.deepcopy(self.job), seed=self.sim_seed))
+                answer_seed = kwargs.get('answer_seed', None)
+                self.agents.append(Agent(name=agent_name, job=copy.deepcopy(self.job), seed=self.sim_seed, answer_seed=answer_seed))
             self.job.predicted_makespan = self.job.get_current_makespan()
         self.set_task_status()
 

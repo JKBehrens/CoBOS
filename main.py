@@ -7,6 +7,7 @@ from control.control_logic import ControlLogic
 from visualization.json_2_video import video_parser
 from visualization import schedule_save_file_name, Vis, comparison_save_file_name
 from control.jobs import Job
+import numpy as np
 import argparse
 import logging
 import json
@@ -18,6 +19,7 @@ if __name__ == '__main__':
     parser.add_argument("case", type=str, help='Choose one of this: 1, 2, 3, 4, 5, 6')
     parser.add_argument("file_name", nargs="?", help="File name (required if -f is set)")
     parser.add_argument('--only_schedule', action=argparse.BooleanOptionalAction)
+    parser.add_argument('--change_job', action=argparse.BooleanOptionalAction)
     parser.add_argument('--offline', action=argparse.BooleanOptionalAction)
     parser.add_argument('--log_error', action=argparse.BooleanOptionalAction)
     parser.add_argument('--log_debug', action=argparse.BooleanOptionalAction)
@@ -42,10 +44,26 @@ if __name__ == '__main__':
 
     if args.comparison:
         job = Job(case, seed=0)
-        execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
-        schedule1, stat1 = execute_job.run(animation=True, experiments=True)
-        execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=7)
-        schedule2, stat2 = execute_job.run(animation=True, experiments=True)
+        if args.change_job:
+            execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0, answer_seed=None)
+            schedule1, stat1 = execute_job.run(animation=True, experiments=True)
+            seed = 9
+            nameList = [True, False]
+            rand = np.random.default_rng(seed=seed)
+            answers = []
+            for task in job.task_sequence:
+                answer = rand.choice(nameList, p=(1 - task.rejection_prob, task.rejection_prob), size=1)
+                answers.append(answer)
+                if not answer and task.universal:
+                    task.universal = False
+                    task.agent = 'Robot'
+            execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0,  answer_seed=seed)
+            schedule2, stat2 = execute_job.run(animation=True, experiments=True)
+        else:
+            execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
+            schedule1, stat1 = execute_job.run(animation=True, experiments=True)
+            execute_job = ControlLogic(case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
+            schedule2, stat2 = execute_job.run(animation=True, experiments=True)
 
         file_name = args.file_name if args.file_name else comparison_save_file_name
 
@@ -61,7 +79,7 @@ if __name__ == '__main__':
             logging.info(f'Save data to {file_name}')
 
     elif not args.only_schedule:
-        execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=7)
+        execute_job = ControlLogic(case, distribution_seed=0, schedule_seed=0, sim_seed=0)
         if args.offline:
             execute_job.run(animation=True)
         else:

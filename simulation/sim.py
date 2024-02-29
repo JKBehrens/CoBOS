@@ -23,22 +23,23 @@ class Sim:
     distribution of their duration, as well as the choice of a person
     who is offered to him by the control logic.
     """
-    def __init__(self, agent_name, job, **kwargs):
+    def __init__(self, agent_name, job, seed, **kwargs):
         self.agent_name = agent_name
         self.job = job
         self.agent_list = ['Human', 'Robot']
         self.task_duration = {agent: {} for agent in self.agent_list}
         self.prob = None
-        if "seed" in kwargs:
-            self.seed = int(kwargs["seed"])
+        self.seed = seed
         self.rand = np.random.default_rng(seed=self.seed)
         self.fail_probability = []
         self.task_execution = {agent: {'Start': 0, 'Duration': []} for agent in self.agent_list}
         self.start_time = time.time()
 
         self.set_tasks_duration(**kwargs)
-        self.human_answer = {'change_agent': {}, 'execute_task': {}}
-        self.sample_human_response()
+
+        answer_seed = kwargs.get('answer_seed', None)
+        self.human_answer = self.sample_human_response(answer_seed)
+
         self.response_time = []
         self.set_response_time()
 
@@ -189,8 +190,15 @@ class Sim:
         else:
             raise NotImplementedError("is this case relevant? DO we ever go here?")
 
-    def sample_human_response(self):
+    def sample_human_response(self, seed=None):
         nameList = [True, False]
-        for task in self.job.task_sequence:
-            self.human_answer['change_agent'][task.id] = self.rand.choice(nameList, p=(task.rejection_prob, 1 - task.rejection_prob), size=1)
-            self.human_answer['execute_task'][task.id] = self.rand.choice(nameList, p=(1 - task.rejection_prob, task.rejection_prob), size=1)
+        answer = {'execute_task': {}}
+        if seed:
+            rand = np.random.default_rng(seed=seed)
+            for task in self.job.task_sequence:
+                answer['execute_task'][task.id] = rand.choice(nameList, p=(1 - task.rejection_prob, task.rejection_prob), size=1)
+        else:
+            nameList = [True, False]
+            for task in self.job.task_sequence:
+                answer['execute_task'][task.id] = self.rand.choice(nameList, p=(1 - task.rejection_prob, task.rejection_prob), size=1)
+        return answer

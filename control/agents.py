@@ -16,8 +16,8 @@ class Agent(Sim):
     :param tasks: List of tasks assigned to the agent.
     :type tasks: list
     """
-    def __init__(self, name, job=None, **kwargs):
-        super().__init__(name, job, **kwargs)
+    def __init__(self, name=None, job=None, seed=0, **kwargs):
+        super().__init__(name, job, seed, **kwargs)
         self.name = name
         self.state = AgentState.IDLE
         self.current_task = None
