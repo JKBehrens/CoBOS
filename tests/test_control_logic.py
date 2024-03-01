@@ -15,7 +15,7 @@ def test_refactoring_control_logic():
     job = Job(case, seed=seed)
 
     agent_names = ["Human", "Robot"]
-    agents: list(Agent) = []
+    agents: list[Agent] = []
     for agent_name in agent_names:
         agents.append(Agent(name=agent_name, job=copy.deepcopy(job), seed=sim_seed, answer_seed=answer_seed))
 

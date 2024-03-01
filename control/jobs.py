@@ -5,8 +5,8 @@
     @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
     @contact: marina.ionova@cvut.cz
 """
+from pydantic import BaseModel
 from control.agent_and_task_states import TaskState
-from inputs import case_generator
 from typing import List, Optional
 import numpy as np
 import logging
@@ -21,10 +21,11 @@ class Job:
     :type case: str
     """
 
-    def __init__(self, case, seed):
-        self.case = str(case)
+    def __init__(self, case: int, seed: int):
+        self.case = case
+        from inputs import case_generator
         self.job_description = case_generator.set_input(self.case, seed)
-        self.task_sequence: List[Task] = [Task(task) for task in self.job_description]
+        self.task_sequence: List[Task] = self.job_description
         self.in_progress_tasks = []
         self.completed_tasks = []
         self.agents = ["Human", "Robot"]
@@ -130,26 +131,42 @@ class Job:
         return True
 
 
-class Task:
+class Action(BaseModel):
+    Object: str
+    Place: str
+
+class Task(BaseModel):
     """
     Represents a task to be completed.
 
     :param task_description: Dictionary containing task details.
     :type task_description: dict
     """
+    id: int
+    action: Action
+    state: TaskState | None = None
+    conditions: list[int] 
+    universal: bool
+    agent: str
+    start: int | None = None
+    finish: int | None = None
 
-    def __init__(self, task_description):
-        self.id: int = task_description['ID']
-        self.action: dict[str, str] = {'Object': task_description['Object'], 'Place': task_description['Place']}
-        self.state = None
-        self.conditions: list[int] = task_description['Conditions']
-        self.universal: bool = task_description['Agent'] == 'Both'
-        self.agent: str = task_description['Agent']
-        self.start = None
-        self.finish = None
+    distribution: list[tuple[tuple[int, int], tuple[int, int], tuple[float, float]]]
+    rejection_prob: float
 
-        self.distribution: list[list[np.ndarray]] = task_description["Distribution"]
-        self.rejection_prob: float = task_description["Rejection_prob"]
+
+    # def __init__(self, task_description):
+    #     self.id: int = task_description['ID']
+    #     self.action: dict[str, str] = {'Object': task_description['Object'], 'Place': task_description['Place']}
+    #     self.state: TaskState |None = None
+    #     self.conditions: list[int] = task_description['Conditions']
+    #     self.universal: bool = task_description['Agent'] == 'Both'
+    #     self.agent: str = task_description['Agent']
+    #     self.start: int | None = None
+    #     self.finish: int | None = None
+
+    #     self.distribution: list[list[np.ndarray]] = task_description["Distribution"]
+    #     self.rejection_prob: float = task_description["Rejection_prob"]
 
     def __str__(self):
         """

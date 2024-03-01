@@ -8,12 +8,14 @@ from visualization import Vis, initial_and_final_schedule_save_file_name, Web_vi
 from methods import Schedule, NoOverlapSchedule, OverlapSchedule, RandomAllocation, MaxDuration, Solver
 from control.agent_and_task_states import AgentState, TaskState
 from control.agents import Agent
-from control.jobs import Job
+from control.jobs import Job, Task
 import numpy as np
 import logging
 import json
 import time
 import copy
+
+from typing import Any
 
 
 
@@ -124,7 +126,7 @@ class ControlLogic:
         # if self.plot:
         #     self.plot.update_info(agent)
 
-    def run(self, animation=False, online_plot=False, experiments=False):
+    def run(self, animation: bool=False, online_plot: bool=False, experiments: bool=False) -> tuple[dict, dict]:
         """
         Run the methods simulation.
         """
@@ -174,6 +176,7 @@ class ControlLogic:
                 if self.plot.current_time + 2 == self.current_time:
                     self.plot.current_time = self.current_time
                     self.plot.data = self.schedule_as_dict(hierarchy=True)
+                    # self.plot.data = self.job.__dict__
                     self.plot.save_data()
         logging.info('__________FINAL SCHEDULE___________')
         self.job.__str__()
@@ -190,14 +193,14 @@ class ControlLogic:
             statistics['solver'] = self.solving_method.get_statistics()
             return self.output_data, statistics
 
-    def schedule_as_dict(self, hierarchy=False):
+    def schedule_as_dict(self, hierarchy: bool=False) -> dict[str, list[Task]]:
         """
         Returns the current schedule as a dictionary.
         """
         if hierarchy:
             output = {'Human': [], 'Robot': []}
             for task in self.job.task_sequence:
-                output[task.agent].append(task.as_dict())
+                output[task.agent].append(task.dict())
         else:
             output = {
                 "Status": [],

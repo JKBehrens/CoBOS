@@ -1,5 +1,3 @@
-import copy
-
 import numpy as np
 from control.agents import Agent
 from control.jobs import Job

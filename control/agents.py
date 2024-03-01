@@ -5,8 +5,10 @@
     @contact: marina.ionova@cvut.cz
 """
 from control.agent_and_task_states import AgentState, TaskState
+from control.jobs import Job, Task
 from simulation.sim import Sim
 import logging
+
 class Agent(Sim):
     """
     Represents an agent in the simulation.
@@ -92,7 +94,7 @@ class Agent(Sim):
             self._handle_accepted_task(task, job, current_time, coworker)
             self.state = AgentState.PREPARATION
 
-    def _handle_accepted_task(self, task, job, current_time, coworker):
+    def _handle_accepted_task(self, task:Task, job: Job, current_time: int, coworker: "Agent"):
         coworker_task_execution = coworker.task_execution.get(coworker.name)
         self.task_execution[coworker.name] = coworker_task_execution
 
@@ -100,12 +102,12 @@ class Agent(Sim):
         self.set_task_end(self, current_time)
         job.in_progress_tasks.append(task.id)
 
-        logging.info(f'{task.agent} is doing the task {task.id}. Place object {task.action["Object"]}'
-                     f' to {task.action["Place"]}. TIME {current_time}')
+        logging.info(f'{task.agent} is doing the task {task.id}. Place object {task.action.Object}'
+                     f' to {task.action.Place}. TIME {current_time}')
 
-    def _handle_rejected_task(self, task, current_time):
-        logging.info(f'Human rejects the task {task.id}. Place object {task.action["Object"]} '
-                     f'to {task.action["Place"]}. TIME {current_time}')
+    def _handle_rejected_task(self, task: Task, current_time: int):
+        logging.info(f'Human rejects the task {task.id}. Place object {task.action.Object} '
+                     f'to {task.action.Place}. TIME {current_time}')
         self.rejection_tasks.append([task.id, current_time])
 
     def get_feedback(self, current_time, **kwargs):

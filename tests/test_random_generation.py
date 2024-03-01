@@ -6,7 +6,7 @@ import numpy as np
 
 
 def test_randon_number_gen():
-    task_case = '4'
+    task_case = 4
     seed = 7
 
     job = Job(task_case, seed=seed)
@@ -98,7 +98,7 @@ def test_random_number_in_function():
 
 
 def test_schedule():
-    task_case = '5'
+    task_case = 5
     seed = 7
 
     job = Job(task_case, seed=seed)

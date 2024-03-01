@@ -7,7 +7,7 @@ import copy
 
 def test_model_invalid():
     METHOD = OverlapSchedule
-    case = '0'
+    case = 0
     distribution_seed = 3
     sim_seed = 0
     schedule_seed = 0
@@ -29,7 +29,7 @@ def test_model_invalid():
 
 def test_case():
     METHOD = OverlapSchedule
-    case = '5'
+    case = 5
     distribution_seed = 3
     sim_seed = 0
     schedule_seed = 0
@@ -37,7 +37,7 @@ def test_case():
     job = Job(case, seed=distribution_seed)
 
     agent_names = ["Human", "Robot"]
-    agents: list(Agent) = []
+    agents: list[Agent] = []
     for agent_name in agent_names:
         agents.append(Agent(name=agent_name, job=copy.deepcopy(job), seed=sim_seed, answer_seed=answer_seed))
 
