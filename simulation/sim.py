@@ -4,7 +4,9 @@
     @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
     @contact: marina.ionova@cvut.cz
 """
+import copy
 from typing import Optional
+from control.jobs import Job
 from simulation.task_execution_time_const import get_approximated_task_duration
 from control.agent_and_task_states import AgentState
 from numpy.random import Generator
@@ -25,7 +27,7 @@ class Sim:
     """
     def __init__(self, agent_name, job, seed, **kwargs):
         self.agent_name = agent_name
-        self.job = job
+        self.job: Job = job
         self.agent_list = ['Human', 'Robot']
         self.task_duration = {agent: {} for agent in self.agent_list}
         self.prob = None
@@ -39,9 +41,39 @@ class Sim:
 
         answer_seed = kwargs.get('answer_seed', None)
         self.human_answer = self.sample_human_response(answer_seed)
+        self.task_acceptance: dict[int, bool] = dict(
+            zip(
+                self.human_answer["execute_task"].keys(),
+                [v[0] for v in self.human_answer["execute_task"].values()],
+            )
+        )
+
 
         self.response_time = []
         self.set_response_time()
+
+    def _get_deterministic_job(self) -> Job:
+        """returns a deterministic version of the job. All universal tasks that are rejected 
+        will be converted to tasks for the other agent(s).
+        Task durations are fixed.
+
+        Returns:
+            Job: Job with only true universal tasks
+        """
+        out_job: Job = copy.deepcopy(self.job)
+        for task in out_job.task_sequence:
+            if task.universal and self.task_acceptance[task.id]:
+                task.rejection_prob = 0.0
+            elif task.universal and not self.task_acceptance[task.id]:
+                task.agent = self.agent_list.copy()
+                task.agent.remove(self.agent_name)
+                task.universal = False
+                task.rejection_prob = 0.0
+            else:
+                # print(task)
+                task.rejection_prob = 0.0
+
+        return out_job
 
     def set_tasks_duration(self, **kwargs):
         for task in self.job.task_sequence:
