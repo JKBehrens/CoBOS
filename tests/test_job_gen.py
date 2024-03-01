@@ -13,8 +13,6 @@ def test_job_gen():
     assert isinstance(job.__str__(), str)
     assert 0.0 == job.progress()
 
-    job.sample()
-
 
 def test_job_sampling():
     case = 5
