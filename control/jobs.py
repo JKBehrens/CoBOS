@@ -37,11 +37,17 @@ class Job:
         """
         logging.info("Task list")
         logging.info("____________________________")
+        s = ""
         for agent in self.agents:
             for task in self.task_sequence:
                 if task.agent == agent:
-                    task.__str__()
+                    s += task.__str__() + "\n"
         logging.info("____________________________")
+
+        return s
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
     def progress(self):
         """
@@ -139,13 +145,16 @@ class Task:
         :rtype: str
         """
         try:
-            logging.info(f"ID: {self.id}, agent: {self.agent}, status: {TaskState(self.state).name}, "
-                         f"task action: {self.action}, conditions: {self.conditions}, universal: {self.universal}, "
-                         f"start: {self.start}, finish: {self.finish}")
+            s1 = "ID: {self.id}, agent: {self.agent}, status: {TaskState(self.state).name}, " + \
+                f"task action: {self.action}, conditions: {self.conditions}, universal: {self.universal}, " + \
+                f"start: {self.start}, finish: {self.finish}"
+            logging.info(s1)
         except ValueError:
-            logging.info(f"ID: {self.id}, agent: {self.agent}, state: {self.state}, "
-                         f"task action: {self.action}, conditions: {self.conditions}, universal: {self.universal}, "
-                         f"start: {self.start}, finish: {self.finish}")
+            s1 = f"ID: {self.id}, agent: {self.agent}, state: {self.state}, " + \
+                    f"task action: {self.action}, conditions: {self.conditions}, universal: {self.universal}, " + \
+                    f"start: {self.start}, finish: {self.finish}"
+            logging.info(s1)
+        return s1
 
     def progress(self, current_time, duration):
         """
