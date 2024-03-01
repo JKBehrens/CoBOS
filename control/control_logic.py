@@ -37,38 +37,11 @@ class ControlLogic:
         self.solving_method = method
         self.available_tasks = []
         self.output_data = []
+        self.decision_making_duration = []
 
-        self.distribution_seed = kwargs.get('distribution_seed', 0)
-        self.sim_seed = kwargs.get('sim_seed', 0)
-        self.schedule_seed = kwargs.get('schedule_seed', 0)
-
-        # self.set_schedule(kwargs)
-
-        # self.plot = Vis(horizon=self.solving_method.horizon)
         self.plot = None
         if self.method != RandomAllocation and self.method != MaxDuration:
             self.job.predicted_makespan = self.job.get_current_makespan()
-        self.set_task_status()
-
-
-
-    def set_schedule(self, kwargs):
-        """
-        Sets the schedule for task execution by agents.
-        """
-        self.solving_method = self.method(self.job, seed=self.schedule_seed)
-        done = self.solving_method.prepare()
-        if not done:
-            logging.error(f'Solving method preparation failed. Case {self.case}. Distribution seed {self.distribution_seed}, sim seed {self.sim_seed}, '
-                          f'schedule seed {self.schedule_seed}')
-            self.job.__str__()
-            exit()
-        else:
-            for agent_name in self.agent_list:
-                answer_seed = kwargs.get('answer_seed', None)
-                self.agents.append(Agent(name=agent_name, job=copy.deepcopy(self.job), seed=self.sim_seed, answer_seed=answer_seed))
-            if self.method != RandomAllocation and self.method != MaxDuration:
-                self.job.predicted_makespan = self.job.get_current_makespan()
         self.set_task_status()
 
     def set_task_status(self):
@@ -98,33 +71,7 @@ class ControlLogic:
 
         return output
 
-    def shift_schedule(self):
-        """
-       Shifts the schedule forward by one time unit if a task has been completed.
-       """
-        for task in self.job.task_sequence:
-        # for agent in self.agents:
-            shift = False
-            # for task in agent.tasks:
-            if task.state == TaskState.InProgress and task.finish[0] < self.current_time:
-                task.finish[0] = self.current_time
-                shift = True
-            elif shift and (task.state == TaskState.UNAVAILABLE or task.state == TaskState.InProgress):
-                task.start += 1
-                task.finish[0] += 1
-
-    def task_completed(self, agent, time_info):
-        """
-        Updates the status of a completed task and logs the completion.
-        """
-        # agent.finish_task(time_info)
-        self.job.refresh_completed_task_list(agent.current_task.id)
-        logging.info(
-            f'TIME {self.current_time}. {agent.name} completed the task {agent.current_task.id}. Progress {self.job.progress()}.')
-        # if self.plot:
-        #     self.plot.update_info(agent)
-
-    def run(self, animation=False, online_plot=False, experiments=False):
+    def run(self, animation=False, online_plot=False, experiments=True, save2file=False):
         """
         Run the methods simulation.
         """
@@ -145,7 +92,10 @@ class ControlLogic:
             observation_data = self.get_observation_data()
 
             # ask planner to decide about next actions for robot and human
+            decision_making_start = time.time()
             selected_task = self.solving_method.decide(observation_data, self.current_time)
+            self.decision_making_duration.append(time.time()-decision_making_start)
+
             for agent in self.agents:
                 if agent.state == AgentState.REJECTION:
                     agent.state = AgentState.IDLE
@@ -160,7 +110,6 @@ class ControlLogic:
                     self.plot.update_info(agent, start=True)
 
             self.current_time += 1
-            # self.shift_schedule()
 
             if online_plot:
                 self.plot.current_time = self.current_time
@@ -178,13 +127,17 @@ class ControlLogic:
         logging.info('__________FINAL SCHEDULE___________')
         self.job.__str__()
         logging.info('___________________________________')
-        logging.info(f'SIMULATION TOTAL TIME: {time.time() - self.start_time}')
+        sim_time = time.time() - self.start_time
+        logging.info(f'SIMULATION TOTAL TIME: {sim_time}')
         self.output_data.append(self.schedule_as_dict(hierarchy=True))
-        with open(initial_and_final_schedule_save_file_name, 'w') as f:
-            json.dump(self.output_data, f, indent=4)
+        if save2file:
+            with open(initial_and_final_schedule_save_file_name, 'w') as f:
+                json.dump(self.output_data, f, indent=4)
 
         if experiments:
             statistics = {}
+            statistics['sim_time'] = sim_time
+            statistics['decision_making_duration'] = self.decision_making_duration
             statistics['makespan'] = [self.job.predicted_makespan, self.job.get_current_makespan()]
             statistics['rejection tasks'] = self.agents[1].rejection_tasks
             statistics['solver'] = self.solving_method.get_statistics()
