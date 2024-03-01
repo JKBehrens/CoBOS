@@ -25,6 +25,12 @@ class Agent(Sim):
         self.delay = 0
         self.waiting = 0
 
+    def __str__(self) -> str:
+        return f"{self.name} is {self.print_current_state()}"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def set_start_task(self, task, start):
         """
         Sets the start time of the current task.
@@ -49,7 +55,7 @@ class Agent(Sim):
         self.current_task.state = TaskState.COMPLETED
         self.waiting = 0
 
-    def print_current_state(self):
+    def print_current_state(self) -> str:
         """
         Returns the current state of the agent.
 
