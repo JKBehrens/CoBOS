@@ -116,6 +116,20 @@ class Job:
         if matching_task:
             matching_task.agent = new_agent_name
 
+    def validate(self):
+        for task in self.task_sequence:
+            start = task.finish[0] - task.finish[2] - task.finish[3]
+            ends = []
+            for dep in task.conditions:
+                ends.append(self.task_sequence[dep].finish[0] - self.task_sequence[dep].finish[3])
+
+            if len(ends) == 0:
+                continue
+            assert start >= max(ends), f"dependency graph violation for task {task.id}."
+        logging.info("The solution is valid. No dependency violation")
+        return True
+
+
 class Task:
     """
     Represents a task to be completed.
