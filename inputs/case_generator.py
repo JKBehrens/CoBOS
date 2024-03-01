@@ -1,4 +1,3 @@
-from simulation import sim_param_path
 from typing import Optional
 from inputs.config import n, mean_min, mean_max, deviation_min, deviation_max, allocation_weights
 import numpy as np
