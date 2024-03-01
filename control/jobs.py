@@ -173,7 +173,7 @@ class Task:
     def __repr__(self) -> str:
         return self.__str__()
 
-    def progress(self, current_time, duration):
+    def progress(self, current_time: int, duration:int) -> float:
         """
         Calculates and returns the progress of the task as a percentage.
 
@@ -184,7 +184,9 @@ class Task:
         :return: Progress of task as a percentage.
         :rtype: float
         """
-        return round((current_time - self.start / float(duration)) * 100, 2)
+        if self.start is None:
+            return 0.0
+        return round(number=(current_time - self.start / float(duration)) * 100, ndigits=2)
 
     def as_dict(self):
         """
