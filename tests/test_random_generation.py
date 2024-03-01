@@ -1,12 +1,12 @@
 from control.jobs import Job
 from simulation.sim import Sim
 from typing import Optional
-from methods.scheduling_split_tasks import Schedule
+from methods import Schedule, OverlapSchedule
 import numpy as np
 
 
 def test_randon_number_gen():
-    task_case = '1'
+    task_case = '4'
     seed = 7
 
     job = Job(task_case, seed=seed)
@@ -24,6 +24,10 @@ def test_randon_number_gen():
     array4 = np.array(list(h_agent_2.task_duration['Robot'].values()), dtype=float)
     assert np.allclose(array3, array4)
 
+    rejection_prob1 = np.array([task.rejection_prob for task in job.task_sequence], dtype=float)
+    job = Job(task_case, seed=seed)
+    rejection_prob2 = np.array([task.rejection_prob for task in job.task_sequence], dtype=float)
+    assert np.allclose(rejection_prob1, rejection_prob2)
 
     # schedule = schedule_model.set_schedule(seed=seed, fail_prob=fail_prob, second_mode=second_mode, scale=scale)
     #
@@ -99,10 +103,10 @@ def test_schedule():
 
     job = Job(task_case, seed=seed)
 
-    schedule_model1 = Schedule(job, seed=seed)
-    output1 = schedule_model1.set_schedule()
+    schedule_model1 = OverlapSchedule(job, seed=seed)
+    output1, _ = schedule_model1.prepare()
 
-    schedule_model2 = Schedule(job, seed=seed)
-    output2 = schedule_model2.set_schedule()
+    schedule_model2 = OverlapSchedule(job, seed=seed)
+    output2, _ = schedule_model2.prepare()
 
-    assert output1["Human"][0].id == output2["Human"][0].id
+    assert output1 == output2
