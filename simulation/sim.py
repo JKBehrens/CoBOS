@@ -27,7 +27,7 @@ class Sim:
     """
     def __init__(self, agent_name, job, seed, **kwargs):
         self.agent_name = agent_name
-        self.job: Job = job
+        self.job: Job = copy.deepcopy(job)
         self.agent_list = ['Human', 'Robot']
         self.task_duration = {agent: {} for agent in self.agent_list}
         self.prob = None
@@ -103,7 +103,7 @@ class Sim:
         n = self.job.get_universal_task_number()
         self.response_time = self.rand.integers(response_time_min, response_time_max, size=n)
 
-    def set_task_end(self, agent, job, current_time):
+    def set_task_end(self, agent, current_time):
         """
         Setting the end time of a task for a given agent in a job.  If there is a dependent task
         that overlaps with the current task, it adjusts the duration to account for the overlapping time.
@@ -151,7 +151,7 @@ class Sim:
         """
         return self.human_answer[question_type][task.id]
 
-    def get_feedback_from_robot(self, task, job, current_time):
+    def get_feedback_from_robot(self, task, current_time):
         """
         Checks the status of a task being executed by a robot agent.
 
@@ -193,7 +193,7 @@ class Sim:
                 return AgentState.DONE, time_info
         return AgentState.IDLE, -1
 
-    def check_human_task(self, task, job, current_time):
+    def check_human_task(self, current_time):
         """
         Checks the status of a task being executed by a human agent.
 

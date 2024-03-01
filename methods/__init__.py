@@ -3,3 +3,4 @@ from methods.nooverlap_method import NoOverlapSchedule
 from methods.overlap_method import OverlapSchedule
 from methods.random_task_allocation import RandomAllocation
 from methods.max_duration import MaxDuration
+from methods.solver import Solver

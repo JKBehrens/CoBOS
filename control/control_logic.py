@@ -5,7 +5,7 @@
     @contact: marina.ionova@cvut.cz
 """
 from visualization import Vis, initial_and_final_schedule_save_file_name, Web_vis
-from methods import Schedule, NoOverlapSchedule, OverlapSchedule, RandomAllocation, MaxDuration
+from methods import Schedule, NoOverlapSchedule, OverlapSchedule, RandomAllocation, MaxDuration, Solver
 from control.agent_and_task_states import AgentState, TaskState
 from control.agents import Agent
 from control.jobs import Job
@@ -15,6 +15,9 @@ import json
 import time
 import copy
 
+
+
+
 class ControlLogic:
     """
     Class that controls the methods and execution of tasks by agents.
@@ -22,15 +25,16 @@ class ControlLogic:
     :param case: Case to be executed.
     :type case: str
     """
-    def __init__(self, method, case, **kwargs):
+    def __init__(self, job: Job, agents: list[Agent], method: Solver, **kwargs):
         self.method = method
-        self.case = case
+        self.job = job
+
         self.agent_list = ['Robot', 'Human']
-        self.agents = []
+        self.agents: list[Agent] = agents
         self.current_time = 0
         self.start_time = time.time()
         self.task_finish_time = []
-        self.solving_method = None
+        self.solving_method = method
         self.available_tasks = []
         self.output_data = []
 
@@ -38,11 +42,15 @@ class ControlLogic:
         self.sim_seed = kwargs.get('sim_seed', 0)
         self.schedule_seed = kwargs.get('schedule_seed', 0)
 
-        self.job = kwargs.get('job', Job(self.case, seed=self.distribution_seed))
-        self.set_schedule(kwargs)
+        # self.set_schedule(kwargs)
 
         # self.plot = Vis(horizon=self.solving_method.horizon)
         self.plot = None
+        if self.method != RandomAllocation and self.method != MaxDuration:
+            self.job.predicted_makespan = self.job.get_current_makespan()
+        self.set_task_status()
+
+
 
     def set_schedule(self, kwargs):
         """
@@ -82,7 +90,7 @@ class ControlLogic:
                 agent.state = AgentState.IDLE
             elif not agent.state == AgentState.IDLE:
                 coworker = self.agents[self.agents.index(agent) - 1]
-                agent.get_feedback(self.job, self.current_time, coworker=coworker)
+                agent.get_feedback(self.current_time, coworker=coworker)
             try:
                 output.append([agent.name, agent.state, agent.current_task, np.array(agent.rejection_tasks)[:, 0]])
             except IndexError:
@@ -214,3 +222,7 @@ class ControlLogic:
                     output['Universal'].append(copy.deepcopy(task['Universal']))
                     output['Agent'].append(copy.deepcopy(task['Agent']))
         return output
+
+
+def make_control_logic(job: Job, agents: list[Agent], method: Solver) -> ControlLogic:
+    pass

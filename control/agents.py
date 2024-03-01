@@ -97,7 +97,7 @@ class Agent(Sim):
         self.task_execution[coworker.name] = coworker_task_execution
 
         self.set_start_task(task, current_time)
-        self.set_task_end(self, job, current_time)
+        self.set_task_end(self, current_time)
         job.in_progress_tasks.append(task.id)
 
         logging.info(f'{task.agent} is doing the task {task.id}. Place object {task.action["Object"]}'
@@ -108,7 +108,7 @@ class Agent(Sim):
                      f'to {task.action["Place"]}. TIME {current_time}')
         self.rejection_tasks.append([task.id, current_time])
 
-    def get_feedback(self, job, current_time, **kwargs):
+    def get_feedback(self, current_time, **kwargs):
         """
         Sends feedback from an agent.
 
@@ -124,10 +124,10 @@ class Agent(Sim):
         coworker = kwargs['coworker']
         self.task_execution[coworker.name] = coworker.task_execution[coworker.name]
         if self.name == 'Robot':
-            state, time_info = self.get_feedback_from_robot(self.current_task, job, current_time)
+            state, time_info = self.get_feedback_from_robot(self.current_task, current_time)
             self.state = state
         else:
-            state, time_info = self.check_human_task(self.current_task, job, current_time)
+            state, time_info = self.check_human_task(current_time)
             self.state = state
 
         if self.state == AgentState.DONE:
