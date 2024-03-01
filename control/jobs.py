@@ -125,17 +125,17 @@ class Task:
     """
 
     def __init__(self, task_description):
-        self.id = task_description['ID']
-        self.action = {'Object': task_description['Object'], 'Place': task_description['Place']}
+        self.id: int = task_description['ID']
+        self.action: dict[str, str] = {'Object': task_description['Object'], 'Place': task_description['Place']}
         self.state = None
-        self.conditions = task_description['Conditions']
-        self.universal = task_description['Agent'] == 'Both'
-        self.agent = task_description['Agent']
+        self.conditions: list[int] = task_description['Conditions']
+        self.universal: bool = task_description['Agent'] == 'Both'
+        self.agent: str = task_description['Agent']
         self.start = None
         self.finish = None
 
-        self.distribution = task_description["Distribution"]
-        self.rejection_prob = task_description["Rejection_prob"]
+        self.distribution: list[list[np.ndarray]] = task_description["Distribution"]
+        self.rejection_prob: float = task_description["Rejection_prob"]
 
     def __str__(self):
         """
@@ -155,6 +155,9 @@ class Task:
                     f"start: {self.start}, finish: {self.finish}"
             logging.info(s1)
         return s1
+    
+    def __repr__(self) -> str:
+        return self.__str__()
 
     def progress(self, current_time, duration):
         """
