@@ -3,6 +3,7 @@ from control.jobs import Job
 from control.agents import Agent
 from methods.overlap_method import OverlapSchedule
 import copy
+from exp_scripts.run_base_scheduling_exps import run_exp
 
 
 def test_model_invalid():
@@ -17,14 +18,20 @@ def test_model_invalid():
     agent_names = ["Human", "Robot"]
     agents: list(Agent) = []
     for agent_name in agent_names:
-        agents.append(Agent(name=agent_name, job=copy.deepcopy(job), seed=sim_seed, answer_seed=answer_seed))
+        agents.append(
+            Agent(
+                name=agent_name,
+                job=copy.deepcopy(job),
+                seed=sim_seed,
+                answer_seed=answer_seed,
+            )
+        )
 
     solving_method = METHOD(job=job, seed=schedule_seed)
     solving_method.prepare()
 
     execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
     execute_job.run(animation=True)
-
 
 
 def test_case():
@@ -39,7 +46,14 @@ def test_case():
     agent_names = ["Human", "Robot"]
     agents: list[Agent] = []
     for agent_name in agent_names:
-        agents.append(Agent(name=agent_name, job=copy.deepcopy(job), seed=sim_seed, answer_seed=answer_seed))
+        agents.append(
+            Agent(
+                name=agent_name,
+                job=copy.deepcopy(job),
+                seed=sim_seed,
+                answer_seed=answer_seed,
+            )
+        )
 
     solving_method = METHOD(job=job, seed=schedule_seed)
     solving_method.prepare()
@@ -52,7 +66,14 @@ def test_case():
 
     agents: list(Agent) = []
     for agent_name in agent_names:
-        agents.append(Agent(name=agent_name, job=copy.deepcopy(job), seed=sim_seed, answer_seed=answer_seed))
+        agents.append(
+            Agent(
+                name=agent_name,
+                job=copy.deepcopy(job),
+                seed=sim_seed,
+                answer_seed=answer_seed,
+            )
+        )
 
     solving_method = METHOD(job=job, seed=schedule_seed)
     solving_method.prepare()
