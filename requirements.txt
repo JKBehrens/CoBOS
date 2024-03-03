@@ -7,3 +7,4 @@ streamlit>=1.26.0
 altair>=4.2.2
 graphviz
 pytest
+pydantic<2
