@@ -25,7 +25,7 @@ class Job:
         self.case = case
         self.seed = seed
         from inputs import case_generator
-        self.job_description = case_generator.set_input(self.case, seed)
+        self.job_description = case_generator.set_input(self.case, self.seed)
         self.task_sequence: List[Task] = self.job_description
         self.in_progress_tasks = []
         self.completed_tasks = []
@@ -119,17 +119,26 @@ class Job:
             matching_task.agent = new_agent_name
 
     def validate(self):
+        valid = True
+        messages: list[str] = []
         for task in self.task_sequence:
-            start = task.finish[0] - task.finish[2] - task.finish[3]
-            ends = []
+            start: int = task.finish[0] - task.finish[2] - task.finish[3]
+            ends: list[int] = []
             for dep in task.conditions:
                 ends.append(self.task_sequence[dep].finish[0] - self.task_sequence[dep].finish[3])
 
             if len(ends) == 0:
                 continue
-            assert start >= max(ends), f"dependency graph violation for task {task.id}."
-        logging.info("The solution is valid. No dependency violation")
-        return True
+            if not start >= max(ends):
+                valid =False
+                messages.append(f"dependency graph violation for task {task.id}.")
+        if valid:
+            logging.info("The solution is valid. No dependency violation")
+            return True
+        else:
+            for msg in messages:
+                logging.error(msg)
+        return valid
 
 
 class Action(BaseModel):
