@@ -180,3 +180,4 @@ simulation/config.json
 visualization/data_for_visualization/
 img/*
 exp_scripts/experiments/
+profile.json
