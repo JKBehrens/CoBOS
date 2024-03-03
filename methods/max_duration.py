@@ -1,4 +1,5 @@
 from control.agent_and_task_states import AgentState, TaskState
+from control.jobs import Job
 from methods.solver import Solver
 import numpy as np
 
@@ -7,10 +8,9 @@ START_AVAILABLE_TASKS = True
 
 class MaxDuration(Solver):
 
-    def __init__(self, job, seed):
-        super().__init__(job)
-        self.horizon = None
-        self.rand = np.random.default_rng(seed=seed)
+    def __init__(self, job: Job, seed: int):
+        super().__init__(job, seed=seed)
+        self.rand = np.random.default_rng(seed=self.seed)
         self.task_duration = self.job.task_duration(rand_gen=self.rand)
 
 
