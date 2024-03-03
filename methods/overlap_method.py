@@ -37,6 +37,10 @@ class OverlapSchedule(Schedule):
         self.no_overlap_execution_intervals = []
         self.no_overlap_execution_constraint = None
 
+    @classmethod
+    def name(cls) -> str:
+        return str(cls).capitalize().split(".")[-1].split("'>")[0]
+
     def set_variables(self):
         """
         Sets constraints for schedule
@@ -190,13 +194,13 @@ class OverlapSchedule(Schedule):
 
         elif self.status == cp_model.INFEASIBLE:
             logging.error(self.model.Validate())
-            logging.error("No solution found")
+            logging.error(f"No solution found. case {self.job.case} \nsolver_seed {self.seed}, dist_seed {self.job.seed}")
             # self.constraint_debugger()
-            exit(2)
+            raise ValueError(f"case {self.job.case}, solver_seed {self.seed}, dist_seed {self.job.seed}")
         else:
             logging.error(self.model.Validate())
             logging.error(f"Something is wrong, status {self.solver.StatusName(self.status)} and the log of the solve")
-            exit(2)
+            raise ValueError(f"case {self.job.case}, solver_seed {self.seed}, dist_seed {self.job.seed}")
 
         makespan = 0
         output = {'Human': [], 'Robot': []}
@@ -418,7 +422,12 @@ class OverlapSchedule(Schedule):
                     self.job.__str__()
 
                     logging.error(
-                        f"Something is wrong, status {solver.StatusName(status)} and the log of the solve")
+                        f"Something is wrong in FIND_TASK, status {solver.StatusName(status)} and the log of the solve")
+                    logging.error(self.job.__str__())
+                    logging.error(self.model.Validate())
+                    logging.error(f"Something is wrong, status {self.solver.StatusName(self.status)} and the log of the solve")
+                    raise ValueError(f"case {self.job.case}, solver_seed {self.seed}, dist_seed {self.job.seed}")
+
                     exit(2)
         return None
 

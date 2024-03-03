@@ -1,13 +1,19 @@
 from abc import ABC, abstractmethod
-from control.agent_and_task_states import AgentState, TaskState
+from control.agent_and_task_states import TaskState
+from control.jobs import Job
 
 
 class Solver(ABC):
 
     @abstractmethod
-    def __init__(self, job):
+    def __init__(self, job:Job, seed:int):
         self.job = job
+        self.seed = seed
         self.horizon = None
+
+    @classmethod
+    def name(cls) -> str:
+        return str(cls.__class__)
 
     @abstractmethod
     def prepare(self):

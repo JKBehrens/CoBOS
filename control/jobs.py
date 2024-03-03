@@ -23,6 +23,7 @@ class Job:
 
     def __init__(self, case: int, seed: int):
         self.case = case
+        self.seed = seed
         from inputs import case_generator
         self.job_description = case_generator.set_input(self.case, seed)
         self.task_sequence: List[Task] = self.job_description

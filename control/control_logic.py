@@ -95,7 +95,13 @@ class ControlLogic:
 
             # ask planner to decide about next actions for robot and human
             decision_making_start = time.time()
-            selected_task = self.solving_method.decide(observation_data, self.current_time)
+            try:
+                selected_task = self.solving_method.decide(observation_data, self.current_time)
+            except ValueError as e:
+                msg = f"{e} \nsim_seed {self.agents[0].seed}"
+                logging.error(msg=msg)
+                break
+                # raise ValueError(msg)
             self.decision_making_duration.append(time.time()-decision_making_start)
 
             for agent in self.agents:

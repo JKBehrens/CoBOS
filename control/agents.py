@@ -18,7 +18,7 @@ class Agent(Sim):
     :param tasks: List of tasks assigned to the agent.
     :type tasks: list
     """
-    def __init__(self, name=None, job=None, seed=0, **kwargs):
+    def __init__(self, name=None, job=None, seed:int=0, **kwargs):
         super().__init__(name, job, seed, **kwargs)
         self.name = name
         self.state = AgentState.IDLE
