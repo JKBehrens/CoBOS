@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import re
 import json
 import zipfile
@@ -37,8 +38,8 @@ def set_density(ax, data, first=False):
     return ax
 
 
-def makaspan_histogram(extracted_files: list, all_together=False, folder_path='', save_path=None):
-
+def makaspan_histogram(extracted_files: list[Path], all_together: bool=False, save_path: Path|None=None):
+    folder_path = extracted_files[0].parent
     if all_together:
         makespan = np.array([])
         makespan_same_seed = np.array([])
@@ -61,13 +62,25 @@ def makaspan_histogram(extracted_files: list, all_together=False, folder_path=''
         makespan_same_seed = [[] for _ in range(6)]
         makespan_different_seed = [[] for _ in range(6)]
         for file_name in extracted_files:
-            with open(folder_path+'/'+file_name) as json_file:
-                data = json.load(json_file)
+            file_stem = file_name.stem
+            try:
+                with open(file_name) as json_file:
+                    data = json.load(json_file)
+            except json.decoder.JSONDecodeError as e:
+                print(e)
+                print(file_name)
+                continue
+
             # Use regular expression to extract the number of the case
-            case_number = int(re.search(r'case_(\d+)', file_name).group(1))
-            schedule_seed = int(re.search(r'schedule_(\d+)', file_name).group(1))
+            case_number = int(re.search(r'case_(\d+)', file_stem).group(1))
+            schedule_seed = int(re.search(r'schedule_(\d+)', file_stem).group(1))
             if schedule_seed == 0:
-                makespan_same_seed[case_number-1].append(data['statistics']['makespan'][1])
+                try:
+                    makespan_same_seed[case_number-1].append(data['statistics']['makespan'][1])
+                except KeyError as e:
+                    print(e)
+                    print(file_name)
+                    continue
             else:
                 makespan_different_seed[case_number-1].append(data['statistics']['makespan'][1])
             makespan[case_number-1].append(data['statistics']['makespan'][0])
