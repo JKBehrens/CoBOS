@@ -268,6 +268,11 @@ class OverlapSchedule(Schedule):
         """
         for i, task in enumerate(self.job.task_sequence):
             if task.state in [TaskState.InProgress, TaskState.COMPLETED]:
+                idx = self.allowedAgents[task.id].Index()
+                self.model.Proto().constraints[idx].Clear()
+                self.allowedAgents[task.id] = self.model.AddAllowedAssignments(
+                    variables=[self.task_assignment_var[task.id]],
+                    tuples_list=[tuple([self.agent_mapping[task.agent]])])
 
                 if task.state == TaskState.COMPLETED:
                     if task.id in self.tasks_with_final_var:
