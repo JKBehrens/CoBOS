@@ -167,7 +167,7 @@ def set_input(case: int, seed: int) -> list[Task]:
             task_description = {}
             task_description["id"] = ID_counter
             try:
-                task_description["action"] = {"Object": cubes_sequence[ID_counter]}
+                task_description["action"] = {"object": cubes_sequence[ID_counter]}
             except IndexError as e:
                 return job_description
 
@@ -179,7 +179,7 @@ def set_input(case: int, seed: int) -> list[Task]:
             else:
                 task_description["agent"] = "Both"
                 task_description["universal"] = True
-            task_description["action"]["Place"] = x + y
+            task_description["action"]["place"] = x + y
             if case in (1, 4):
                 task_description["conditions"] = []
             elif case == 0:

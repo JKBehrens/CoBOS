@@ -130,7 +130,8 @@ class Sim:
                     self.task_execution[coworker_name]['Duration'][0] \
                     - self.task_execution[coworker_name]['Duration'][3] - current_time
             logging.debug(f'overlapping:{overlapping}, dependent_task.start :{self.task_execution[coworker_name]["Start"]},'
-                  f'duration: {self.task_execution["Human"]["Duration"]}, time: {current_time}')
+                  f'duration of dependent task: {self.task_execution["Human"]["Duration"]}, time: {current_time},'
+                          f' sampled duration of task: {self.task_duration[agent.name][agent.current_task.id]}')
             if overlapping > self.task_execution[agent.name]['Duration'][1]:
                 self.task_execution[agent.name]['Duration'][0] += overlapping - \
                                                                   self.task_execution[agent.name]['Duration'][1]

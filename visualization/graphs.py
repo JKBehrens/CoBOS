@@ -1,7 +1,7 @@
 """
     Visualization class for Gantt chart and dependency graph
 
-    @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
+    @author: Marina Ionova, student of Cybernetics and Robotics at the CTu in Prague
     @contact: marina.ionova@cvut.cz
 """
 import pandas as pd
@@ -43,11 +43,11 @@ class MulticolorPatchHandler(object):
         return patch
 
 
-def get_task_from_id(ID, data):
+def get_task_from_id(id, data):
     for agent in data:
         for task in data[agent]:
-            if task['ID'] == ID:
-                return task["Action"]['Place']
+            if task['id'] == id:
+                return task["action"]['place']
     return None
 
 
@@ -81,7 +81,7 @@ class Vis:
         try:
             with open(self.data4video, "w") as json_file:
                 json.dump({}, json_file)
-        except FileNotFoundError as e:
+        except FileNotfoundError as e:
             self.data4video = './..' + self.data4video[1:]
             with open(self.data4video, "w") as json_file:
                 json.dump({}, json_file)
@@ -91,31 +91,31 @@ class Vis:
         self.gnt.set_title(title)
 
         if not reschedule_num:
-            # Setting Y-axis limits
+            # setting Y-axis limits
             self.gnt.set_ylim(0, 13)
-            # Setting ticks on y-axis
+            # setting ticks on y-axis
             self.gnt.set_yticks([1.5, 4.5, 7.5, 10.5])
             # Labelling tickes of y-axis
             self.gnt.set_yticklabels(
                 ['Robot', 'Allocatable\n for robot', 'Allocatable\n for human', 'Human'])
         else:
-            # Setting Y-axis limits
+            # setting Y-axis limits
             self.gnt.set_ylim(0, 16.5)
-            # Setting ticks on y-axis
+            # setting ticks on y-axis
             self.gnt.set_yticks([1.5, 4.5, 7.5, 10.5, 14, 15.5])
             # Labelling tickes of y-axis
             self.gnt.set_yticklabels(
                 ['Robot', 'Allocatable\n for robot', 'Allocatable\n for human',
                  'Human', 'Rescheduling', 'Evaluation'])
 
-        # Setting X-axis limits
+        # setting X-axis limits
         if lim:
             self.gnt.set_xlim(0, lim+5)
 
-        # Setting labels for x-axis and y-axis
+        # setting labels for x-axis and y-axis
         self.gnt.set_xlabel('Time [s]')
 
-        # Setting graph attribute
+        # setting graph attribute
         self.gnt.grid(True)
 
         # ------ choose some colors
@@ -160,15 +160,15 @@ class Vis:
         self.labels.append(mpatches.Patch(color='silver', label='Completed'))
 
     def set_horizon(self, data):
-        # Flatten the nested dictionary to get all "Finish" values
+        # flatten the nested dictionary to get all "finish" values
         finish_time = 0
         for schedule in data:
             for agent in schedule:
                 for task in schedule[agent]:
-                    if task["Finish"][0] > finish_time:
-                        finish_time = task['Finish'][0]
+                    if task["finish"][0] > finish_time:
+                        finish_time = task['finish'][0]
 
-        # Find the maximum "Finish" time
+        # find the maximum "finish" time
         return finish_time
 
     def plot_schedule(self, file_name='', video=False):
@@ -210,35 +210,35 @@ class Vis:
 
             for agent in local_data[i]:
                 for task in local_data[i][agent]:
-                    position_y, task_name_y, action_y = self.y_pos_and_text[task["Universal"]][agent]
+                    position_y, task_name_y, action_y = self.y_pos_and_text[task["universal"]][agent]
 
                     if self.from_file:
-                        if task['Universal']:
+                        if task['universal']:
                             color = ['paleturquoise', 'turquoise', 'lightseagreen']
                         else:
                             color = ['lightsteelblue', 'cornflowerblue', 'royalblue']
 
-                        self.gnt.text(task["Start"] + 0.5, task_name_y, task['ID'], fontsize=9,
+                        self.gnt.text(task["start"] + 0.5, task_name_y, task['id'], fontsize=9,
                                       rotation='horizontal')
-                        preps_duration = task['Finish'][0]-task['Start'] - task['Finish'][2] - task['Finish'][3]
-                        self.gnt.broken_barh([(task['Start'], preps_duration)], [position_y - 1.2, 2.4],
+                        preps_duration = task['finish'][0]-task['start'] - task['finish'][2] - task['finish'][3]
+                        self.gnt.broken_barh([(task['start'], preps_duration)], [position_y - 1.2, 2.4],
                                              facecolors=color[0])
-                        self.gnt.broken_barh([(task['Start']+preps_duration, task['Finish'][2])],
+                        self.gnt.broken_barh([(task['start']+preps_duration, task['finish'][2])],
                                              [position_y - 1.2, 2.4], facecolors=color[1])
-                        self.gnt.broken_barh([(task['Start']+preps_duration+task['Finish'][2], task["Finish"][3])],
+                        self.gnt.broken_barh([(task['start']+preps_duration+task['finish'][2], task["finish"][3])],
                                              [position_y - 1.2, 2.4], facecolors=color[2])
-                        self.gnt.annotate("", xy=((task['Finish'][0]), position_y - 1.3),
-                                          xytext=((task['Finish'][0]), position_y + 1.3),
+                        self.gnt.annotate("", xy=((task['finish'][0]), position_y - 1.3),
+                                          xytext=((task['finish'][0]), position_y + 1.3),
                                           arrowprops=dict(arrowstyle="-", lw=1, color="black"))
                     else:
-                        duration = task['Finish'][0] - task['Start']
-                        color = self.color[task["Status"]]
-                        self.gnt.broken_barh([(task["Start"], duration - 0.2)], [position_y - 1.2, 2.4],
+                        duration = task['finish'][0] - task['start']
+                        color = self.color[task["state"]]
+                        self.gnt.broken_barh([(task["start"], duration - 0.2)], [position_y - 1.2, 2.4],
                                              facecolors=color)
-                        self.gnt.broken_barh([(task['Start'] + duration - 0.2, 0.2)], [position_y - 1.2, 2.4],
+                        self.gnt.broken_barh([(task['start'] + duration - 0.2, 0.2)], [position_y - 1.2, 2.4],
                                              facecolors='black')
 
-                        self.gnt.text(task["Start"] + 0.5, task_name_y, task['ID'], fontsize=9,
+                        self.gnt.text(task["start"] + 0.5, task_name_y, task['id'], fontsize=9,
                                       rotation='horizontal')
 
             if not self.from_file:
@@ -271,18 +271,18 @@ class Vis:
 
     def online_plotting(self):
         data = pd.DataFrame({
-            "Status": ["Completed", "In progress", "Available", "Non available", "Completed",
+            "state": ["Completed", "In progress", "Available", "Non available", "Completed",
                        "In progress", "Available"],
-            "Start": [0, 7, 14, 26, 0, 10, 17],
+            "start": [0, 7, 14, 26, 0, 10, 17],
             "End": [7, 14, 23, 30, 10, 17, 26],
             "Agent": ["Human", "Human", "Human", "Human", "Robot", "Robot", "Robot"]
         })
         bar_chart = alt.Chart(data).mark_bar().encode(
             y="Agent:N",
             # x="sum(Time):O",
-            x=alt.X('Start:Q', title='Time'),
+            x=alt.X('start:Q', title='Time'),
             x2='End:Q',
-            color=alt.Color('Status:N', title='Status',
+            color=alt.Color('state:N', title='state',
                             scale=alt.Scale(
                                 domain=['Completed', 'In progress', 'Available', 'Non available'],
                                 range=['#1f77b4', '#2ca02c', '#ff7f0e', '#d62728']
@@ -303,13 +303,13 @@ class Vis:
         # "Energy Costs By Month"
 
 
-        # if st.button('Say hello'):
+        # if st.button('say hello'):
         #     st.write('Why hello there')
         # else:
         #     st.write('Goodbye')
                 # progress_bar.empty()
 
-        # Streamlit widgets automatically run the script from top to bottom. Since
+        # streamlit widgets automatically run the script from top to bottom. since
         # this button is not connected to any other logic, it just causes a plain
         # rerun.
         # st.button("Re-run")
@@ -340,20 +340,20 @@ class Vis:
 
         G = nx.DiGraph()
         labels = {}
-        status = {None: [], 'UNAVAILABLE': [], 'AVAILABLE': [], 'InProgress': [], 'COMPLETED': []}
+        state = {None: [], -1: [], 0: [], 1: [], 2: []}
         allocability = {True: [], False: []}
         for agent in local_data:
             for task in local_data[agent]:
-                G.add_node(task["Action"]["Place"])
-                status[task["Status"]].append(task["Action"]["Place"])
-                labels[task["Action"]["Place"]] = task['ID']
-                # labels[task["Action"]["Place"]] = task["Action"]['Object']
-                allocability[task['Universal']].append(task['Action']['Place'])
+                G.add_node(task["action"]["place"])
+                state[task["state"]].append(task["action"]["place"])
+                labels[task["action"]["place"]] = task['id']
+                # labels[task["action"]["place"]] = task["action"]['Object']
+                allocability[task['universal']].append(task['action']['place'])
         for agent in local_data:
             for task in local_data[agent]:
-                if task["Conditions"]:
-                    for j in task["Conditions"]:
-                        G.add_edges_from([(get_task_from_id(j, local_data), task["Action"]["Place"])])
+                if task["conditions"]:
+                    for j in task["conditions"]:
+                        G.add_edges_from([(get_task_from_id(j, local_data), task["action"]["place"])])
 
         pos = {'A1': (0, 3), 'B1': (1, 3), 'C1': (2, 3), 'D1': (3, 3),
                "A2": (0, 2), 'B2': (1, 2), 'C2': (2, 2), 'D2': (3, 2),
@@ -372,11 +372,11 @@ class Vis:
             nx.draw_networkx_nodes(G, pos, nodelist=allocability[True], node_color='lightseagreen', node_size=node_size)
         else:
             node_color = ["lightcoral", "lightcoral", "gold", "lightgreen", "silver"]
-            nx.draw_networkx_nodes(G, pos, nodelist=status[None], node_color=node_color[0], node_size=node_size)
-            nx.draw_networkx_nodes(G, pos, nodelist=status[-1], node_color=node_color[1], node_size=node_size)
-            nx.draw_networkx_nodes(G, pos, nodelist=status[0], node_color=node_color[2], node_size=node_size)
-            nx.draw_networkx_nodes(G, pos, nodelist=status[1], node_color=node_color[3], node_size=node_size)
-            nx.draw_networkx_nodes(G, pos, nodelist=status[2], node_color=node_color[4], node_size=node_size)
+            nx.draw_networkx_nodes(G, pos, nodelist=state[None], node_color=node_color[0], node_size=node_size)
+            nx.draw_networkx_nodes(G, pos, nodelist=state[-1], node_color=node_color[1], node_size=node_size)
+            nx.draw_networkx_nodes(G, pos, nodelist=state[0], node_color=node_color[2], node_size=node_size)
+            nx.draw_networkx_nodes(G, pos, nodelist=state[1], node_color=node_color[3], node_size=node_size)
+            nx.draw_networkx_nodes(G, pos, nodelist=state[2], node_color=node_color[4], node_size=node_size)
 
         axis = plt.gca()
         # maybe smaller factors work as well, but 1.1 works fine for this minimal example

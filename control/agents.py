@@ -102,12 +102,12 @@ class Agent(Sim):
         self.set_task_end(self, current_time)
         job.in_progress_tasks.append(task.id)
 
-        logging.info(f'{task.agent} is doing the task {task.id}. Place object {task.action.Object}'
-                     f' to {task.action.Place}. TIME {current_time}')
+        logging.info(f'{task.agent} is doing the task {task.id}. Place object {task.action.object}'
+                     f' to {task.action.place}. TIME {current_time}')
 
     def _handle_rejected_task(self, task: Task, current_time: int):
-        logging.info(f'Human rejects the task {task.id}. Place object {task.action.Object} '
-                     f'to {task.action.Place}. TIME {current_time}')
+        logging.info(f'Human rejects the task {task.id}. Place object {task.action.object} '
+                     f'to {task.action.place}. TIME {current_time}')
         self.rejection_tasks.append([task.id, current_time])
 
     def get_feedback(self, current_time, **kwargs):

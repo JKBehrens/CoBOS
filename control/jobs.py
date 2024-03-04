@@ -142,8 +142,8 @@ class Job:
 
 
 class Action(BaseModel):
-    Object: str
-    Place: str
+    object: str
+    place: str
 
 class Task(BaseModel):
     """
@@ -186,7 +186,7 @@ class Task(BaseModel):
         :rtype: str
         """
         try:
-            s1 = "ID: {self.id}, agent: {self.agent}, status: {TaskState(self.state).name}, " + \
+            s1 = f"ID: {self.id}, agent: {self.agent}, status: {TaskState(self.state).name}, " + \
                 f"task action: {self.action}, conditions: {self.conditions}, universal: {self.universal}, " + \
                 f"start: {self.start}, finish: {self.finish}"
             logging.info(s1)
@@ -224,14 +224,14 @@ class Task(BaseModel):
         """
         state = TaskState(self.state).name if self.state is not None else None
         return {
-            'Agent': copy.deepcopy(self.agent),
-            'ID': copy.deepcopy(self.id),
-            'Action': copy.deepcopy(self.action),
-            'Status': copy.deepcopy(state),
-            'Conditions': copy.deepcopy(self.conditions),
-            'Universal': copy.deepcopy(self.universal),
-            'Start': copy.deepcopy(self.start),
-            'Finish': copy.deepcopy(self.finish)}
+            'agent': copy.deepcopy(self.agent),
+            'id': copy.deepcopy(self.id),
+            'action': copy.deepcopy(self.action),
+            'status': copy.deepcopy(state),
+            'conditions': copy.deepcopy(self.conditions),
+            'universal': copy.deepcopy(self.universal),
+            'start': copy.deepcopy(self.start),
+            'finish': copy.deepcopy(self.finish)}
 
     def get_duration(self, rand_gen: Optional[np.random.Generator] = None, seed=None, distribution_param=None):
         if rand_gen is None:

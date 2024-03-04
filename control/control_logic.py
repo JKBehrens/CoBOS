@@ -162,21 +162,21 @@ class ControlLogic:
                 output[task.agent].append(task.dict())
         else:
             output = {
-                "Status": [],
-                "Start": [],
-                "End": [],
-                "Agent": [],
-                "ID": [],
-                "Conditions": [],
-                "Object": [],
-                "Place": [],
-                "Universal": []
+                "status": [],
+                "start": [],
+                "finish": [],
+                "agent": [],
+                "id": [],
+                "conditions": [],
+                "object": [],
+                "place": [],
+                "universal": []
             }
             for agent in self.agents:
                 for task in agent.tasks_as_dict():
                     output['Status'].append(copy.deepcopy(task['Status']))
                     output['Start'].append(copy.deepcopy(task['Start']))
-                    output['End'].append(copy.deepcopy(task['Finish'][0]))
+                    output['Finish'].append(copy.deepcopy(task['Finish'][0]))
                     output['ID'].append(copy.deepcopy(task['ID']))
                     output['Conditions'].append(copy.deepcopy(task['Conditions']))
                     output['Object'].append(copy.deepcopy(task['Action']['Object']))
