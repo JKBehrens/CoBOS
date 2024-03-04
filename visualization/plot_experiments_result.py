@@ -8,6 +8,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 import argparse
 
+cases = [1, 2, 3, 4, 5, 6]
+
 
 
 def set_density(ax, data, first=False):
@@ -57,23 +59,15 @@ def makaspan_histogram(extracted_files: list[Path], all_together: bool=False, sa
         plt.legend(['Original', 'Sim. with same seed', 'Sim. with different seed'], loc='upper left')
 
     else:
-        cases = [1, 2, 3, 4, 5, 6]
         makespan = [[] for _ in range(6)]
         makespan_same_seed = [[] for _ in range(6)]
         makespan_different_seed = [[] for _ in range(6)]
         for file_name in extracted_files:
-            file_stem = file_name.stem
-            try:
-                with open(file_name) as json_file:
-                    data = json.load(json_file)
-            except json.decoder.JSONDecodeError as e:
-                print(e)
-                print(file_name)
+            data = get_data_from_file(file_name)
+            if not data:
                 continue
 
-            # Use regular expression to extract the number of the case
-            case_number = int(re.search(r'case_(\d+)', file_stem).group(1))
-            schedule_seed = int(re.search(r'schedule_(\d+)', file_stem).group(1))
+            case_number, schedule_seed, _, _ = get_experiment_info(file_name.stem)
             if schedule_seed == 0:
                 try:
                     makespan_same_seed[case_number-1].append(data['statistics']['makespan'][1])
@@ -96,14 +90,34 @@ def makaspan_histogram(extracted_files: list[Path], all_together: bool=False, sa
     fig.supxlabel('Makespan [s]')
     fig.supylabel('Density')
     fig.tight_layout()
-    if isinstance(save_path, str):
-        plt.savefig(save_path +'makaspan_histogram.png')
+    if isinstance(save_path, Path):
+        plt.savefig(Path.joinpath(save_path,'makaspan_histogram.png'))
     plt.show()
+
+
+def get_data_from_file(file_name: Path):
+    try:
+        with open(file_name) as json_file:
+            data = json.load(json_file)
+    except json.decoder.JSONDecodeError as e:
+        print(e)
+        print(file_name)
+        return None
+    return data
+
+
+def get_experiment_info(file_stem: str):
+    # Use regular expression to extract the number of the case
+    case_number = int(re.search(r'case_(\d+)', file_stem).group(1))
+    schedule_seed = int(re.search(r'schedule_(\d+)', file_stem).group(1))
+    dist_seed = int(re.search(r'dist_(\d+)', file_stem).group(1))
+    sim_seed = int(re.search(r'sim_(\d+)', file_stem).group(1))
+    return case_number, schedule_seed, dist_seed, sim_seed
 
 
 def extract_files():
     # Path to the zip file containing JSON files
-    zip_file_path = 'base_sched_100.zip'
+    zip_file_path = 'base_sched.zip'
     extracted_dir = 'extracted_json_files'
 
     # Create a directory to extract the files
@@ -119,25 +133,40 @@ def extract_files():
     return extracted_files
 
 
-def get_mean_calculation_time(files):
-    calculation_time = np.array([])
-    calculation_time_estimation = np.array([])
+def get_mean_calculation_time(files: list[Path], save_path: Path|None=None):
+    simulation_time = [[] for _ in range(6)]
+    decision_making_duration = [[] for _ in range(6)]
+    solving_time = [[] for _ in range(6)]
     for file_name in files:
-        with open(file_name) as json_file:
-            data = json.load(json_file)
-        calculation_time = np.append(calculation_time, [time[3] for time in data['statistics']['solver'][0]])
-        calculation_time_estimation = np.append(calculation_time_estimation, [time[2] for time in data['statistics']['solver'][1]])
-    print(f'Mean of general calculation time {np.mean(np.append(calculation_time, calculation_time_estimation))} \n'
-          f'Mean of rescheduling calculation time {np.mean(calculation_time)} \n'
-          f'Mean of rescheduling estimation calculation time {np.mean(calculation_time_estimation)}')
+        data = get_data_from_file(file_name)
+        if not data:
+            continue
+
+        case_number, schedule_seed, dist_seed, sim_seed = get_experiment_info(file_name.stem)
+        simulation_time[case_number-1].append(data['statistics']['sim_time'])
+        decision_making_duration[case_number-1].append(np.mean(data['statistics']['decision_making_duration']))
+        solving = [time[3] for time in data['statistics']['solver'][0]]
+        evaluation = [time[2] for time in data['statistics']['solver'][1]]
+        solving_time[case_number-1].append(np.mean(solving+evaluation))
+
+    output = {}
+    for case in cases:
+        output[case] = {'sim_mean': np.mean(simulation_time[case-1]),
+                        'decision_mean': np.mean(decision_making_duration[case-1]),
+                        'solving_time': np.mean(solving_time[case-1])}
+
+    with open(Path.joinpath(save_path, 'statistics.json'), 'w') as f:
+        json.dump(output, f, indent=4)
 
 
 def rejection_and_rescheduling_correlation(files):
     rejection_time = np.empty((0, 2), float)
     rescheduling_time = np.empty((0, 2), float)
     for i, file_name in enumerate(files):
-        with open(file_name) as json_file:
-            data = json.load(json_file)
+        data = get_data_from_file(file_name)
+        if not data:
+            continue
+
         for task in data['statistics']['rejection tasks']:
             rejection_time = np.append(rejection_time, [[task[1], i]], axis=0)
         for time in data['statistics']['solver'][0]:
@@ -153,7 +182,7 @@ def rejection_and_rescheduling_correlation(files):
 
 
 if __name__ == '__main__':
-    folder_path = 'extracted_json_files/base_sched'
+    folder_path = 'extracted_json_files/base_sched/'
     save_path = ''
 
     parser = argparse.ArgumentParser()
@@ -164,10 +193,10 @@ if __name__ == '__main__':
         extracted_files = extract_files()
     else:
         extracted_files = os.listdir(folder_path)
-        extracted_files = [file for file in extracted_files if '.json' in file and '.ipynb' not in file]
+        extracted_files = [Path(folder_path+file) for file in extracted_files if '.json' in file and '.ipynb' not in file]
 
-    makaspan_histogram(extracted_files, folder_path=folder_path, save_path=save_path)
+    makaspan_histogram(extracted_files, save_path=Path(save_path))
 
-    # get_mean_calculation_time(extracted_files)
+    # get_mean_calculation_time(extracted_files, save_path=Path(''))
 
     # rejection_and_rescheduling_correlation(extracted_files)
