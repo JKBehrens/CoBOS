@@ -3,6 +3,7 @@ import copy
 from methods.scheduling_split_tasks import Schedule, schedule_as_dict
 from methods import OverlapSchedule, NoOverlapSchedule, RandomAllocation, MaxDuration
 from control.control_logic import ControlLogic
+from control.agents import Agent
 from visualization.json_2_video import video_parser
 from visualization import schedule_save_file_name, Vis, comparison_save_file_name
 from control.jobs import Job
@@ -12,6 +13,10 @@ import logging
 import json
 
 METHOD = OverlapSchedule
+case = 4
+solver_seed = 4
+dist_seed = 7
+sim_seed = 3
 
 
 if __name__ == '__main__':
@@ -39,10 +44,27 @@ if __name__ == '__main__':
     logging.getLogger("mylogger")
 
     if args.case in cases:
-        case = args.case
+        case = int(args.case)
     else:
         logging.error("The case does not exist")
         raise SystemExit(1)
+
+    job = Job(case, seed=dist_seed)
+
+    agent_names = ["Human", "Robot"]
+    agents: list[Agent] = []
+    for agent_name in agent_names:
+        agents.append(
+            Agent(
+                name=agent_name,
+                job=copy.deepcopy(job),
+                seed=sim_seed,
+                answer_seed=sim_seed,
+            )
+        )
+
+    solving_method = METHOD(job=job, seed=solver_seed)
+    solving_method.prepare()
 
     if args.comparison:
         job = Job(case, seed=0)
@@ -86,11 +108,11 @@ if __name__ == '__main__':
                 logging.info(f'Save data to {file_name}')
 
     elif not args.only_schedule:
-        execute_job = ControlLogic(method=METHOD, case=case, distribution_seed=0, schedule_seed=0, sim_seed=0)
+        control_logic = ControlLogic(job=job, agents=agents, method=solving_method)
         if args.offline:
-            execute_job.run(animation=False)
+            schedule, statistics = control_logic.run(experiments=True, save2file=True)
         else:
-            execute_job.run(online_plot=True)
+            schedule, statistics = control_logic.run(experiments=True)
 
     else:
         job = Job(case, seed=0)
