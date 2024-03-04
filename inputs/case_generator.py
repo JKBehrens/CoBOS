@@ -95,6 +95,7 @@ CONDITIONS = {
         [],
         [],
     ],
+    7: [[], [], [], [0, 1], [0, 2], [3], [4], [3, 4]]
 }
 X = ["A", "B", "C", "D"]
 Y = ["1", "2", "3", "4"]
@@ -164,6 +165,8 @@ def set_input(case: int, seed: int) -> list[Task]:
 
     for x in X:
         for y in Y:
+            if case == 7 and ID_counter == 8:
+                break
             task_description = {}
             task_description["id"] = ID_counter
             try:

@@ -342,26 +342,30 @@ class Vis:
         labels = {}
         state = {None: [], -1: [], 0: [], 1: [], 2: []}
         allocability = {True: [], False: []}
+        task_number = 0
         for agent in local_data:
             for task in local_data[agent]:
                 G.add_node(task["action"]["place"])
                 state[task["state"]].append(task["action"]["place"])
                 labels[task["action"]["place"]] = task['id']
-                # labels[task["action"]["place"]] = task["action"]['Object']
                 allocability[task['universal']].append(task['action']['place'])
+                task_number += 1
         for agent in local_data:
             for task in local_data[agent]:
                 if task["conditions"]:
                     for j in task["conditions"]:
                         G.add_edges_from([(get_task_from_id(j, local_data), task["action"]["place"])])
 
-        pos = {'A1': (0, 3), 'B1': (1, 3), 'C1': (2, 3), 'D1': (3, 3),
-               "A2": (0, 2), 'B2': (1, 2), 'C2': (2, 2), 'D2': (3, 2),
-               "A3": (0, 1), 'B3': (1, 1), 'C3': (2, 1), 'D3': (3, 1),
-               "A4": (0, 0), 'B4': (1, 0), 'C4': (2, 0), 'D4': (3, 0)}  # positions for all nodes
-        # pos = {'A1': (0, 0), 'B1': (0, 2), 'C1': (1, 0), 'D1': (1, 2),
-        #        "A2": (0, 1), 'C2': (2, 0), 'D2': (2, 2),
-        #        'C3': (3, 0.5), 'D3': (3, 1.5)}  # positions for all nodes
+        if task_number == 16:
+            pos = {'A1': (0, 3), 'B1': (1, 3), 'C1': (2, 3), 'D1': (3, 3),
+                   "A2": (0, 2), 'B2': (1, 2), 'C2': (2, 2), 'D2': (3, 2),
+                   "A3": (0, 1), 'B3': (1, 1), 'C3': (2, 1), 'D3': (3, 1),
+                   "A4": (0, 0), 'B4': (1, 0), 'C4': (2, 0), 'D4': (3, 0)}  # positions for all nodes
+        else:
+            # for case 7
+            pos = {'A2': (0.5, 2.5), 'A1': (1.5, 2.5), 'A3': (2.5, 2.5),
+                   "A4": (0.5, 1.5), 'C1': (1.5, 1.5), 'B1': (2.5, 1.5),
+                   "B2": (0.5, 0.5), 'B4': (1.5, 0.5), 'B3': (2.5, 0.5)}
 
         node_size = 900
         nx.draw_networkx_edges(G, pos, width=1.0, alpha=0.7, node_size=node_size)

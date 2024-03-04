@@ -20,7 +20,7 @@ sim_seed = 3
 
 
 if __name__ == '__main__':
-    cases = ['1', '2', '3', '4', '5', '6', '0']
+    cases = ['1', '2', '3', '4', '5', '6', '7', '0']
 
     parser = argparse.ArgumentParser()
     parser.add_argument("case", type=str, help='Choose one of this: 1, 2, 3, 4, 5, 6')
