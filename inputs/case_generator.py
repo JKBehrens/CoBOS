@@ -180,7 +180,7 @@ def set_input(case: int, seed: int) -> list[Task]:
             elif "r" in cubes_sequence[ID_counter]:
                 task_description["agent"] = "Robot"
             else:
-                task_description["agent"] = "Both"
+                task_description["agent"] = ["Human", "Robot"]
                 task_description["universal"] = True
             task_description["action"]["place"] = x + y
             if case in (1, 4):
