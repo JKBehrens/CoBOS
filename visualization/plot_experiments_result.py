@@ -40,7 +40,7 @@ def set_density(ax, data, first=False):
     return ax
 
 
-def makaspan_histogram(extracted_files: list[Path], all_together: bool=False, save_path: Path|None=None):
+def makespan_histogram(extracted_files: list[Path], all_together: bool=False, save_path: Path|None=None):
     folder_path = extracted_files[0].parent
     if all_together:
         makespan = np.array([])

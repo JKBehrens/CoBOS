@@ -1,5 +1,5 @@
 from pathlib import Path
-from visualization.plot_experiments_result import makaspan_histogram
+from visualization.plot_experiments_result import makespan_histogram
 
 
 def test_makespan_histogram():
@@ -10,7 +10,7 @@ def test_makespan_histogram():
 
     files = list(path_with_files.glob("*.json"))
 
-    makaspan_histogram(
+    makespan_histogram(
         extracted_files=files,
         # folder_path=path_with_files.__str__(),
         save_path=path_with_files.__str__(),
