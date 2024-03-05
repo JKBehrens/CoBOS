@@ -8,9 +8,13 @@ START_AVAILABLE_TASKS = True
 class RandomAllocation(Solver):
 
     def __init__(self, job, seed):
-        super().__init__(job)
+        super().__init__(job, seed)
         self.horizon = None
         self.rand = np.random.default_rng(seed=seed)
+
+    @classmethod
+    def name(cls) -> str:
+        return str(cls).capitalize().split(".")[-1].split("'>")[0]
 
     def prepare(self):
         return True

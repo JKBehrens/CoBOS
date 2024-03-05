@@ -13,6 +13,9 @@ class MaxDuration(Solver):
         self.rand = np.random.default_rng(seed=self.seed)
         self.task_duration = self.job.task_duration(rand_gen=self.rand)
 
+    @classmethod
+    def name(cls) -> str:
+        return str(cls).capitalize().split(".")[-1].split("'>")[0]
 
     def prepare(self):
         return True

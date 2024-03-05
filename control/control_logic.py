@@ -34,7 +34,6 @@ class ControlLogic:
         self.agent_list = ['Robot', 'Human']
         self.agents: list[Agent] = agents
         self.current_time = 0
-        self.start_time = time.time()
         self.task_finish_time = []
         self.solving_method = method
         self.available_tasks = []
@@ -42,8 +41,10 @@ class ControlLogic:
         self.decision_making_duration = []
 
         self.plot = None
-        if self.method != RandomAllocation and self.method != MaxDuration:
+        try:
             self.job.predicted_makespan = self.job.get_current_makespan()
+        except TypeError:
+            pass
         self.set_task_status()
 
     def set_task_status(self):
@@ -77,14 +78,18 @@ class ControlLogic:
         """
         Run the methods simulation.
         """
-        if self.method != RandomAllocation and self.method != MaxDuration:
+        try:
             self.output_data.append(self.schedule_as_dict(hierarchy=True))
+        except KeyError as e:
+            pass
 
         if animation:
             self.plot = Vis(horizon=self.solving_method.horizon)
             self.plot.delete_existing_file()
         if online_plot:
             self.plot = Web_vis(data=self.schedule_as_dict())
+
+        start_time = time.perf_counter()
 
         while True:
             if self.job.progress() == 100:
@@ -94,7 +99,7 @@ class ControlLogic:
             observation_data = self.get_observation_data()
 
             # ask planner to decide about next actions for robot and human
-            decision_making_start = time.time()
+            decision_making_start = time.perf_counter()
             try:
                 selected_task = self.solving_method.decide(observation_data, self.current_time)
             except ValueError as e:
@@ -102,7 +107,7 @@ class ControlLogic:
                 logging.error(msg=msg)
                 break
                 # raise ValueError(msg)
-            self.decision_making_duration.append(time.time()-decision_making_start)
+            self.decision_making_duration.append(time.perf_counter()-decision_making_start)
 
             for agent in self.agents:
                 if agent.state == AgentState.REJECTION:
@@ -136,7 +141,7 @@ class ControlLogic:
         logging.info('__________FINAL SCHEDULE___________')
         self.job.__str__()
         logging.info('___________________________________')
-        sim_time = time.time() - self.start_time
+        sim_time = time.perf_counter() - start_time
         logging.info(f'SIMULATION TOTAL TIME: {sim_time}')
         self.output_data.append(self.schedule_as_dict(hierarchy=True))
         if save2file:
