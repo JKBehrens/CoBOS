@@ -60,13 +60,19 @@ class Sim:
         Returns:
             Job: Job with only true universal tasks
         """
+
         out_job: Job = copy.deepcopy(self.job)
         for task in out_job.task_sequence:
             if task.universal and self.task_acceptance[task.id]:
                 task.rejection_prob = 0.0
             elif task.universal and not self.task_acceptance[task.id]:
                 task.agent = self.agent_list.copy()
-                task.agent.remove(self.agent_name)
+
+                #TODO: When robots learn to also reject task, this needs to be refactored/fixed
+                # task.agent.remove(self.agent_name)
+                agent_name = "Human"
+                task.agent.remove(agent_name)
+                
                 task.universal = False
                 task.rejection_prob = 0.0
             else:
