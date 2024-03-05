@@ -2,11 +2,14 @@ import os
 from pathlib import Path
 import re
 import json
+from typing import Any
 import zipfile
+from pydantic import BaseModel
 from scipy.stats import gaussian_kde
 from matplotlib import pyplot as plt
 import numpy as np
 import argparse
+import pandas as pd
 
 cases = [1, 2, 3, 4, 5, 6]
 
@@ -28,7 +31,7 @@ def set_density(ax, data, first=False):
     color = ['royalblue', 'lightsteelblue', 'cornflowerblue'] if len(data) == 3 else ['royalblue', 'lightsteelblue']
 
     xs = 0
-    ax.hist(data, n_bins, density=True, histtype='bar', color=color)
+    ax.hist(data, n_bins, density=True, histtype='bar', color=color[:len(data)])
     xs = np.linspace(min(min(makespan) for makespan in data), max(max(makespan) for makespan in data), 20)
 
     for i, case in enumerate(data):
@@ -38,6 +41,60 @@ def set_density(ax, data, first=False):
         ax.plot(xs, density_re(xs), "--", color=color[i])
 
     return ax
+
+
+def read_data_to_df(files: list[Path], cols: dict[str, Any], ignore_missing:bool =False) -> pd.DataFrame:
+    
+
+    raw_data: list[dict[str, int|float|str]] = []
+
+    for file_name in files:
+        data = get_data_from_file(file_name)
+        if not data:
+            raise IOError(f"Could not read {file_name}.")
+        
+        exp_info = get_experiment_info(file_name.stem)
+
+        raw_data.append(exp_info.dict())
+
+        stats = data["statistics"]
+
+        for col, default in cols.items():
+            if col in stats:
+                raw_data[-1][col] = stats[col]
+            elif ignore_missing:
+                pass
+            else:
+                raw_data[-1][col] = default
+                # raise ValueError(f"{file_name} has no data about {col}.")
+            
+    
+    df = pd.DataFrame(raw_data)
+        
+    return df
+
+
+def makespan_histogram_pd(extracted_files: list[Path], all_together: bool=False, save_path: Path|None=None):
+    folder_path = extracted_files[0].parent
+
+
+    df = read_data_to_df(extracted_files, {"makespan": -1, "FAIL": False})
+
+    df2 = df[df["FAIL"]==False][df["case_number"]==4][df["dist_seed"]==0][df["sim_seed"]==0][df["schedule_seed"]==0]
+    make_span_no_task_rejection = df2.at[df2.index[-1], "makespan"][0]
+    makespan_time_knowledge = df2.at[df2.index[-1], "makespan"][1]
+
+    df3 = df[df["FAIL"]==False][df["case_number"]==4][df["dist_seed"]==0][df["sim_seed"]==0][df["schedule_seed"]!=0]
+    makespans_other: list[int] = np.array(list((df3.get("makespan"))))[:,1]
+
+
+    
+    fig, ((ax0, ax1, ax2), (ax3, ax4, ax5)) = plt.subplots(nrows=2, ncols=3, figsize=(9, 6))
+    axes= [ax0, ax1, ax2, ax3, ax4, ax5]
+
+    set_density(ax3, [makespans_other])
+
+
 
 
 def makespan_histogram(extracted_files: list[Path], all_together: bool=False, save_path: Path|None=None):
@@ -106,13 +163,30 @@ def get_data_from_file(file_name: Path):
     return data
 
 
-def get_experiment_info(file_stem: str):
+class ExperimentInfo(BaseModel):
+    case_number: int
+    schedule_seed: int
+    dist_seed: int
+    sim_seed: int
+    answer_seed: int
+    method_name: str
+
+
+def get_experiment_info(file_stem: str) -> ExperimentInfo:
     # Use regular expression to extract the number of the case
     case_number = int(re.search(r'case_(\d+)', file_stem).group(1))
     schedule_seed = int(re.search(r'schedule_(\d+)', file_stem).group(1))
     dist_seed = int(re.search(r'dist_(\d+)', file_stem).group(1))
     sim_seed = int(re.search(r'sim_(\d+)', file_stem).group(1))
-    return case_number, schedule_seed, dist_seed, sim_seed
+
+    answer_seed = re.search(r'answer_(\d+)', file_stem)
+    if answer_seed is None:
+        answer_seed = sim_seed
+    else:
+        answer_seed = int(answer_seed.group(1))
+    method = file_stem.split("method")[-1].split("_")[1]
+    return ExperimentInfo(case_number=case_number, schedule_seed=schedule_seed, dist_seed=dist_seed, sim_seed=sim_seed, answer_seed=answer_seed, method_name=method)
+    # return case_number, schedule_seed, dist_seed, sim_seed
 
 
 def extract_files():
