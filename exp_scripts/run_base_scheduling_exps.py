@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any
 from dask_jobqueue.slurm import SLURMCluster
 from distributed import Client, Future
-from methods.overlap_method import OverlapSchedule
+from methods import OverlapSchedule, RandomAllocation, MaxDuration
 
 from utils.file_handler import EnhancedJSONEncoder
 
@@ -22,7 +22,7 @@ class ExperimentSettings(BaseModel):
     run_on_cluster: bool = False
     num_workers: int = 2
 
-    exp_folder: Path = Path(__file__).parent.joinpath("experiments/base_sched/")
+    exp_folder: Path = Path(__file__).parent.joinpath("experiments/")
     cases: list[int] = []
 
 
@@ -101,7 +101,7 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
     exp_folder = exp_settings.exp_folder
     exp_folder.mkdir(parents=True, exist_ok=True)
 
-    methods = [OverlapSchedule]
+    methods = [OverlapSchedule, RandomAllocation, MaxDuration]
 
     # dist_seed, schedule_seed, sim_seed, answer_seed
     
