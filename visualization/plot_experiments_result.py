@@ -10,9 +10,12 @@ from matplotlib import pyplot as plt
 import numpy as np
 import argparse
 import pandas as pd
+from exp_scripts import experiments_path
+from itertools import product
+
 
 cases = [1, 2, 3, 4, 5, 6]
-
+methods = ['overlapschedule', 'randomallocation', 'maxduration']
 
 
 def set_density(ax, data, first=False):
@@ -35,12 +38,12 @@ def set_density(ax, data, first=False):
     xs = np.linspace(min(min(makespan) for makespan in data), max(max(makespan) for makespan in data), 20)
 
     for i, case in enumerate(data):
-        density_re = gaussian_kde(case)
+        density_re = gaussian_kde(case.tolist())
         density_re.covariance_factor = lambda: .50
         density_re._compute_covariance()
         ax.plot(xs, density_re(xs), "--", color=color[i])
 
-    return ax
+    return ax, max(density_re(xs))
 
 
 def read_data_to_df(files: list[Path], cols: dict[str, Any], ignore_missing:bool =False) -> pd.DataFrame:
@@ -77,22 +80,36 @@ def read_data_to_df(files: list[Path], cols: dict[str, Any], ignore_missing:bool
 def makespan_histogram_pd(extracted_files: list[Path], all_together: bool=False, save_path: Path|None=None):
     folder_path = extracted_files[0].parent
 
-
     df = read_data_to_df(extracted_files, {"makespan": -1, "FAIL": False})
 
-    df2 = df[df["FAIL"]==False][df["case_number"]==4][df["dist_seed"]==0][df["sim_seed"]==0][df["schedule_seed"]==0]
-    make_span_no_task_rejection = df2.at[df2.index[-1], "makespan"][0]
-    makespan_time_knowledge = df2.at[df2.index[-1], "makespan"][1]
-
-    df3 = df[df["FAIL"]==False][df["case_number"]==4][df["dist_seed"]==0][df["sim_seed"]==0][df["schedule_seed"]!=0]
-    makespans_other: list[int] = np.array(list((df3.get("makespan"))))[:,1]
-
-
-    
     fig, ((ax0, ax1, ax2), (ax3, ax4, ax5)) = plt.subplots(nrows=2, ncols=3, figsize=(9, 6))
-    axes= [ax0, ax1, ax2, ax3, ax4, ax5]
+    axes = [ax0, ax1, ax2, ax3, ax4, ax5]
 
-    set_density(ax3, [makespans_other])
+    for case, ax in zip(cases, axes):
+        for method in methods:
+            if method == 'overlapschedule':
+                df2 = df[df["FAIL"] == False][df["case_number"] == case][df["sim_seed"] == 0][
+                    df["schedule_seed"] == 0][df['method_name'] == method]
+
+                df3 = df[df["FAIL"] == False][df["case_number"] == case][df["sim_seed"] == 0][
+                    df["schedule_seed"] != 0][df['method_name'] == method]
+                makespan_time_knowledge = df2.at[df2.index[-1], "makespan"][1]
+
+                original_makespan: list[int] = np.array(list((df3.get("makespan"))))[:, 0]
+                makespans_other: list[int] = np.array(list((df3.get("makespan"))))[:, 1]
+                _, ymax = set_density(ax, [original_makespan, makespans_other])
+                ax.vlines(makespan_time_knowledge, ymin=0, ymax=ymax, color='red')
+            else:
+                pass
+                # df2 = df[df["FAIL"] == False][df["case_number"] == case][df["dist_seed"] == 0][df['method_name'] == method]
+
+
+    # Set common labels
+    fig.supxlabel('Makespan [s]')
+    fig.supylabel('Density')
+    ax1.legend(['Original', 'Sim. with different seed', 'Same seed'], ncol=3, loc='upper center',bbox_to_anchor=(0.5, 1.2))
+    # fig.tight_layout()
+    plt.show()
 
 
 
@@ -141,7 +158,6 @@ def makespan_histogram(extracted_files: list[Path], all_together: bool=False, sa
         for case, ax in zip(cases,axes):
             set_density(ax, [makespan[case-1], makespan_different_seed[case-1]])
             ax.set_title(f'Case {case}')
-
         ax2.legend(['Original', 'Simulation'], loc='upper right')
     # Set common labels
     fig.supxlabel('Makespan [s]')
@@ -178,7 +194,6 @@ def get_experiment_info(file_stem: str) -> ExperimentInfo:
     schedule_seed = int(re.search(r'schedule_(\d+)', file_stem).group(1))
     dist_seed = int(re.search(r'dist_(\d+)', file_stem).group(1))
     sim_seed = int(re.search(r'sim_(\d+)', file_stem).group(1))
-
     answer_seed = re.search(r'answer_(\d+)', file_stem)
     if answer_seed is None:
         answer_seed = sim_seed
@@ -207,27 +222,23 @@ def extract_files():
     return extracted_files
 
 
-def get_mean_calculation_time(files: list[Path], save_path: Path|None=None):
-    simulation_time = [[] for _ in range(6)]
-    decision_making_duration = [[] for _ in range(6)]
-    solving_time = [[] for _ in range(6)]
-    for file_name in files:
-        data = get_data_from_file(file_name)
-        if not data:
-            continue
-
-        case_number, schedule_seed, dist_seed, sim_seed = get_experiment_info(file_name.stem)
-        simulation_time[case_number-1].append(data['statistics']['sim_time'])
-        decision_making_duration[case_number-1].append(np.mean(data['statistics']['decision_making_duration']))
-        solving = [time[3] for time in data['statistics']['solver'][0]]
-        evaluation = [time[2] for time in data['statistics']['solver'][1]]
-        solving_time[case_number-1].append(np.mean(solving+evaluation))
-
+def get_mean_calculation_time(extracted_files: list[Path], save_path: Path|None=None):
+    folder_path = extracted_files[0].parent
     output = {}
+
+    df = read_data_to_df(extracted_files, {"makespan": -1, "FAIL": False})
     for case in cases:
-        output[case] = {'sim_mean': np.mean(simulation_time[case-1]),
-                        'decision_mean': np.mean(decision_making_duration[case-1]),
-                        'solving_time': np.mean(solving_time[case-1])}
+        output[case] = {}
+        for method in methods:
+            df1 = df[df["FAIL"] == False][df["case_number"] == case][df["sim_seed"] == 0][
+                df["schedule_seed"] == 0][df['method_name'] == method]
+            df2 = df[df["FAIL"] == False][df["case_number"] == case][df["sim_seed"] == 0][
+                df["schedule_seed"]!= 0][df['method_name'] == method]
+
+            makespan_same_seed: list[int] = np.array(list((df1.get("makespan"))))[:, 1]
+            makespans_other: list[int] = np.array(list((df2.get("makespan"))))[:, 1]
+            output[case][method] = {'same_seed': np.mean(makespan_same_seed),
+                                    'different_seed':np.mean(makespans_other)}
 
     with open(Path.joinpath(save_path, 'statistics.json'), 'w') as f:
         json.dump(output, f, indent=4)
@@ -256,7 +267,7 @@ def rejection_and_rescheduling_correlation(files):
 
 
 if __name__ == '__main__':
-    folder_path = 'extracted_json_files/base_sched/'
+    folder_path = os.path.join(experiments_path, 'schedule_100/')
     save_path = ''
 
     parser = argparse.ArgumentParser()
@@ -269,7 +280,8 @@ if __name__ == '__main__':
         extracted_files = os.listdir(folder_path)
         extracted_files = [Path(folder_path+file) for file in extracted_files if '.json' in file and '.ipynb' not in file]
 
-    makaspan_histogram(extracted_files, save_path=Path(save_path))
+    # makaspan_histogram(extracted_files, save_path=Path(save_path))
+    makespan_histogram_pd(extracted_files, save_path=Path(save_path))
 
     # get_mean_calculation_time(extracted_files, save_path=Path(''))
 
