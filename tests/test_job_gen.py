@@ -49,3 +49,24 @@ def test_job_sampling():
     )
 
     assert job.get_universal_task_number() >= job2.get_universal_task_number()
+
+
+    agent_name = "Robot"
+    agent_robot = Agent(name=agent_name, job=job, seed=sim_seed, answer_seed=answer_seed)
+    job2_rob = agent_robot._get_deterministic_job()
+
+    assert all(
+        [
+            task1.agent == task2.agent
+            for task1, task2 in zip(job2.task_sequence, job2_rob.task_sequence)
+        ]
+    )
+    assert all(
+        [
+            np.allclose(task1.distribution, task2.distribution)
+            for task1, task2 in zip(job2.task_sequence, job2_rob.task_sequence)
+        ]
+    )
+
+    assert job.get_universal_task_number() >= job2_rob.get_universal_task_number()
+
