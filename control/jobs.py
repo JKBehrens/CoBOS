@@ -42,7 +42,7 @@ class Job:
         s = ""
         for agent in self.agents:
             for task in self.task_sequence:
-                if task.agent == agent:
+                if agent in task.agent:
                     s += task.__str__() + "\n"
         logging.info("____________________________")
 
@@ -116,7 +116,7 @@ class Job:
         matching_task = next((task for task in self.task_sequence if task.id == task_id), None)
 
         if matching_task:
-            matching_task.agent = new_agent_name
+            matching_task.agent = [new_agent_name]
 
     def validate(self):
         valid = True
@@ -157,7 +157,7 @@ class Task(BaseModel):
     state: TaskState | None = None
     conditions: list[int] 
     universal: bool
-    agent: str
+    agent: list[str]
     start: int | None = None
     finish: int | None = None
 

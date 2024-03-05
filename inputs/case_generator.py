@@ -176,9 +176,9 @@ def set_input(case: int, seed: int) -> list[Task]:
 
             task_description["universal"] = False
             if "h" in cubes_sequence[ID_counter]:
-                task_description["agent"] = "Human"
+                task_description["agent"] = ["Human"]
             elif "r" in cubes_sequence[ID_counter]:
-                task_description["agent"] = "Robot"
+                task_description["agent"] = ["Robot"]
             else:
                 task_description["agent"] = ["Human", "Robot"]
                 task_description["universal"] = True

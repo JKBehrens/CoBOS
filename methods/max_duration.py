@@ -42,13 +42,13 @@ class MaxDuration(Solver):
         for task in self.job.task_sequence:
             if task.state == TaskState.AVAILABLE and \
                     ((task.universal and task.id not in rejection_tasks) or
-                     (task.agent == agent_name and task.id not in rejection_tasks)):
+                     (agent_name in task.agent and task.id not in rejection_tasks)):
                 available_tasks.append([task, self.task_duration[agent_name][task.id]])
 
         if available_tasks:
             available_tasks.sort(key=lambda x: x[1])
             task = available_tasks[0]
             if task[0].universal:
-                task[0].agent = agent_name
+                task[0].agent = [agent_name]
             return task[0]
         return None
