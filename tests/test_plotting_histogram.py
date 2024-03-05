@@ -2,7 +2,7 @@ from pathlib import Path
 from visualization.plot_experiments_result import makaspan_histogram
 
 
-def test_makespan_hustogram():
+def test_makespan_histogram():
     path_with_files = Path(
         "~/repos/rss24_sched/scheduling/exp_scripts/experiments/base_sched"
     ).expanduser()
