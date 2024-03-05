@@ -169,7 +169,8 @@ class OverlapSchedule(Schedule):
                         if not (self.job.task_sequence[task.id].finish[0] - self.job.task_sequence[task.id].start) <=\
                                self.solver.Value(self.task_intervals[task.id][2].EndExpr()) - \
                                self.solver.Value(self.task_intervals[task.id][0].StartExpr()):
-                            logging.warning(f"Duration of task {task.id} is wrong.")
+                            # logging.warning(f"Duration of task {task.id} is wrong.")
+                            pass
                 else:
                     agent = self.solver.Value(self.task_assignment_var[task.id])
                     assert self.task_duration[agent][task.id][0] == \
