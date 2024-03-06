@@ -6,6 +6,7 @@
     @contact: marina.ionova@cvut.cz
 """
 from pydantic import BaseModel
+from inputs import RandomCase
 from control.agent_and_task_states import TaskState
 from typing import List, Optional
 import numpy as np
@@ -21,11 +22,11 @@ class Job:
     :type case: str
     """
 
-    def __init__(self, case: int, seed: int):
+    def __init__(self, case: int, seed: int, randon_case_param: RandomCase = None):
         self.case = case
         self.seed = seed
         from inputs import case_generator
-        self.job_description = case_generator.set_input(self.case, self.seed)
+        self.job_description = case_generator.set_input(self.case, self.seed,randon_case_param)
         self.task_sequence: List[Task] = self.job_description
         self.in_progress_tasks = []
         self.completed_tasks = []
@@ -186,12 +187,12 @@ class Task(BaseModel):
         :rtype: str
         """
         try:
-            s1 = f"ID: {self.id}, agent: {self.agent}, status: {TaskState(self.state).name}, " + \
+            s1 = f"ID: {self.id}, agent: {self.agent[0]}, status: {TaskState(self.state).name}, " + \
                 f"task action: {self.action}, conditions: {self.conditions}, universal: {self.universal}, " + \
                 f"start: {self.start}, finish: {self.finish}"
             logging.info(s1)
         except ValueError:
-            s1 = f"ID: {self.id}, agent: {self.agent}, state: {self.state}, " + \
+            s1 = f"ID: {self.id}, agent: {self.agent[0]}, state: {self.state}, " + \
                     f"task action: {self.action}, conditions: {self.conditions}, universal: {self.universal}, " + \
                     f"start: {self.start}, finish: {self.finish}"
             logging.info(s1)
