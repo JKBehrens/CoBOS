@@ -104,6 +104,45 @@ def test_interval_constraints():
         f'Interval2: start {solver.Value(interval2.StartExpr())}, end {solver.Value(interval2.EndExpr())}, duration {solver.Value(interval2.SizeExpr())}')
 
 
+def test_clear_constraints_in_model_clone():
+    model = cp_model.CpModel()
+
+    x = model.NewIntVar(0, 10, 'x')
+    y = model.NewIntVar(0, 10, 'y')
+    constr = model.Add(x + y == 15)
+    constr2 = model.Add(x > 8)
+
+    print(f'Origin model: {model.Proto().constraints}')
+
+    clone_model = model.Clone()
+    print(f'Model clone: {clone_model.Proto().constraints}')
+
+    idx = constr.Index()
+    clone_model.Proto().constraints[idx].Clear()
+    clone_model.Add(x+y < 10)
+    print(f'Origin model: {model.Proto().constraints}')
+    print(f'Model clone: {clone_model.Proto().constraints}')
+
+    idx = constr.Index()
+    model.Proto().constraints[idx].Clear()
+    constr = model.Add(x + y > 16)
+    print(f'Origin model: {model.Proto().constraints}')
+    print(f'Model clone: {clone_model.Proto().constraints}')
+    # print(model.Proto().constraints)
+    # idx = constr.Index()
+    # model.Proto().constraints[idx].Clear()
+    # model.Proto().constraints.remove(constr.Proto())
+    # model.Proto().constraints.insert(idx, constr3.Proto())
+
+    # print(model.Proto().constraints)
+    solver = cp_model.CpSolver()
+    solver.Solve(model)
+    print(f'Origin model: x = {solver.Value(x)}, y = {solver.Value(y)}')
+    solver = cp_model.CpSolver()
+    solver.Solve(clone_model)
+    print(f'Model clone: x = {solver.Value(x)}, y = {solver.Value(y)}')
+
+
 def set_solver():
     # Creates the solver and solve.
     solver = cp_model.CpSolver()
