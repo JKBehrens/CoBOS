@@ -85,9 +85,9 @@ def gen_task_graph_mixed_cross_task_dependencies(param: RandomCase, rand_gen:  n
             edge_to_delete = rand_gen.choice(cycle)
             G.remove_edge(*edge_to_delete)
 
-    nx.draw(G)   # default spring_layout
+    # nx.draw(G)   # default spring_layout
 
-    plt.show()
+    # plt.show()
 
     return G
 

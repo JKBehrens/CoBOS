@@ -26,7 +26,7 @@ class MulticolorPatch(object):
 
 # define a handler for the MulticolorPatch object
 class MulticolorPatchHandler(object):
-    def legend_artist(self,  legend, orig_handle, fontsize, handlebox):
+    def legend_artist(self, legend, orig_handle, fontsize, handlebox):
         width, height = handlebox.width, handlebox.height
         patches = []
         for i, c in enumerate(orig_handle.colors):
@@ -71,7 +71,6 @@ class Vis:
                                     "Robot": [1.5, 2.8, 0.6]}}
         self.color = {None: 'lightcoral', -1: 'lightcoral', 0: 'gold', 1: 'lightgreen', 2: 'silver'}
 
-
         widths = [3, 1]
         self.gs0 = self.fig.add_gridspec(1, 2, width_ratios=widths)
         self.gs00 = self.gs0[0].subgridspec(2, 1)
@@ -110,7 +109,7 @@ class Vis:
 
         # setting X-axis limits
         if lim:
-            self.gnt.set_xlim(0, lim+5)
+            self.gnt.set_xlim(0, lim + 5)
 
         # setting labels for x-axis and y-axis
         self.gnt.set_xlabel('Time [s]')
@@ -190,15 +189,15 @@ class Vis:
             local_data = [self.data]
         horizon = self.set_horizon(local_data)
         for i, position in enumerate(positions[0]):
-            if'comparison' in file_name:
+            if 'comparison' in file_name:
                 if i != 0:
                     self.set_plot_param(title[i], gs[i, :], lim=horizon, reschedule_num=True)
                     colors = {0: 'red', 1: 'blue'}
                     position = {0: 14, 1: 15.5}
                     try:
-                        for idx, solver_info in enumerate(self.data['statistics'][i-1]['solver']):
+                        for idx, solver_info in enumerate(self.data['statistics'][i - 1]['solver']):
                             for data in solver_info:
-                                self.gnt.broken_barh([(data[0], 0.5)], [position[idx]-0.5, 1],
+                                self.gnt.broken_barh([(data[0], 0.5)], [position[idx] - 0.5, 1],
                                                      facecolors=colors[idx])
                     except TypeError:
                         pass
@@ -206,7 +205,6 @@ class Vis:
                     self.set_plot_param(title[i], gs[i, :], lim=horizon)
             else:
                 self.set_plot_param(title[i], gs[i, :], lim=horizon)
-
 
             for agent in local_data[i]:
                 for task in local_data[i][agent]:
@@ -220,12 +218,12 @@ class Vis:
 
                         self.gnt.text(task["start"] + 0.5, task_name_y, task['id'], fontsize=9,
                                       rotation='horizontal')
-                        preps_duration = task['finish'][0]-task['start'] - task['finish'][2] - task['finish'][3]
+                        preps_duration = task['finish'][0] - task['start'] - task['finish'][2] - task['finish'][3]
                         self.gnt.broken_barh([(task['start'], preps_duration)], [position_y - 1.2, 2.4],
                                              facecolors=color[0])
-                        self.gnt.broken_barh([(task['start']+preps_duration, task['finish'][2])],
+                        self.gnt.broken_barh([(task['start'] + preps_duration, task['finish'][2])],
                                              [position_y - 1.2, 2.4], facecolors=color[1])
-                        self.gnt.broken_barh([(task['start']+preps_duration+task['finish'][2], task["finish"][3])],
+                        self.gnt.broken_barh([(task['start'] + preps_duration + task['finish'][2], task["finish"][3])],
                                              [position_y - 1.2, 2.4], facecolors=color[2])
                         self.gnt.annotate("", xy=((task['finish'][0]), position_y - 1.3),
                                           xytext=((task['finish'][0]), position_y + 1.3),
@@ -264,15 +262,15 @@ class Vis:
                 plt.savefig('./img/' + file_name)
             # plt.show()
         else:
-            plt.legend(handles=self.labels, loc='center left', bbox_to_anchor=(1, 0.5), # bbox_to_anchor=(0.5, -0.05),
-                        fancybox=True, shadow=True, ncol=5)
+            plt.legend(handles=self.labels, loc='center left', bbox_to_anchor=(1, 0.5),  # bbox_to_anchor=(0.5, -0.05),
+                       fancybox=True, shadow=True, ncol=5)
             if not video:
                 plt.show()
 
     def online_plotting(self):
         data = pd.DataFrame({
             "state": ["Completed", "In progress", "Available", "Non available", "Completed",
-                       "In progress", "Available"],
+                      "In progress", "Available"],
             "start": [0, 7, 14, 26, 0, 10, 17],
             "End": [7, 14, 23, 30, 10, 17, 26],
             "Agent": ["Human", "Human", "Human", "Human", "Robot", "Robot", "Robot"]
@@ -287,9 +285,9 @@ class Vis:
                                 domain=['Completed', 'In progress', 'Available', 'Non available'],
                                 range=['#1f77b4', '#2ca02c', '#ff7f0e', '#d62728']
                             ))).properties(
-        title='Gantt Chart',
-        width=max(self.data['End'])
-    )
+            title='Gantt Chart',
+            width=max(self.data['End'])
+        )
         current_time_rule = alt.Chart(pd.DataFrame({'current_time': [self.current_time]})).mark_rule(
             color='red').encode(
             x='current_time',
@@ -297,17 +295,15 @@ class Vis:
         )
         self.chart_placeholder.altair_chart(bar_chart + current_time_rule, use_container_width=True)
 
-
     def init_online_plotting(self):
         self.chart_placeholder = st.empty()
         # "Energy Costs By Month"
-
 
         # if st.button('say hello'):
         #     st.write('Why hello there')
         # else:
         #     st.write('Goodbye')
-                # progress_bar.empty()
+        # progress_bar.empty()
 
         # streamlit widgets automatically run the script from top to bottom. since
         # this button is not connected to any other logic, it just causes a plain
@@ -324,7 +320,6 @@ class Vis:
                 data = json.load(json_file)
         except Exception as e:
             data = {}
-
 
         data[len(data)] = {'Time': self.current_time, 'Schedule': self.data}
         with open(self.data4video, 'w') as f:
@@ -361,12 +356,19 @@ class Vis:
                    "A2": (0, 2), 'B2': (1, 2), 'C2': (2, 2), 'D2': (3, 2),
                    "A3": (0, 1), 'B3': (1, 1), 'C3': (2, 1), 'D3': (3, 1),
                    "A4": (0, 0), 'B4': (1, 0), 'C4': (2, 0), 'D4': (3, 0)}  # positions for all nodes
-        else:
+        elif task_number == 8:
             # for case 7
             pos = {'A2': (0.5, 2.5), 'A1': (1.5, 2.5), 'A3': (2.5, 2.5),
                    "A4": (0.5, 1.5), 'C1': (1.5, 1.5), 'B1': (2.5, 1.5),
                    "B2": (0.5, 0.5), 'B4': (1.5, 0.5), 'B3': (2.5, 0.5)}
-
+        else:
+            # TODO: fix graph plotting
+            nx.draw(G)
+            axis = plt.gca()
+            # maybe smaller factors work as well, but 1.1 works fine for this minimal example
+            axis.set_xlim([-0.5, 3.5])
+            axis.set_ylim([-0.5, 3.5])
+            return None
         node_size = 900
         nx.draw_networkx_edges(G, pos, width=1.0, alpha=0.7, node_size=node_size)
         nx.draw_networkx_labels(G, pos, labels, font_size=14, font_color="whitesmoke")
@@ -386,4 +388,3 @@ class Vis:
         # maybe smaller factors work as well, but 1.1 works fine for this minimal example
         axis.set_xlim([-0.5, 3.5])
         axis.set_ylim([-0.5, 3.5])
-
