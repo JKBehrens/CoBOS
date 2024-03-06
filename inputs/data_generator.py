@@ -7,7 +7,6 @@ import json
 
 
 class RandomCase(BaseModel):
-    seed: int
     agent_number: int
     task_number: int
     condition_number: int
@@ -54,24 +53,16 @@ def add_durations_to_graph(g: nx.DiGraph, seed:Optional[int]=None):
     return g
 
 
-def gen_task_graph_mixed_cross_task_dependencies(param: RandomCase):
+def gen_task_graph_mixed_cross_task_dependencies(param: RandomCase, rand_gen:  np.random.Generator | None = None):
     graph_size = param.task_number
 
     G = nx.gnr_graph(graph_size, 0.1)
     for node in G.nodes():
-        G.nodes[node]["agent"] = np.sort(rand.choice([i for i in range(param.agent_number)],
+        G.nodes[node]["agent"] = np.sort(rand_gen.choice([i for i in range(param.agent_number)],
                                                       size=rand.choice([i+1 for i in range(param.agent_number)]),
                                                       replace=False))
 
-    # G2 = nx.gnr_graph(graph_size-(graph_size//2), 0.2)
-    # for node in G2.nodes():
-    #     G2.nodes[node]["agent"] = np.sort(rand.choice([i for i in range(param.agent_number)],
-    #                                                   size=rand.choice([i+1 for i in range(param.agent_number)]),
-    #                                                   replace=False))
-        
-    # G:nx.DiGraph = nx.disjoint_union(G1, G2)
-
-    connections = rand.integers(0, graph_size, size=(2, param.condition_number))
+    connections = rand_gen.integers(0, graph_size, size=(2, param.condition_number))
     for i in np.arange(connections.shape[-1]):
         u, v = connections[:, i]
         print(u, v+graph_size)
@@ -91,7 +82,7 @@ def gen_task_graph_mixed_cross_task_dependencies(param: RandomCase):
             # Find a cycle in the graph
             cycle = nx.find_cycle(G)
             # Choose an edge from the cycle to delete and remove it from graphe
-            edge_to_delete = rand.choice(cycle)
+            edge_to_delete = rand_gen.choice(cycle)
             G.remove_edge(*edge_to_delete)
 
     nx.draw(G)   # default spring_layout
@@ -137,9 +128,11 @@ def gen_task_graph_simple():
     plt.show()
 
     return G
-seed = 0
-g = gen_task_graph_mixed_cross_task_dependencies(RandomCase(seed=0, agent_number=4, task_number=15, condition_number=10))
-g = add_durations_to_graph(g, seed=seed)
-get_data_str_from_graph(g, "t2.json")
+# seed = 0
+# rand_gen = np.random.default_rng(seed)
+#
+# g = gen_task_graph_mixed_cross_task_dependencies(RandomCase(agent_number=4, task_number=15, condition_number=10), rand_gen)
+# g = add_durations_to_graph(g, seed=seed)
+# get_data_str_from_graph(g, "t2.json")
 
 
