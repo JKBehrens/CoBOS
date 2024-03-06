@@ -97,6 +97,7 @@ def test_case_4_solver_seed_4_dist_seed_7_sim_seed_3():
         schedule_seed=solver_seed,
         sim_seed=sim_seed,
         answer_seed=sim_seed,
+        det_job = False
     )
 
     print(schedule)

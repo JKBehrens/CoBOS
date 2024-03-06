@@ -178,7 +178,7 @@ class Sim:
                 return AgentState.PREPARATION, -1
             elif current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][0] -
                                  self.task_execution['Robot']['Duration'][3]):
-                coworker_name = self.agent_list[self.agent_list.index(task.agent) - 1]
+                coworker_name = self.agent_list[self.agent_list.index(task.agent[0]) - 1]
 
                 if self.task_execution[coworker_name]['Duration'] != [0, 0, 0, 0] and \
                         current_time < (self.task_execution['Robot']['Start'] +

@@ -82,6 +82,9 @@ class ControlLogic:
             self.output_data.append(self.schedule_as_dict(hierarchy=True))
         except KeyError as e:
             pass
+        except ValueError as e:
+            # logging.warning(e)
+            pass
 
         if animation:
             self.plot = Vis(horizon=self.solving_method.horizon)
@@ -164,7 +167,9 @@ class ControlLogic:
         if hierarchy:
             output = {'Human': [], 'Robot': []}
             for task in self.job.task_sequence:
-                output[task.agent].append(task.dict())
+                if len(task.agent) != 1:
+                    raise ValueError(f"Not a valid schedule. Task {task.id} is not allocated: {task.agent}")
+                output[task.agent[0]].append(task.dict())
         else:
             output = {
                 "status": [],

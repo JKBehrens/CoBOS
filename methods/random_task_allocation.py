@@ -41,12 +41,12 @@ class RandomAllocation(Solver):
         for task in self.job.task_sequence:
             if task.state == TaskState.AVAILABLE and \
                     ((task.universal and task.id not in rejection_tasks) or
-                     (task.agent == agent_name and task.id not in rejection_tasks)):
+                     (agent_name in task.agent and task.id not in rejection_tasks)):
                 available_tasks.append(task)
 
         if available_tasks:
             task = self.rand.choice(available_tasks, size=1)[0]
             if task.universal:
-                task.agent = agent_name
+                task.agent = [agent_name]
             return task
         return None

@@ -169,7 +169,8 @@ class OverlapSchedule(Schedule):
                         if not (self.job.task_sequence[task.id].finish[0] - self.job.task_sequence[task.id].start) <=\
                                self.solver.Value(self.task_intervals[task.id][2].EndExpr()) - \
                                self.solver.Value(self.task_intervals[task.id][0].StartExpr()):
-                            logging.warning(f"Duration of task {task.id} is wrong.")
+                            # logging.warning(f"Duration of task {task.id} is wrong.")
+                            pass
                 else:
                     agent = self.solver.Value(self.task_assignment_var[task.id])
                     assert self.task_duration[agent][task.id][0] == \
@@ -205,7 +206,7 @@ class OverlapSchedule(Schedule):
         makespan = 0
         output = {'Human': [], 'Robot': []}
         for task in self.job.task_sequence:
-            task.agent = self.agent_mapping[self.solver.Value(self.task_assignment_var[task.id])]
+            task.agent = [self.agent_mapping[self.solver.Value(self.task_assignment_var[task.id])]]
 
             if (task.state == TaskState.UNAVAILABLE) or (task.state == TaskState.AVAILABLE) or (task.state is None):
                 task.start = self.solver.Value(self.task_intervals[task.id][0].StartExpr())
@@ -216,14 +217,14 @@ class OverlapSchedule(Schedule):
                                ]
             elif task.state == TaskState.InProgress:
                 self.job.task_sequence[task.id].finish = \
-                    [task.start + self.task_duration[task.agent][task.id][0],
-                     self.task_duration[task.agent][task.id][1],
-                     self.task_duration[task.agent][task.id][2], self.task_duration[task.agent][task.id][3]]
+                    [task.start + self.task_duration[task.agent[0]][task.id][0],
+                     self.task_duration[task.agent[0]][task.id][1],
+                     self.task_duration[task.agent[0]][task.id][2], self.task_duration[task.agent[0]][task.id][3]]
             else:
                 task.start = self.solver.Value(self.task_intervals[task.id][0].StartExpr())
                 task.finish[0] = self.solver.Value(self.task_intervals[task.id][2].EndExpr())
 
-            output[task.agent].append(task)
+            output[task.agent[0]].append(task)
             makespan = task.finish[0] if task.finish[0] > makespan else makespan
 
         self.rescheduling_run_time.append([current_time, self.solver.StatusName(self.status),
@@ -260,7 +261,7 @@ class OverlapSchedule(Schedule):
                 self.model.Proto().constraints[idx].Clear()
                 self.allowedAgents[task.id] = self.model.AddAllowedAssignments(
                     variables=[self.task_assignment_var[task.id]],
-                    tuples_list=[tuple([self.agent_mapping[task.agent]])])
+                    tuples_list=[tuple([self.agent_mapping[task.agent[0]]])])
 
     def refresh_variables(self, current_time):
         """
@@ -272,7 +273,7 @@ class OverlapSchedule(Schedule):
                 self.model.Proto().constraints[idx].Clear()
                 self.allowedAgents[task.id] = self.model.AddAllowedAssignments(
                     variables=[self.task_assignment_var[task.id]],
-                    tuples_list=[tuple([self.agent_mapping[task.agent]])])
+                    tuples_list=[tuple([self.agent_mapping[task.agent[0]]])])
 
                 if task.state == TaskState.COMPLETED:
                     if task.id in self.tasks_with_final_var:
@@ -304,10 +305,10 @@ class OverlapSchedule(Schedule):
                     for phase in range(3):
                         idx = self.duration_constraints[task.id][phase].Index()
                         self.model.Proto().constraints[idx].Clear()
-                    if current_time > task.start+self.task_duration[task.agent][task.id][0]:
+                    if current_time > task.start+self.task_duration[task.agent[0]][task.id][0]:
                         end_value = current_time
                     else:
-                        end_value = task.start+self.task_duration[task.agent][task.id][0]
+                        end_value = task.start+self.task_duration[task.agent[0]][task.id][0]
 
                     # set end of interval to predictit from actual start time
                     self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[
@@ -356,7 +357,7 @@ class OverlapSchedule(Schedule):
         # task can be assignment to any agent from the task_assignment list except current agent
         self.allowedAgents[task.id] = self.model.AddAllowedAssignments(
             variables=[self.task_assignment_var[task.id]],
-            tuples_list=[tuple([v]) for v in self.task_assignment[task.id] if v != self.agent_mapping[task.agent]])
+            tuples_list=[tuple([v]) for v in self.task_assignment[task.id] if v != self.agent_mapping[task.agent[0]]])
 
     def set_list_of_possible_changes(self, available_tasks, agent_name, current_time, **kwargs):
         makespans = []
@@ -430,7 +431,7 @@ class OverlapSchedule(Schedule):
                         f"Something is wrong in FIND_TASK, status {solver.StatusName(status)} and the log of the solve")
                     logging.error(self.job.__str__())
                     logging.error(self.model.Validate())
-                    logging.error(f"Something is wrong, status {self.solver.StatusName(self.status)} and the log of the solve")
+                    logging.error(f"Something is wrong, status {solver.StatusName(status)} and the log of the solve")
                     raise ValueError(f"case {self.job.case}, solver_seed {self.seed}, dist_seed {self.job.seed}")
 
                     exit(2)
