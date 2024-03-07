@@ -1,0 +1,32 @@
+[project]
+name = "scheduling"
+version = "0.1.0"
+description = "Online scheduling for stochastic cooperative jobs"
+authors = [
+    {name = "Jan Behrens", email = "jan.kristof.behrens@cvut.cz"},
+    {name = "Marina Ionova", email = "ionovmar@ciirc.cvut.cz"},
+]
+dependencies = [
+    "numpy>=1.24.1",
+    "ortools>=9.5.2237",
+    "networkx>=3.0",
+    "matplotlib>=3.6.2",
+    "pandas>=1.5.3",
+    "streamlit>=1.26.0",
+    "altair>=4.2.2",
+    "graphviz",
+    "pytest",
+    "pydantic<2",
+    "dask-jobqueue",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
