@@ -4,13 +4,12 @@ This class create model and solve methods problem.
 @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
 @contact: marina.ionova@cvut.cz
 """
-from typing import Dict, List, Tuple
+from typing import Dict, List
 from methods.scheduling_split_tasks import Schedule, START_AVAILABLE_TASKS
 from control.agent_and_task_states import TaskState
 from ortools.sat.python import cp_model
 import logging
 import statistics
-import copy
 
 LAMBDA = 1
 

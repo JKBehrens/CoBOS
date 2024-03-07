@@ -2,8 +2,7 @@
 
 
 import json
-from pathlib import Path
-from exp_scripts.run_base_scheduling_exps import ExperimentRun, ExperimentSettings, run_exp
+from exp_scripts.run_base_scheduling_exps import ExperimentRun, run_exp
 from methods.max_duration import MaxDuration
 from methods.overlap_method import OverlapSchedule
 from methods.random_task_allocation import RandomAllocation

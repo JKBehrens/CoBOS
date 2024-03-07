@@ -3,12 +3,11 @@ from pathlib import Path
 from typing import Any, Iterable
 from dask_jobqueue.slurm import SLURMCluster
 from distributed import Client, Future
-from dask.distributed import wait, progress
+from dask.distributed import wait
 import tqdm
 
 from methods import OverlapSchedule, RandomAllocation, MaxDuration
 
-from utils.file_handler import EnhancedJSONEncoder
 
 import copy
 import json

@@ -5,7 +5,7 @@
     @contact: marina.ionova@cvut.cz
 """
 from visualization import Vis, initial_and_final_schedule_save_file_name, Web_vis
-from methods import Schedule, NoOverlapSchedule, OverlapSchedule, RandomAllocation, MaxDuration, Solver
+from methods import Solver
 from control.agent_and_task_states import AgentState, TaskState
 from control.agents import Agent
 from control.jobs import Job, Task
@@ -15,7 +15,6 @@ import json
 import time
 import copy
 
-from typing import Any
 
 
 
@@ -80,9 +79,9 @@ class ControlLogic:
         """
         try:
             self.output_data.append(self.schedule_as_dict(hierarchy=True))
-        except KeyError as e:
+        except KeyError:
             pass
-        except ValueError as e:
+        except ValueError:
             # logging.warning(e)
             pass
 

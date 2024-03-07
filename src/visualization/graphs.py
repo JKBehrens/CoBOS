@@ -7,14 +7,11 @@
 import pandas as pd
 from matplotlib import pyplot as plt
 import json
-import os
 import networkx as nx
 import matplotlib.patches as mpatches
 from matplotlib import gridspec
 from matplotlib.collections import PatchCollection
-import pandas
 import streamlit as st
-import numpy as np
 import altair as alt
 
 
@@ -80,7 +77,7 @@ class Vis:
         try:
             with open(self.data4video, "w") as json_file:
                 json.dump({}, json_file)
-        except FileNotfoundError as e:
+        except FileNotfoundError:
             self.data4video = './..' + self.data4video[1:]
             with open(self.data4video, "w") as json_file:
                 json.dump({}, json_file)
@@ -314,11 +311,11 @@ class Vis:
         try:
             with open(self.data4video, "r+") as json_file:
                 data = json.load(json_file)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             self.data4video = './..' + self.data4video[1:]
             with open(self.data4video, "r+") as json_file:
                 data = json.load(json_file)
-        except Exception as e:
+        except Exception:
             data = {}
 
         data[len(data)] = {'Time': self.current_time, 'Schedule': self.data}

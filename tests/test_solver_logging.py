@@ -1,7 +1,7 @@
 
 import json
 from methods.solver_wrapper import SolverRunLog, SolverWrapper, CpModel, CpSolver
-from ortools.sat.python import cp_model, cp_model_helper
+from ortools.sat.python import cp_model
 
 from google.protobuf import text_format
 from ortools.sat import cp_model_pb2

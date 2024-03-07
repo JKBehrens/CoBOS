@@ -4,13 +4,10 @@ This class create model and solve methods problem.
 @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
 @contact: marina.ionova@cvut.cz
 """
-import numpy as np
 from typing import Dict
 from methods.scheduling_split_tasks import Schedule
-from control.agent_and_task_states import AgentState, TaskState
+from control.agent_and_task_states import TaskState
 from ortools.sat.python import cp_model
-from methods.solver import Solver
-import collections
 import logging
 import copy
 

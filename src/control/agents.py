@@ -85,7 +85,7 @@ class Agent(Sim):
         if task.universal and self.name == 'Human':
             if self.ask_human('execute_task', task):
                 self._handle_accepted_task(task, job, current_time, coworker)
-                logging.info(f'Human accept task. Task in progress...')
+                logging.info('Human accept task. Task in progress...')
                 self.state = AgentState.ACCEPTANCE
             else:
                 self.state = AgentState.REJECTION

@@ -5,15 +5,11 @@
     @contact: marina.ionova@cvut.cz
 """
 import copy
-from typing import Optional
 from control.jobs import Job
-from simulation.task_execution_time_const import get_approximated_task_duration
 from control.agent_and_task_states import AgentState
-from numpy.random import Generator
 from inputs.config import response_time_max, response_time_min
 import numpy as np
 import logging
-import json
 import time
 
 SIM_MODE = 'NORMAL'  # OVERFIT, UNDERFIT, NORMAL

@@ -4,7 +4,6 @@ import pandas as pd
 import altair as alt
 import time
 from graphviz import Digraph
-from datetime import datetime
 
 # Sample data
 data = pd.DataFrame({
@@ -76,7 +75,6 @@ def update_current_time():
 
 
 # Start a separate thread to continuously update the current_time
-import threading
 
 # update_thread = threading.Thread(target=update_current_time)
 # update_thread.daemon = True

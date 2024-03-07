@@ -298,7 +298,7 @@ class Schedule(Solver):
 
             return output, makespan
         else:
-            self.model.ExportToFile(f'model.txt')
+            self.model.ExportToFile('model.txt')
             self.job.__str__()
             logging.error(f"Scheduling failed, max self.horizon: {self.horizon} \n")
             exit(2)

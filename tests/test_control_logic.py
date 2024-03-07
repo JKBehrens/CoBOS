@@ -1,6 +1,5 @@
-import numpy as np
-from methods import OverlapSchedule, RandomAllocation, MaxDuration
-from control.control_logic import ControlLogic, make_control_logic
+from methods import OverlapSchedule
+from control.control_logic import ControlLogic
 from control.agents import Agent
 from control.jobs import Job
 import copy
