@@ -4,6 +4,7 @@ from methods.scheduling_split_tasks import Schedule, schedule_as_dict
 from methods import OverlapSchedule, NoOverlapSchedule, RandomAllocation, MaxDuration
 from control.control_logic import ControlLogic
 from control.agents import Agent
+from inputs import RandomCase
 from visualization.json_2_video import video_parser
 from visualization import schedule_save_file_name, Vis, comparison_save_file_name
 from control.jobs import Job
@@ -13,14 +14,14 @@ import logging
 import json
 
 METHOD = OverlapSchedule
-case = 4
+case = 8
 solver_seed = 4
 dist_seed = 7
 sim_seed = 3
 
 
 if __name__ == '__main__':
-    cases = ['1', '2', '3', '4', '5', '6', '7', '0']
+    cases = ['1', '2', '3', '4', '5', '6', '7', '8', '0']
 
     parser = argparse.ArgumentParser()
     parser.add_argument("case", type=str, help='Choose one of this: 1, 2, 3, 4, 5, 6')
@@ -48,8 +49,10 @@ if __name__ == '__main__':
     else:
         logging.error("The case does not exist")
         raise SystemExit(1)
-
-    job = Job(case, seed=dist_seed)
+    if case == 8:
+        job = Job(int(case), seed=dist_seed, randon_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
+    else:
+        job = Job(int(case), seed=dist_seed)
 
     agent_names = ["Human", "Robot"]
     agents: list[Agent] = []
@@ -67,11 +70,10 @@ if __name__ == '__main__':
     solving_method.prepare()
 
     if args.comparison:
-        job = Job(case, seed=0)
         if args.change_job:
-            execute_job = ControlLogic(method=METHOD, case=case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0, answer_seed=None)
-            schedule1, stat1 = execute_job.run(animation=False, experiments=True)
-            seed = 9
+            control_logic = ControlLogic(job=copy.deepcopy(job), agents=agents, method=solving_method)
+            schedule1, stat1 = control_logic.run(animation=False, experiments=True)
+            seed = sim_seed
             nameList = [True, False]
             rand = np.random.default_rng(seed=seed)
             answers = []
@@ -80,14 +82,22 @@ if __name__ == '__main__':
                 answers.append(answer)
                 if not answer and task.universal:
                     task.universal = False
-                    task.agent = 'Robot'
-            execute_job = ControlLogic(method=METHOD, case=case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0,  answer_seed=seed)
-            schedule2, stat2 = execute_job.run(animation=False, experiments=True)
+                    task.agent = ['Robot']
+            control_logic = ControlLogic(job=copy.deepcopy(job), agents=agents, method=solving_method)
+            schedule2, stat2 = control_logic.run(animation=False, experiments=True)
         else:
-            execute_job = ControlLogic(method=OverlapSchedule, case=case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
-            schedule1, stat1 = execute_job.run(animation=False, experiments=True)
-            execute_job = ControlLogic(method=MaxDuration, case=case, job=copy.deepcopy(job), schedule_seed=0, sim_seed=0)
-            schedule2, stat2 = execute_job.run(animation=False, experiments=True)
+            control_logic = ControlLogic(job=job, agents=agents, method=solving_method)
+            schedule1, stat1 = control_logic.run(animation=False, experiments=True)
+
+            if case == 8:
+                job = Job(int(case), seed=dist_seed,
+                          randon_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
+            else:
+                job = Job(int(case), seed=dist_seed)
+            solving_method = METHOD(job=job, seed=1)
+            solving_method.prepare()
+            control_logic = ControlLogic(job=job, agents=agents, method=solving_method)
+            schedule2, stat2 = control_logic.run(animation=False, experiments=True)
 
         file_name = args.file_name if args.file_name else comparison_save_file_name
 
@@ -100,11 +110,11 @@ if __name__ == '__main__':
 
         try:
             with open(file_name, "w") as outfile:
-                json.dump({'schedule': schedule1+[schedule2[1]], 'statistics': [stat1, stat2]}, outfile)
+                json.dump({'schedule': schedule1+[schedule2[1]], 'statistics': [stat1, stat2]}, outfile,  indent=4)
                 logging.info(f'Save data to {file_name}')
         except IndexError:
             with open(file_name, "w") as outfile:
-                json.dump({'schedule': schedule1+schedule2, 'statistics': [stat1, stat2]}, outfile)
+                json.dump({'schedule': schedule1+schedule2, 'statistics': [stat1, stat2]}, outfile,  indent=4)
                 logging.info(f'Save data to {file_name}')
 
     elif not args.only_schedule:

@@ -1,5 +1,8 @@
 from typing import Optional
 from control.jobs import Task
+from inputs import RandomCase
+import networkx as nx
+
 from inputs.config import (
     n,
     mean_min,
@@ -9,6 +12,7 @@ from inputs.config import (
     allocation_weights,
 )
 import numpy as np
+from inputs import gen_task_graph_mixed_cross_task_dependencies
 
 
 TASK_NUM = 8
@@ -97,8 +101,8 @@ CONDITIONS = {
     ],
     7: [[], [], [], [0, 1], [0, 2], [3], [4], [3, 4]]
 }
-X = ["A", "B", "C", "D"]
-Y = ["1", "2", "3", "4"]
+# X = ["A", "B", "C", "D", "E", "F", "G", "H"]
+# Y = ["1", "2", "3", "4"]
 
 
 def set_random_sequence(
@@ -156,46 +160,58 @@ def set_rejection_prob(
     return float(rand_gen.dirichlet(np.ones(2), size=1)[0][0])
 
 
-def set_input(case: int, seed: int) -> list[Task]:
+def set_input(case: int, seed: int, random_case_param: RandomCase = None) -> list[Task]:
     rand_gen = np.random.default_rng(seed)
     assert isinstance(rand_gen, np.random.Generator)
+
+    if case == 8:
+        g = gen_task_graph_mixed_cross_task_dependencies(random_case_param, rand_gen)
+        assigment_list = nx.get_node_attributes(g, "agent")
+        condition_list = nx.to_dict_of_lists(g)
+    else:
+        if case in (1, 4):
+            condition_list = [[] for _ in range(len(CONDITIONS[2]))]
+        else:
+            condition_list = CONDITIONS[case]
+        cubes_sequence = set_random_sequence(case, rand_gen)
+        assigment_list = {}
+        for i, cube in enumerate(cubes_sequence):
+            if 'h' in cube:
+                assigment_list[i] = ['Human']
+            elif 'r' in cube:
+                assigment_list[i] = ['Robot']
+            else:
+                assigment_list[i] = ['Robot', 'Human']
     job_description = []
-    ID_counter = 0
-    cubes_sequence = set_random_sequence(case, rand_gen)
 
-    for x in X:
-        for y in Y:
-            if case == 7 and ID_counter == 8:
-                break
-            task_description = {}
-            task_description["id"] = ID_counter
-            try:
-                task_description["action"] = {"object": cubes_sequence[ID_counter]}
-            except IndexError as e:
-                return job_description
+    for task_id in assigment_list.keys():
+        if case == 7 and task_id == 7:
+            break
+        task_description = {"id": task_id, "action": {"object": task_id, "place": task_id}}
 
+        if len(assigment_list[task_id]) != 1:
+            task_description["universal"] = True
+        else:
             task_description["universal"] = False
-            if "h" in cubes_sequence[ID_counter]:
-                task_description["agent"] = ["Human"]
-            elif "r" in cubes_sequence[ID_counter]:
-                task_description["agent"] = ["Robot"]
-            else:
-                task_description["agent"] = ["Human", "Robot"]
-                task_description["universal"] = True
-            task_description["action"]["place"] = x + y
-            if case in (1, 4):
-                task_description["conditions"] = []
-            elif case == 0:
-                task_description["conditions"] = TEST_CASE_CONDITIONS[ID_counter]
-            else:
-                task_description["conditions"] = CONDITIONS[case][ID_counter]
 
-            task_description["distribution"] = [
-                set_distribution_parameters(rand_gen=rand_gen) for _ in range(3)
-            ]
-            task_description["rejection_prob"] = set_rejection_prob(rand_gen=rand_gen)
-            ID_counter += 1
-            task = Task(**task_description)
-            job_description.append(task)
+        if isinstance(assigment_list[task_id][0], str):
+            task_description["agent"] = assigment_list[task_id]
+        else:
+            if len(assigment_list[task_id]) != 1:
+                task_description["agent"] = ['Robot', 'Human']
+            else:
+                task_description["agent"] = ['Robot'] if assigment_list[task_id][0] == 0 else ['Human']
+
+        if case == 0:
+            task_description["conditions"] = TEST_CASE_CONDITIONS[task_id]
+        else:
+            task_description["conditions"] = condition_list[task_id]
+
+        task_description["distribution"] = [
+            set_distribution_parameters(rand_gen=rand_gen) for _ in range(3)
+        ]
+        task_description["rejection_prob"] = set_rejection_prob(rand_gen=rand_gen)
+        task = Task(**task_description)
+        job_description.append(task)
 
     return job_description
