@@ -10,8 +10,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import argparse
 import pandas as pd
-from exp_scripts import experiments_path
-from itertools import product
+# from exp_scripts import experiments_path
 
 
 cases = [1, 2, 3, 4, 5, 6]

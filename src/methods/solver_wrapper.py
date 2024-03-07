@@ -127,7 +127,7 @@ class SolverWrapper(CpSolver):
         """
         try:
             return self.solver_run_log
-        except AttributeError as e:
+        except AttributeError as _:
             raise RuntimeError(
                 "No Log available because the solver did not run. Call Solve first."
             )

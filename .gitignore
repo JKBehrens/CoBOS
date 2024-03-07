@@ -181,3 +181,4 @@ visualization/data_for_visualization/
 img/*
 exp_scripts/experiments/
 profile.json
+src/exp_scripts/experiments/*
