@@ -181,6 +181,7 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
                 settings = dict(zip(exp_settings.variation_int_var_lst + exp_settings.variation_list_var_lst, seeds_tpl))
                 settings["answer_seed"] = settings["sim_seed"]
                 # job = Job(case, seed=dist_seed)
+                #TODO: make sure that names are sorted
                 fname = f"sched_case_{case}_method_{method.name()}"
                 for name, seed in settings.items():
                     fname += f"_{name}_{seed}"
