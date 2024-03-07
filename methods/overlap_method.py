@@ -226,12 +226,33 @@ class OverlapSchedule(Schedule):
             output[task.agent[0]].append(task)
             makespan = task.finish[0] if task.finish[0] > makespan else makespan
 
-        self.rescheduling_run_time.append([current_time, self.solver.StatusName(self.status),
-                                           self.solver.ObjectiveValue(), self.solver.WallTime()])
+        solver_info = self.get_solver_info_as_dict(self.solver)
+        solver_info['current_time'] = current_time
+        self.rescheduling_run_time.append(solver_info)
+
         output['Human'].sort(key=lambda x: x.start)
         output['Robot'].sort(key=lambda x: x.start)
-
         return output, makespan
+
+    @staticmethod
+    def get_solver_info_as_dict(solver: cp_model.CpSolver):
+        return {
+            'status': solver.StatusName(solver.ResponseProto().status),
+            'objective_value': solver.ResponseProto().objective_value,
+            'best_objective_bound': solver.ResponseProto().best_objective_bound,
+            'inner_objective_lower_bound': solver.ResponseProto().inner_objective_lower_bound,
+            'num_integers': solver.ResponseProto().num_integers,
+            'num_booleans': solver.ResponseProto().num_booleans,
+            'num_conflicts': solver.ResponseProto().num_conflicts,
+            'num_binary_propagations': solver.ResponseProto().num_binary_propagations,
+            'num_integer_propagations': solver.ResponseProto().num_integer_propagations,
+            'num_lp_iterations': solver.ResponseProto().num_lp_iterations,
+            'wall_time': solver.ResponseProto().wall_time,
+            'user_time': solver.ResponseProto().user_time,
+            'deterministic_time': solver.ResponseProto().deterministic_time,
+            'gap_integral': solver.ResponseProto().gap_integral
+        }
+
 
     def get_task_assignment_list(self):
         task_assignment = {}
@@ -374,7 +395,9 @@ class OverlapSchedule(Schedule):
             status = solver.Solve(test_model)
             if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
                 makespans.append([solver.ObjectiveValue(), available_task])
-                self.evaluation_run_time.append([current_time, solver.ObjectiveValue(), solver.WallTime()])
+                solver_info = self.get_solver_info_as_dict(solver)
+                solver_info['current_time'] = current_time
+                self.evaluation_run_time.append(solver_info)
             else:
                 logging.error(self.model.Validate())
                 self.job.__str__()
@@ -416,7 +439,9 @@ class OverlapSchedule(Schedule):
                 status = solver.Solve(test_model)
                 # offset = self.get_mean_of_task_duration()/2
                 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-                    self.evaluation_run_time.append([current_time, solver.ObjectiveValue(), solver.WallTime()])
+                    solver_info = self.get_solver_info_as_dict(solver)
+                    solver_info['current_time'] = current_time
+                    self.evaluation_run_time.append(solver_info)
                     if solver.ObjectiveValue() < self.job.get_current_makespan():
                         self.schedule, self.current_makespan = self.solve(current_time=current_time)
                         return self.find_task(agent_name, agent_rejection_tasks, current_time)
