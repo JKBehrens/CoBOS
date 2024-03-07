@@ -209,4 +209,4 @@ def test_find_infeasible_explanation():
         print("No solution found. Minimal infeasible conditions: ")
         #We haven't set any maximization objective yet so we can get the minimal result
         for i in solver.SufficientAssumptionsForInfeasibility():
-            print(model.VarIndexToVarProto(i).name)
+            print(model.var_index_to_var_proto(i).name)

@@ -122,8 +122,8 @@ def test_make_model_from_string_and_back():
 
     # solve model via swig
     solve_wrapper = swig_helper.SolveWrapper()
-    solve_wrapper.SetParameters(parameters)
-    solution = solve_wrapper.Solve(model)
+    solve_wrapper.set_parameters(parameters)
+    solution = solve_wrapper.solve(model)
 
     assert cp_model_pb2.OPTIMAL == solution.status
     assert 30.0 == solution.objective_value
