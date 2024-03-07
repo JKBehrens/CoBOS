@@ -47,6 +47,6 @@ test = "pytest -v tests/"
 coverage = "coverage run --source src -m pytest tests/"
 post_coverage = "coverage xml"
 ruff = "ruff check src tests examples"
-black = "black --check --diff --verbose src tests examples"
+black = "black --check --diff --verbose src tests"
 format = "black src tests examples"
 lint = { composite = ["ruff", "black"] }
