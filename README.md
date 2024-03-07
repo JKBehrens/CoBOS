@@ -13,8 +13,16 @@ Create conda environment:
 ```
 conda create -n msched python=3.10
 conda activate msched
-pip install -r requirements.txt
+pip install -e .
 ```
+
+## Installation for the package development
+
+Clone the repository, install [pdm](https://pdm-project.org/latest/) (if you haven't done so before) go to the repository root folder and install it via:
+
+pdm install
+
+Before pushing your commits, you can check the code formating with pdm lint and tests with pdm test.
 
 
 ## Quick Start

@@ -23,6 +23,17 @@ requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 
+
+[tool.pdm.dev-dependencies]
+test = [
+    "pytest>=7.4.3",
+    "coverage>=7.3.2",
+]
+lint = [
+    "black>=23.10.1",
+    "ruff>=0.1.3",
+]
+
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
@@ -30,3 +41,12 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = true
+
+[tool.pdm.scripts]
+test = "pytest -v tests/"
+coverage = "coverage run --source src -m pytest tests/"
+post_coverage = "coverage xml"
+ruff = "ruff check src tests examples"
+black = "black --check --diff --verbose src tests examples"
+format = "black src tests examples"
+lint = { composite = ["ruff", "black"] }
