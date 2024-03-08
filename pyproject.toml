@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Online scheduling for stochastic cooperative jobs"
 authors = [
     {name = "Jan Behrens", email = "jan.kristof.behrens@cvut.cz"},
-    {name = "Marina Ionova", email = "ionovmar@ciirc.cvut.cz"},
+    {name = "Marina Ionova", email = "marina.ionova@cvut.cz"},
 ]
 dependencies = [
     "numpy>=1.24.1",
