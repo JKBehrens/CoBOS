@@ -22,11 +22,11 @@ class Job:
     :type case: str
     """
 
-    def __init__(self, case: int, seed: int, randon_case_param: RandomCase = None):
+    def __init__(self, case: int, seed: int, random_case_param: RandomCase = None):
         self.case = case
         self.seed = seed
         from inputs import case_generator
-        self.job_description = case_generator.set_input(self.case, self.seed,randon_case_param)
+        self.job_description = case_generator.set_input(self.case, self.seed,random_case_param)
         self.task_sequence: List[Task] = self.job_description
         self.in_progress_tasks = []
         self.completed_tasks = []
@@ -160,7 +160,9 @@ class Task(BaseModel):
     universal: bool
     agent: list[str]
     start: int | None = None
-    finish: int | None = None
+    # finish: int | None = None
+    finish: tuple[int,int,int,int] | None = None
+
 
     distribution: list[tuple[tuple[int, int], tuple[int, int], tuple[float, float]]]
     rejection_prob: float

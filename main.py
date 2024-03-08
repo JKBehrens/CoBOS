@@ -50,7 +50,7 @@ if __name__ == '__main__':
         logging.error("The case does not exist")
         raise SystemExit(1)
     if case == 8:
-        job = Job(int(case), seed=dist_seed, randon_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
+        job = Job(int(case), seed=dist_seed, random_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
     else:
         job = Job(int(case), seed=dist_seed)
 
