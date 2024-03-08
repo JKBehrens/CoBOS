@@ -18,6 +18,8 @@ dependencies = [
     "pytest",
     "pydantic<2",
     "dask-jobqueue",
+    "tqdm",
+    "scipy"
 ]
 requires-python = ">=3.10"
 readme = "README.md"
