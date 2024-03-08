@@ -348,6 +348,8 @@ class Vis:
                     for j in task["conditions"]:
                         G.add_edges_from([(get_task_from_id(j, local_data), task["action"]["place"])])
 
+        #TODO: @Marina these position tables don't work anymore with the dropping of object names and location names.
+        # the failure happens then in line 373.
         if task_number == 16:
             pos = {'A1': (0, 3), 'B1': (1, 3), 'C1': (2, 3), 'D1': (3, 3),
                    "A2": (0, 2), 'B2': (1, 2), 'C2': (2, 2), 'D2': (3, 2),

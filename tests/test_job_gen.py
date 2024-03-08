@@ -1,6 +1,7 @@
 import numpy as np
 from control.agents import Agent
-from control.jobs import Job
+from control.jobs import Action, Job, Task
+# from inputs.case_generator import 
 
 
 def test_job_gen():
@@ -10,6 +11,24 @@ def test_job_gen():
 
     assert isinstance(job.__str__(), str)
     assert 0.0 == job.progress()
+
+    for task in job.task_sequence:
+        assert isinstance(task, Task)
+        assert isinstance(task.action, Action)
+
+
+    
+def test_random_job_gen():
+    case = 8
+    seed = 42
+    job = Job(case, seed=seed)
+
+    assert isinstance(job.__str__(), str)
+    assert 0.0 == job.progress()
+
+    for task in job.task_sequence:
+        assert isinstance(task, Task)
+        assert isinstance(task.action, Action)
 
 
 def test_job_sampling():

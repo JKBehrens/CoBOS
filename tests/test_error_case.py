@@ -1,9 +1,11 @@
+from pathlib import Path
 from control.control_logic import ControlLogic
 from control.jobs import Job
 from control.agents import Agent
 from methods.overlap_method import OverlapSchedule
 import copy
 from exp_scripts.run_base_scheduling_exps import run_exp
+from visualization.graphs import Vis
 
 
 def test_model_invalid():
@@ -184,3 +186,31 @@ def test_case_4_solver_seed_4_dist_seed_7_sim_seed_3():
     # ERROR:root:Something is wrong, status OPTIMAL and the log of the solve
     # ERROR:root:case 6, solver_seed 3, dist_seed 7
     # sim_seed 7
+
+
+def test_det_job_perf(tmp_path: Path):
+    # ERROR:root:case 4, solver_seed 4, dist_seed 7
+    # sim_seed 3
+
+    case = 4
+    solver_seed = 4
+    dist_seed = 7
+    sim_seed = 3
+    schedule, stats = run_exp(
+        OverlapSchedule,
+        case=case,
+        dist_seed=dist_seed,
+        schedule_seed=solver_seed,
+        sim_seed=sim_seed,
+        answer_seed=sim_seed,
+        det_job = True
+    )
+
+    print(schedule)
+
+    gantt = Vis(data=schedule, from_file=False)
+    gantt.plot_schedule(tmp_path.joinpath("simulation.png").__str__())
+
+    assert "FAIL" not in stats or stats["FAIL"] == False
+    assert stats["makespan"][0] == stats["makespan"][1]
+
