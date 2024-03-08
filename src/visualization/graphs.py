@@ -51,7 +51,7 @@ def get_task_from_id(id, data):
 class Vis:
     def __init__(self, horizon=None, data=None, from_file=False):
         self.fig = plt.figure(figsize=(12, 10))
-        self.data4video = './visualization/data_for_visualization/sim_2_video.json'
+        self.data4video = 'src/visualization/data_for_visualization/sim_2_video.json'
         self.gnt1 = None
         self.gnt2 = None
         self.data = data
@@ -77,7 +77,7 @@ class Vis:
         try:
             with open(self.data4video, "w") as json_file:
                 json.dump({}, json_file)
-        except FileNotfoundError:
+        except FileNotFoundError:
             self.data4video = './..' + self.data4video[1:]
             with open(self.data4video, "w") as json_file:
                 json.dump({}, json_file)
@@ -207,34 +207,34 @@ class Vis:
                 for task in local_data[i][agent]:
                     position_y, task_name_y, action_y = self.y_pos_and_text[task["universal"]][agent]
 
-                    if self.from_file:
-                        if task['universal']:
-                            color = ['paleturquoise', 'turquoise', 'lightseagreen']
-                        else:
-                            color = ['lightsteelblue', 'cornflowerblue', 'royalblue']
-
-                        self.gnt.text(task["start"] + 0.5, task_name_y, task['id'], fontsize=9,
-                                      rotation='horizontal')
-                        preps_duration = task['finish'][0] - task['start'] - task['finish'][2] - task['finish'][3]
-                        self.gnt.broken_barh([(task['start'], preps_duration)], [position_y - 1.2, 2.4],
-                                             facecolors=color[0])
-                        self.gnt.broken_barh([(task['start'] + preps_duration, task['finish'][2])],
-                                             [position_y - 1.2, 2.4], facecolors=color[1])
-                        self.gnt.broken_barh([(task['start'] + preps_duration + task['finish'][2], task["finish"][3])],
-                                             [position_y - 1.2, 2.4], facecolors=color[2])
-                        self.gnt.annotate("", xy=((task['finish'][0]), position_y - 1.3),
-                                          xytext=((task['finish'][0]), position_y + 1.3),
-                                          arrowprops=dict(arrowstyle="-", lw=1, color="black"))
+                    # if self.from_file:
+                    if task['universal']:
+                        color = ['paleturquoise', 'turquoise', 'lightseagreen']
                     else:
-                        duration = task['finish'][0] - task['start']
-                        color = self.color[task["state"]]
-                        self.gnt.broken_barh([(task["start"], duration - 0.2)], [position_y - 1.2, 2.4],
-                                             facecolors=color)
-                        self.gnt.broken_barh([(task['start'] + duration - 0.2, 0.2)], [position_y - 1.2, 2.4],
-                                             facecolors='black')
+                        color = ['lightsteelblue', 'cornflowerblue', 'royalblue']
 
-                        self.gnt.text(task["start"] + 0.5, task_name_y, task['id'], fontsize=9,
-                                      rotation='horizontal')
+                    self.gnt.text(task["start"] + 0.5, task_name_y, task['id'], fontsize=9,
+                                    rotation='horizontal')
+                    preps_duration = task['finish'][0] - task['start'] - task['finish'][2] - task['finish'][3]
+                    self.gnt.broken_barh([(task['start'], preps_duration)], [position_y - 1.2, 2.4],
+                                            facecolors=color[0])
+                    self.gnt.broken_barh([(task['start'] + preps_duration, task['finish'][2])],
+                                            [position_y - 1.2, 2.4], facecolors=color[1])
+                    self.gnt.broken_barh([(task['start'] + preps_duration + task['finish'][2], task["finish"][3])],
+                                            [position_y - 1.2, 2.4], facecolors=color[2])
+                    self.gnt.annotate("", xy=((task['finish'][0]), position_y - 1.3),
+                                        xytext=((task['finish'][0]), position_y + 1.3),
+                                        arrowprops=dict(arrowstyle="-", lw=1, color="black"))
+                    # else:
+                    #     duration = task['finish'][0] - task['start']
+                    #     color = self.color[task["state"]]
+                    #     self.gnt.broken_barh([(task["start"], duration - 0.2)], [position_y - 1.2, 2.4],
+                    #                          facecolors=color)
+                    #     self.gnt.broken_barh([(task['start'] + duration - 0.2, 0.2)], [position_y - 1.2, 2.4],
+                    #                          facecolors='black')
+
+                    #     self.gnt.text(task["start"] + 0.5, task_name_y, task['id'], fontsize=9,
+                    #                   rotation='horizontal')
 
             if not self.from_file:
                 self.gnt.annotate("", xy=(self.current_time, 0), xytext=(self.current_time, 13),
@@ -351,10 +351,10 @@ class Vis:
         #TODO: @Marina these position tables don't work anymore with the dropping of object names and location names.
         # the failure happens then in line 373.
         if task_number == 16:
-            pos = {'A1': (0, 3), 'B1': (1, 3), 'C1': (2, 3), 'D1': (3, 3),
-                   "A2": (0, 2), 'B2': (1, 2), 'C2': (2, 2), 'D2': (3, 2),
-                   "A3": (0, 1), 'B3': (1, 1), 'C3': (2, 1), 'D3': (3, 1),
-                   "A4": (0, 0), 'B4': (1, 0), 'C4': (2, 0), 'D4': (3, 0)}  # positions for all nodes
+            pos = { '0': (0, 3), '4': (1, 3), '8': (2, 3), '12': (3, 3),
+                    '1': (0, 2), '5': (1, 2), '9': (2, 2), '13': (3, 2),
+                    '2': (0, 1), '6': (1, 1), '10': (2, 1), '14': (3, 1),
+                    '3': (0, 0), '7': (1, 0), '11': (2, 0), '15': (3, 0)} # positions for all nodes
         elif task_number == 8:
             # for case 7
             pos = {'A2': (0.5, 2.5), 'A1': (1.5, 2.5), 'A3': (2.5, 2.5),
@@ -372,16 +372,16 @@ class Vis:
         nx.draw_networkx_edges(G, pos, width=1.0, alpha=0.7, node_size=node_size)
         nx.draw_networkx_labels(G, pos, labels, font_size=14, font_color="whitesmoke")
 
-        if self.from_file:
-            nx.draw_networkx_nodes(G, pos, nodelist=allocability[False], node_color='royalblue', node_size=node_size)
-            nx.draw_networkx_nodes(G, pos, nodelist=allocability[True], node_color='lightseagreen', node_size=node_size)
-        else:
-            node_color = ["lightcoral", "lightcoral", "gold", "lightgreen", "silver"]
-            nx.draw_networkx_nodes(G, pos, nodelist=state[None], node_color=node_color[0], node_size=node_size)
-            nx.draw_networkx_nodes(G, pos, nodelist=state[-1], node_color=node_color[1], node_size=node_size)
-            nx.draw_networkx_nodes(G, pos, nodelist=state[0], node_color=node_color[2], node_size=node_size)
-            nx.draw_networkx_nodes(G, pos, nodelist=state[1], node_color=node_color[3], node_size=node_size)
-            nx.draw_networkx_nodes(G, pos, nodelist=state[2], node_color=node_color[4], node_size=node_size)
+        # if self.from_file:
+        nx.draw_networkx_nodes(G, pos, nodelist=allocability[False], node_color='royalblue', node_size=node_size)
+        nx.draw_networkx_nodes(G, pos, nodelist=allocability[True], node_color='lightseagreen', node_size=node_size)
+        # else:
+        #     node_color = ["lightcoral", "lightcoral", "gold", "lightgreen", "silver"]
+        #     nx.draw_networkx_nodes(G, pos, nodelist=state[None], node_color=node_color[0], node_size=node_size)
+        #     nx.draw_networkx_nodes(G, pos, nodelist=state[-1], node_color=node_color[1], node_size=node_size)
+        #     nx.draw_networkx_nodes(G, pos, nodelist=state[0], node_color=node_color[2], node_size=node_size)
+        #     nx.draw_networkx_nodes(G, pos, nodelist=state[1], node_color=node_color[3], node_size=node_size)
+        #     nx.draw_networkx_nodes(G, pos, nodelist=state[2], node_color=node_color[4], node_size=node_size)
 
         axis = plt.gca()
         # maybe smaller factors work as well, but 1.1 works fine for this minimal example

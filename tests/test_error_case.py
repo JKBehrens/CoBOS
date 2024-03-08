@@ -194,8 +194,8 @@ def test_det_job_perf(tmp_path: Path):
 
     case = 4
     solver_seed = 4
-    dist_seed = 7
-    sim_seed = 3
+    dist_seed = 0
+    sim_seed = 4
     schedule, stats = run_exp(
         OverlapSchedule,
         case=case,

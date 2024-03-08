@@ -30,7 +30,7 @@ class Sim:
         self.seed = seed
         self.rand = np.random.default_rng(seed=self.seed)
         self.fail_probability = []
-        self.task_execution = {agent: {'Start': 0, 'Duration': []} for agent in self.agent_list}
+        self.task_execution = {agent: {'Start': 0, 'id': -1, 'Duration': [0,0,0,0]} for agent in self.agent_list}        
         self.start_time = time.time()
 
         self.set_tasks_duration(**kwargs)
@@ -47,6 +47,12 @@ class Sim:
 
         self.response_time = []
         self.set_response_time()
+
+    def waiting_for_dependent_task(self, task_id, coworker_task_id):
+        for task in self.job.task_sequence:
+            if task_id in task.conditions and task.id == coworker_task_id:
+                return True
+        return False
 
     def _get_deterministic_job(self) -> Job:
         """returns a deterministic version of the job. All universal tasks that are rejected 
@@ -120,25 +126,31 @@ class Sim:
         :rtype: int
         """
         self.task_execution[agent.name]['Start'] = current_time
+        self.task_execution[agent.name]['id'] = agent.current_task.id
         self.task_execution[agent.name]['Duration'] = self.task_duration[agent.name][agent.current_task.id]
 
-        coworker_name = self.agent_list[self.agent_list.index(agent.name)-1]
-        if self.task_execution[coworker_name]['Duration'] != []:
-            if sum(self.task_execution[coworker_name]['Duration'][1:]) == self.task_execution[coworker_name]['Duration'][0]:
-                overlapping = self.task_execution[coworker_name]['Start'] + sum(
-                    self.task_execution[coworker_name]['Duration'][1:3]) - current_time
-            else:
-                overlapping = self.task_execution[coworker_name]['Start'] + \
-                    self.task_execution[coworker_name]['Duration'][0] \
-                    - self.task_execution[coworker_name]['Duration'][3] - current_time
-            logging.debug(f'overlapping:{overlapping}, dependent_task.start :{self.task_execution[coworker_name]["Start"]},'
-                  f'duration of dependent task: {self.task_execution["Human"]["Duration"]}, time: {current_time},'
-                          f' sampled duration of task: {self.task_duration[agent.name][agent.current_task.id]}')
-            if overlapping > self.task_execution[agent.name]['Duration'][1]:
-                self.task_execution[agent.name]['Duration'][0] += overlapping - \
-                                                                  self.task_execution[agent.name]['Duration'][1]
+        coworker_name = self.agent_list[self.agent_list.index(agent.name) - 1]
+        if self.task_execution[coworker_name]['Duration'][0] != 0:
+            coworker_preparation = self.task_execution[coworker_name]['Duration'][0] - \
+                                sum(self.task_execution[coworker_name]['Duration'][2:4])
 
-        return current_time + self.task_execution[agent.name]['Duration'][0]
+            overlapping = self.task_execution[coworker_name]['Start'] + \
+                        self.task_execution[coworker_name]['Duration'][0] \
+                        - self.task_execution[coworker_name]['Duration'][3] - current_time
+
+            if self.task_execution[coworker_name]['Start'] + coworker_preparation > \
+                current_time + sum(self.task_execution[agent.name]['Duration'][1:3]):
+                if self.waiting_for_dependent_task(agent.current_task.id, self.task_execution[coworker_name]['id']):
+                    self.task_execution[agent.name]['Duration'][0] += overlapping - \
+                                                                    self.task_execution[agent.name]['Duration'][1]
+                else:
+                    pass
+            elif self.task_execution[coworker_name]['Start'] + self.task_execution[coworker_name]['Duration'][0] - \
+                self.task_execution[coworker_name]['Duration'][3] >current_time + self.task_execution[agent.name]['Duration'][1]:
+                self.task_execution[agent.name]['Duration'][0] += overlapping - \
+                                                                self.task_execution[agent.name]['Duration'][1]
+            else:
+                pass
 
     def ask_human(self, question_type, task):
         """
