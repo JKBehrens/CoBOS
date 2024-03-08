@@ -33,7 +33,7 @@ class Agent(Sim):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def set_start_task(self, task, start):
+    def set_start_task(self, task: Task, start: int):
         """
         Sets the start time of the current task.
 

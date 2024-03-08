@@ -412,6 +412,24 @@ class OverlapSchedule(Schedule):
             return makespans
         else:
             return makespans
+        
+    def decide(self, observation_data, current_time):
+        decision = {}
+        self.update_tasks_status()
+        self.update_schedule(current_time)
+        for index, [agent_name, agent_state, agent_current_task, agent_rejection_tasks] in enumerate(observation_data):
+            logging.debug(f'TIME: {current_time}. Is {agent_name} available? {agent_state}')
+            if agent_state == AgentState.IDLE:
+                decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
+            elif agent_state == AgentState.REJECTION:
+                coworker = observation_data[index - 1]
+                self.change_agent(task=agent_current_task, coworker_name=coworker[0], current_time=current_time)
+                decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
+            elif agent_state == AgentState.DONE:
+                decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
+            else:
+                decision[agent_name] = None
+        return decision
 
     def find_task(self, agent_name, agent_rejection_tasks, current_time):
         # find allocated task
