@@ -80,14 +80,10 @@ class ControlLogic:
         try:
             self.output_data.append(self.schedule_as_dict(hierarchy=True))
         except KeyError:
-            pass
+            self.output_data.append([])
         except ValueError:
-            # logging.warning(e)
-            pass
+            self.output_data.append([])
 
-        if animation:
-            self.plot = Vis(horizon=self.solving_method.horizon)
-            self.plot.delete_existing_file()
         if online_plot:
             self.plot = Web_vis(data=self.schedule_as_dict())
 
@@ -133,19 +129,15 @@ class ControlLogic:
                 self.plot.update_dependency_graph()
                 time.sleep(1)
 
-            if animation:
-                # save current state
-                if self.plot.current_time + 2 == self.current_time:
-                    self.plot.current_time = self.current_time
-                    self.plot.data = self.schedule_as_dict(hierarchy=True)
-                    # self.plot.data = self.job.__dict__
-                    self.plot.save_data()
         logging.info('__________FINAL SCHEDULE___________')
         self.job.__str__()
         logging.info('___________________________________')
         sim_time = time.perf_counter() - start_time
         logging.info(f'SIMULATION TOTAL TIME: {sim_time}')
         self.output_data.append(self.schedule_as_dict(hierarchy=True))
+        if animation:
+            gantt = Vis(data=self.output_data, from_file=False)
+            gantt.plot_schedule(file_name='simulation')
         if save2file:
             with open(initial_and_final_schedule_save_file_name, 'w') as f:
                 json.dump(self.output_data, f, indent=4)

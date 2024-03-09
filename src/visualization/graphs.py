@@ -161,9 +161,11 @@ class Vis:
         for schedule in data:
             for agent in schedule:
                 for task in schedule[agent]:
-                    if task["finish"][0] > finish_time:
-                        finish_time = task['finish'][0]
-
+                    try:
+                        if task["finish"][0] > finish_time:
+                            finish_time = task['finish'][0]
+                    except TypeError:
+                        break
         # find the maximum "finish" time
         return finish_time
 
@@ -202,6 +204,9 @@ class Vis:
                     self.set_plot_param(title[i], gs[i, :], lim=horizon)
             else:
                 self.set_plot_param(title[i], gs[i, :], lim=horizon)
+
+            if local_data[i]['Robot'][0]['start'] is None:
+                continue
 
             for agent in local_data[i]:
                 for task in local_data[i][agent]:
@@ -259,8 +264,8 @@ class Vis:
                 plt.savefig('./img/' + file_name)
             # plt.show()
         else:
-            plt.legend(handles=self.labels, loc='center left', bbox_to_anchor=(1, 0.5),  # bbox_to_anchor=(0.5, -0.05),
-                       fancybox=True, shadow=True, ncol=5)
+            plt.legend(self.h, self.l, loc='center left', bbox_to_anchor=(1.1, 0.5), fontsize="15",
+                       handler_map={MulticolorPatch: MulticolorPatchHandler()})
             if not video:
                 plt.show()
 

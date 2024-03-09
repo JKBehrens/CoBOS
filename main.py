@@ -120,7 +120,7 @@ if __name__ == '__main__':
     elif not args.only_schedule:
         control_logic = ControlLogic(job=job, agents=agents, method=solving_method)
         if args.offline:
-            schedule, statistics = control_logic.run(experiments=True, save2file=True)
+            schedule, statistics = control_logic.run(experiments=True, save2file=True, animation=True)
         else:
             schedule, statistics = control_logic.run(experiments=True)
         assert job.validate()
