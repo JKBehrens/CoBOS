@@ -1,7 +1,7 @@
 import numpy as np
 from control.agents import Agent
 from control.jobs import Action, Job, Task
-# from inputs.case_generator import 
+from inputs.data_generator import RandomCase
 
 
 def test_job_gen():
@@ -21,7 +21,7 @@ def test_job_gen():
 def test_random_job_gen():
     case = 8
     seed = 42
-    job = Job(case, seed=seed)
+    job = Job(case, seed=seed, random_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
 
     assert isinstance(job.__str__(), str)
     assert 0.0 == job.progress()
