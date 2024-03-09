@@ -13,12 +13,12 @@ import argparse
 import logging
 import json
 
-METHOD = OverlapSchedule
-case = 8
-solver_seed = 4
-dist_seed = 7
-sim_seed = 3
-
+METHOD = MaxDuration
+case = 3
+solver_seed = 5
+dist_seed = 1
+sim_seed = 0
+answer_seed = 0
 
 if __name__ == '__main__':
     cases = ['1', '2', '3', '4', '5', '6', '7', '8', '0']
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                 name=agent_name,
                 job=copy.deepcopy(job),
                 seed=sim_seed,
-                answer_seed=sim_seed,
+                answer_seed=answer_seed,
             )
         )
 
@@ -123,6 +123,8 @@ if __name__ == '__main__':
             schedule, statistics = control_logic.run(experiments=True, save2file=True)
         else:
             schedule, statistics = control_logic.run(experiments=True)
+        assert job.validate()
+        assert job.progress() == 100
 
     else:
         job = Job(case, seed=0)
