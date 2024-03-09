@@ -33,7 +33,7 @@ def test_model_invalid():
     solving_method.prepare()
 
     execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
-    execute_job.run(animation=True)
+    execute_job.run(animation=False)
 
 
 def test_case():
@@ -61,7 +61,7 @@ def test_case():
     solving_method.prepare()
 
     execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
-    execute_job.run(animation=True)
+    execute_job.run(animation=False)
 
     distribution_seed = 1
     job = Job(case, seed=distribution_seed)
