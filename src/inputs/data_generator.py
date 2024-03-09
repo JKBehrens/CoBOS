@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 import networkx as nx
 from pydantic import BaseModel
@@ -65,20 +66,17 @@ def gen_task_graph_mixed_cross_task_dependencies(param: RandomCase, rand_gen:  n
     connections = rand_gen.integers(0, graph_size, size=(2, param.condition_number))
     for i in np.arange(connections.shape[-1]):
         u, v = connections[:, i]
-        print(u, v+graph_size)
         G.add_edge(u, v)
-
         cyc = nx.simple_cycles(G=G)
-
         pass
 
     while True:
         # Check if the graph is acyclic
         if nx.is_directed_acyclic_graph(G):
-            print("The graph is acyclic.")
+            logging.debug("The graph is acyclic.")
             break
         else:
-            print("The graph contains cycles.")
+            logging.debug("The graph contains cycles.")
             # Find a cycle in the graph
             cycle = nx.find_cycle(G)
             # Choose an edge from the cycle to delete and remove it from graphe
