@@ -19,20 +19,9 @@ methods = ['overlapschedule', 'randomallocation', 'maxduration']
 
 def set_density(ax, data, first=False):
     n_bins = 30
-    # mode = ["Schedule method with soft constraints", "Schedule method without soft constraints", "Baseline method"]
-    if first:
-        mode = ["Prediction with constant processing time",
-                "Prediction with processing time from distribution",
-                "Simulation"] #, ""]
-    else:
-        mode = ["Prediction with constant processing time",
-                "Prediction with processing time from distribution",
-                "Simulation"] #, ""]
 
-    # color = ['lightsteelblue', 'cornflowerblue', 'royalblue']
-    color = ['royalblue', 'lightsteelblue', 'cornflowerblue'] if len(data) == 3 else ['royalblue', 'lightsteelblue']
+    color = ['red', 'blue', 'green', 'orange', 'black']
 
-    xs = 0
     ax.hist(data, n_bins, density=True, histtype='bar', color=color[:len(data)])
     xs = np.linspace(min(min(makespan) for makespan in data), max(max(makespan) for makespan in data), 20)
 
@@ -84,29 +73,25 @@ def makespan_histogram_pd(extracted_files: list[Path], all_together: bool=False,
     fig, ((ax0, ax1, ax2), (ax3, ax4, ax5)) = plt.subplots(nrows=2, ncols=3, figsize=(9, 6))
     axes = [ax0, ax1, ax2, ax3, ax4, ax5]
 
+    legend: list[str] = []
     for case, ax in zip(cases, axes):
+        makespans_other: list[list[int]] = []
+        legend = []
         for method in methods:
-            if method == 'overlapschedule':
-                df2 = df[df["FAIL"] == False][df["case_number"] == case][df["sim_seed"] == 0][
-                    df["schedule_seed"] == 0][df['method_name'] == method]
+            legend.append(method)
+            df3 = df[df["FAIL"] == False][df["case_number"] == case][df["sim_seed"] == 0][
+                df["schedule_seed"] != 0][df['method_name'] == method]
 
-                df3 = df[df["FAIL"] == False][df["case_number"] == case][df["sim_seed"] == 0][
-                    df["schedule_seed"] != 0][df['method_name'] == method]
-                makespan_time_knowledge = df2.at[df2.index[-1], "makespan"][1]
-
-                original_makespan: list[int] = np.array(list((df3.get("makespan"))))[:, 0]
-                makespans_other: list[int] = np.array(list((df3.get("makespan"))))[:, 1]
-                _, ymax = set_density(ax, [original_makespan, makespans_other])
-                ax.vlines(makespan_time_knowledge, ymin=0, ymax=ymax, color='red')
-            else:
-                pass
-                # df2 = df[df["FAIL"] == False][df["case_number"] == case][df["dist_seed"] == 0][df['method_name'] == method]
+            # original_makespan: list[int] = np.array(list((df3.get("makespan"))))[:, 0]
+            makespans_other.append(np.array(list(df3.get("makespan")))[:, 1])
+        _, ymax = set_density(ax, makespans_other)
+            # ax.vlines(makespan_time_knowledge, ymin=0, ymax=ymax, color='red')
 
 
     # Set common labels
     fig.supxlabel('Makespan [s]')
     fig.supylabel('Density')
-    ax1.legend(['Original', 'Sim. with different seed', 'Same seed'], ncol=3, loc='upper center',bbox_to_anchor=(0.5, 1.2))
+    ax1.legend(legend, ncol=3, loc='upper center',bbox_to_anchor=(0.5, 1.2))
     # fig.tight_layout()
     plt.show()
 
@@ -185,23 +170,26 @@ class ExperimentInfo(BaseModel):
     sim_seed: int
     answer_seed: int
     method_name: str
+    det_job: bool
 
 
 def get_experiment_info(file_stem: str) -> ExperimentInfo:
+    # sched_case_1_method_maxduration_dist_seed_0_schedule_seed_0_sim_seed_0_det_job_False_answer_seed_0
+
     # Use regular expression to extract the number of the case
     case_number = int(re.search(r'case_(\d+)', file_stem).group(1))
-    schedule_seed = int(re.search(r'schedule_(\d+)', file_stem).group(1))
-    dist_seed = int(re.search(r'dist_(\d+)', file_stem).group(1))
-    sim_seed = int(re.search(r'sim_(\d+)', file_stem).group(1))
-    answer_seed = re.search(r'answer_(\d+)', file_stem)
+    schedule_seed = int(re.search(r'schedule_seed_(\d+)', file_stem).group(1))
+    dist_seed = int(re.search(r'dist_seed_(\d+)', file_stem).group(1))
+    sim_seed = int(re.search(r'sim_seed_(\d+)', file_stem).group(1))
+    answer_seed = re.search(r'answer_seed_(\d+)', file_stem)
+    det_job = True if file_stem.split("job")[-1].split("_")[1] == 'True' else False
     if answer_seed is None:
         answer_seed = sim_seed
     else:
         answer_seed = int(answer_seed.group(1))
     method = file_stem.split("method")[-1].split("_")[1]
-    return ExperimentInfo(case_number=case_number, schedule_seed=schedule_seed, dist_seed=dist_seed, sim_seed=sim_seed, answer_seed=answer_seed, method_name=method)
-    # return case_number, schedule_seed, dist_seed, sim_seed
-
+    return ExperimentInfo(case_number=case_number, schedule_seed=schedule_seed, dist_seed=dist_seed, sim_seed=sim_seed,
+                          answer_seed=answer_seed, method_name=method, det_job=det_job)
 
 def extract_files():
     # Path to the zip file containing JSON files
