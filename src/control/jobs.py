@@ -59,7 +59,7 @@ class Job:
         completed_tasks = sum( 1 for task in self.task_sequence if task.state == TaskState.COMPLETED)
         return round((completed_tasks / self.task_number) * 100, 2)
 
-    def get_current_makespan(self):
+    def get_current_makespan(self) -> int:
         """
         Returns the current makespan of the job.
         """
@@ -160,9 +160,7 @@ class Task(BaseModel):
     universal: bool
     agent: list[str]
     start: int | None = None
-    # finish: int | None = None
-    finish: tuple[int,int,int,int] | None = None
-
+    finish: list[int] | None = None
 
     distribution: list[tuple[tuple[int, int], tuple[int, int], tuple[float, float]]]
     rejection_prob: float
