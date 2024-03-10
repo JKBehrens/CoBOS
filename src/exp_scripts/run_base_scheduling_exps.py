@@ -171,6 +171,7 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
     for case in range(1, 7):
         print(f"case: {case}")
         for method in methods:
+            # client.restart()
             futures: dict[str, Future] = {}
             run_settings: dict[str, ExperimentRun] = {}
 
@@ -220,7 +221,7 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
                     batch_completion += len(done)
                     # cur_perc = batch_completion / batch_size
 
-                    pbar.update(batch_completion)
+                    pbar.update(len(done))
                     # print(f"completed work: {batch_completion} / {batch_size}")
                 
             
