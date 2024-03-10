@@ -33,8 +33,8 @@ def test_refactoring_control_logic():
             control_logic = ControlLogic(job=job, agents=agents, method=solving_method)
             schedule, statistics = control_logic.run(experiments=True)
 
-            assert (job.validate(), f'method {method}, case {case}')
-            assert (job.progress() == 100,  f'method {method}, case {case}')
+            assert job.validate(), f'method {method}, case {case}'
+            assert job.progress() == 100,  f'method {method}, case {case}'
 
             assert control_logic.job == job
             assert control_logic.agents[0] == agents[0]
