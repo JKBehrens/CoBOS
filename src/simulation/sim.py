@@ -50,7 +50,7 @@ class Sim:
 
     def waiting_for_dependent_task(self, task_id, coworker_task_id):
         for task in self.job.task_sequence:
-            if task_id in task.conditions and task.id == coworker_task_id:
+            if coworker_task_id in task.conditions and task.id == task_id:
                 return True
         return False
 
@@ -146,7 +146,7 @@ class Sim:
                 else:
                     pass
             elif self.task_execution[coworker_name]['Start'] + self.task_execution[coworker_name]['Duration'][0] - \
-                self.task_execution[coworker_name]['Duration'][3] >current_time + self.task_execution[agent.name]['Duration'][1]:
+                self.task_execution[coworker_name]['Duration'][3] > current_time + self.task_execution[agent.name]['Duration'][1]:
                 self.task_execution[agent.name]['Duration'][0] += overlapping - \
                                                                 self.task_execution[agent.name]['Duration'][1]
             else:
