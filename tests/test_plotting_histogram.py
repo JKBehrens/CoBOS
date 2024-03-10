@@ -1,10 +1,11 @@
 from pathlib import Path
 from visualization.plot_experiments_result import makespan_histogram_pd
 from exp_scripts.run_base_scheduling_exps import ExperimentSettings, start_cluster, run_exps
+from dask.distributed import performance_report
 
 
-def test_makespan_histogram():
-    exp_settings = ExperimentSettings(dist_seed=2, schedule_seed=10)
+def test_makespan_histogram(tmp_path: Path):
+    exp_settings = ExperimentSettings(dist_seed=2, schedule_seed=10, exp_folder=tmp_path)
     try:
         client = start_cluster(exp_settings)
         run_exps(client=client, exp_settings=exp_settings)

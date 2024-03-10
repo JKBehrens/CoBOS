@@ -93,7 +93,15 @@ def makespan_histogram_pd(extracted_files: list[Path], all_together: bool=False,
     fig.supylabel('Density')
     ax1.legend(legend, ncol=3, loc='upper center',bbox_to_anchor=(0.5, 1.2))
     # fig.tight_layout()
-    plt.show()
+    if save_path is not None:
+        if save_path.is_file():
+            fig.savefig(fname=save_path.__str__())
+        elif save_path.is_dir():
+            fig.savefig(save_path.joinpath("histogram_pd.png").__str__())
+        else:
+            raise ValueError(f"save_path has invalid type: {type(save_path)}. var: {save_path}")
+    else:
+        plt.show()
 
 
 
