@@ -7,6 +7,9 @@ import copy
 from exp_scripts.run_base_scheduling_exps import run_exp
 from visualization.graphs import Vis
 
+from hypothesis import Verbosity, example, given, strategies as st
+from hypothesis import settings
+
 
 def test_model_invalid():
     METHOD = OverlapSchedule
@@ -82,6 +85,37 @@ def test_case():
 
     execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
     execute_job.run(animation=True)
+
+
+#     case 3, solver_seed 44, dist_seed 0 sim_seed 0
+@settings(deadline=10000.0, max_examples=100, verbosity=Verbosity.verbose)
+@given(st.integers(min_value=0, max_value=7), st.lists(st.integers(min_value=0, max_value=2000), min_size=4, max_size=4))
+@example(3, [0,0,44,0])
+def test_case_x(case: int, data: list[int]):
+    distribution_seed, sim_seed, schedule_seed, answer_seed = data
+    METHOD = OverlapSchedule
+
+    job = Job(case, seed=distribution_seed)
+
+    agent_names = ["Human", "Robot"]
+    agents: list[Agent] = []
+    for agent_name in agent_names:
+        agents.append(
+            Agent(
+                name=agent_name,
+                job=copy.deepcopy(job),
+                seed=sim_seed,
+                answer_seed=answer_seed,
+            )
+        )
+
+    solving_method = METHOD(job=job, seed=schedule_seed)
+    solving_method.prepare()
+
+    execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
+    schedue, stats = execute_job.run(animation=False, experiments=True)
+
+    pass
 
 
 def test_case_4_solver_seed_4_dist_seed_7_sim_seed_3():
