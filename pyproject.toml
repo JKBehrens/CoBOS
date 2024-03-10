@@ -28,6 +28,7 @@ license = {text = "MIT"}
 test = [
     "pytest>=7.4.3",
     "coverage>=7.3.2",
+    "hypothesis>=6.98.1",
 ]
 lint = [
     "black>=23.10.1",
