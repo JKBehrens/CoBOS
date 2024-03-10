@@ -1,5 +1,5 @@
 from pathlib import Path
-from visualization.plot_experiments_result import makespan_histogram, makespan_histogram_pd
+from visualization.plot_experiments_result import makespan_histogram_pd
 
 
 def test_makespan_histogram():
