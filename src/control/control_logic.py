@@ -73,7 +73,7 @@ class ControlLogic:
 
         return output
 
-    def run(self, animation=False, online_plot=False, experiments=True, save2file=False):
+    def run(self, animation:bool=False, online_plot:bool=False, experiments:bool=True, save2file:bool=False):
         """
         Run the methods simulation.
         """
@@ -146,7 +146,7 @@ class ControlLogic:
             statistics = {}
             statistics['sim_time'] = sim_time
             statistics['decision_making_duration'] = self.decision_making_duration
-            statistics['makespan'] = [self.job.predicted_makespan, self.job.get_current_makespan()]
+            statistics['makespan'] = np.array([self.job.predicted_makespan, self.job.get_current_makespan()])
             statistics['rejection tasks'] = self.agents[1].rejection_tasks
             statistics['solver'] = self.solving_method.get_statistics()
             return self.output_data, statistics

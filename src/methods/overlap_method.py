@@ -5,7 +5,7 @@ This class create model and solve methods problem.
 @contact: marina.ionova@cvut.cz
 """
 from typing import Dict, List
-from methods.scheduling_split_tasks import Schedule, START_AVAILABLE_TASKS
+from methods.scheduling_split_tasks import Schedule
 from control.agent_and_task_states import AgentState
 from control.agent_and_task_states import TaskState
 from ortools.sat.python import cp_model
@@ -13,7 +13,7 @@ import logging
 import statistics
 
 LAMBDA = 1
-
+START_AVAILABLE_TASKS = False
 
 class OverlapSchedule(Schedule):
     """

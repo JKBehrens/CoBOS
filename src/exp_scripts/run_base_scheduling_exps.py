@@ -19,12 +19,14 @@ from methods.solver import Solver
 
 from pydantic import BaseModel
 
+from utils.file_handler import EnhancedJSONEncoder
+
 
 class ExperimentSettings(BaseModel):
     run_on_cluster: bool = False
     num_workers: int = 2
 
-    exp_folder: Path = Path(__file__).parent.joinpath("experiments/base_sched")
+    exp_folder: Path = Path("~/sched_exps/").expanduser().joinpath("base_sched")
     cases: list[int] = []
 
     dist_seed: int = 10 
@@ -151,7 +153,7 @@ def save_data(exp_folder: Path, fname: str, schedule_stats: tuple[Any, Any], set
     with open(exp_folder.joinpath(fname), "w") as outfile:
         # schedule, stats = res
         # settings = run_settings[fname]
-        json.dump(out:={"schedule": schedule, "statistics": stats, "settings": settings}, outfile)
+        json.dump(out:={"schedule": schedule, "statistics": stats, "settings": settings}, outfile, cls=EnhancedJSONEncoder)
         logging.info(f"Save data to {fname}")
 
     return out
