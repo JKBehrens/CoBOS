@@ -7,6 +7,7 @@ This class create model and solve methods problem.
 import numpy as np
 from control.agent_and_task_states import AgentState, TaskState
 from ortools.sat.python import cp_model
+from control.jobs import Job
 from methods.solver import Solver
 import collections
 import logging
@@ -24,7 +25,7 @@ class Schedule(Solver):
     :param job: Job for which schedule is to be generated.
     :type job: Job
     """
-    def __init__(self, job, seed):
+    def __init__(self, job: Job, seed: int):
         self.COUNTER = 0
         self.job = job
         self.model: cp_model.CpModel = cp_model.CpModel()
