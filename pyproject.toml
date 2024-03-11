@@ -19,7 +19,8 @@ dependencies = [
     "pydantic<2",
     "dask-jobqueue",
     "tqdm",
-    "scipy"
+    "scipy",
+    "hypothesis"
 ]
 requires-python = ">=3.10"
 readme = "README.md"
