@@ -73,7 +73,7 @@ class ControlLogic:
 
         return output
 
-    def run(self, animation=False, online_plot=False, experiments=True, save2file=False):
+    def run(self, animation:bool=False, online_plot:bool=False, experiments:bool=True, save2file:bool=False):
         """
         Run the methods simulation.
         """
