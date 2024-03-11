@@ -31,7 +31,7 @@ def test_refactoring_control_logic():
             solving_method.prepare()
 
             control_logic = ControlLogic(job=job, agents=agents, method=solving_method)
-            schedule, statistics = control_logic.run(experiments=True)
+            schedule, statistics = control_logic.run(experiments=False)
 
             assert job.validate(), f'method {method}, case {case}'
             assert job.progress() == 100,  f'method {method}, case {case}'
