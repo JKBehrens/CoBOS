@@ -83,7 +83,7 @@ def makespan_histogram_pd(df: pd.DataFrame, save_path: Path|None=None):
 
             # original_makespan: list[int] = np.array(list((df3.get("makespan"))))[:, 0]
             # list_of_lists = [ast.literal_eval(l) for l in list(df3.get("makespan"))]
-            makespans_other.append(np.array(list(df3.get("makespan")))[:, 1])
+            makespans_other.append(np.array(list(df3.get("final_makespan")))[:])
         _, ymax = set_density(ax, makespans_other)
             # ax.vlines(makespan_time_knowledge, ymin=0, ymax=ymax, color='red')
 

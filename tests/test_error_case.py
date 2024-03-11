@@ -258,5 +258,5 @@ def test_det_job_perf(tmp_path: Path):
     gantt.plot_schedule(tmp_path.joinpath("simulation.png").__str__())
 
     assert "FAIL" not in stats or stats["FAIL"] == False
-    assert stats["makespan"][0] == stats["makespan"][1]
+    assert stats["initial_makespan"] == stats["final_makespan"]
 
