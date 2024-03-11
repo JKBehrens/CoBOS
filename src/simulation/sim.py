@@ -138,7 +138,7 @@ class Sim:
                         self.task_execution[coworker_name]['Duration'][0] \
                         - self.task_execution[coworker_name]['Duration'][3] - current_time
 
-            if self.task_execution[coworker_name]['Start'] + coworker_preparation > \
+            if self.task_execution[coworker_name]['Start'] + coworker_preparation >= \
                 current_time + sum(self.task_execution[agent.name]['Duration'][1:3]):
                 if self.waiting_for_dependent_task(agent.current_task.id, self.task_execution[coworker_name]['id']):
                     self.task_execution[agent.name]['Duration'][0] += overlapping - \
