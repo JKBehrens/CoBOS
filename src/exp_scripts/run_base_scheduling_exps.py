@@ -171,7 +171,6 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
     for case in range(1, 7):
         print(f"case: {case}")
         for method in methods:
-            # client.restart()
             futures: dict[str, Future] = {}
             run_settings: dict[str, ExperimentRun] = {}
 
