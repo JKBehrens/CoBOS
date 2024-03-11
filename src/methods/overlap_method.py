@@ -5,6 +5,7 @@ This class create model and solve methods problem.
 @contact: marina.ionova@cvut.cz
 """
 from typing import Dict, List
+from control.jobs import Job
 from methods.scheduling_split_tasks import Schedule
 from control.agent_and_task_states import AgentState
 from control.agent_and_task_states import TaskState
@@ -22,7 +23,7 @@ class OverlapSchedule(Schedule):
     :param job: Job for which schedule is to be generated.
     :type job: Job
     """
-    def __init__(self, job, seed):
+    def __init__(self, job: Job, seed: int):
         super().__init__(job, seed)
         self.all_agents = [0, 1]
         self.task_intervals: Dict[int, List[cp_model.IntervalVar]] = {}
