@@ -91,12 +91,13 @@ def test_case():
 #     case 3, solver_seed 57, dist_seed 3 sim_seed 0
 #     case 3, solver_seed 66, dist_seed 7 sim_seed 0
 @settings(deadline=10000.0, max_examples=100, verbosity=Verbosity.verbose)
-@given(st.integers(min_value=0, max_value=7), st.lists(st.integers(min_value=0, max_value=2000), min_size=4, max_size=4))
-@example(3, [0,0,44,0])
-@example(3, [3,0,57,0])
-@example(3, [7,0,66,0])
+@given(st.integers(min_value=0, max_value=7), st.lists(st.integers(min_value=0, max_value=2000), min_size=4, max_size=4), st.booleans())
+@example(3, [0,0,44,0], True)
+@example(3, [3,0,57,0], True)
+@example(3, [7,0,66,0], True)
+@example(4, [1,0,0,0], True)
 
-def test_case_x(case: int, data: list[int]):
+def test_case_x(case: int, data: list[int], det_job: bool):
     distribution_seed, sim_seed, schedule_seed, answer_seed = data
     METHOD = OverlapSchedule
 
@@ -113,6 +114,9 @@ def test_case_x(case: int, data: list[int]):
                 answer_seed=answer_seed,
             )
         )
+
+    if det_job:
+        job = agents[0]._get_deterministic_job()
 
     solving_method = METHOD(job=job, seed=schedule_seed)
     solving_method.prepare()
