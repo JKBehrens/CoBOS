@@ -13,7 +13,7 @@ import logging
 import statistics
 
 LAMBDA = 1
-START_AVAILABLE_TASKS = False
+START_AVAILABLE_TASKS = True
 
 class OverlapSchedule(Schedule):
     """
@@ -435,6 +435,7 @@ class OverlapSchedule(Schedule):
     def find_task(self, agent_name, agent_rejection_tasks, current_time):
         # find allocated task
         available_tasks = self.are_there_available_tasks()
+        logging.debug(f'Available tasks for agent {agent_name}')
         a = [task.id  for agent in available_tasks.keys() for task in available_tasks[agent]]
         if available_tasks[agent_name]:
             for task in available_tasks[agent_name]:
@@ -444,8 +445,9 @@ class OverlapSchedule(Schedule):
                     else:
                         if available_tasks[agent_name][0].start <= current_time:
                             return available_tasks[agent_name][0]
-        elif any(available_tasks[key] for key in available_tasks):
-            available_tasks.pop(agent_name)
+
+        available_tasks.pop(agent_name)
+        if self.are_there_available_coworker_tasks(available_tasks):
             available_tasks_id = set([task.id for agent in available_tasks.keys() for task in available_tasks[agent]])
             # if not isinstance(agent_rejection_tasks, np.ndarray):
             agent_rejection_tasks = set(agent_rejection_tasks)
@@ -466,17 +468,12 @@ class OverlapSchedule(Schedule):
                     else:
                         return None
                 else:
-                    logging.error(self.model.Validate())
-                    self.job.__str__()
-
-                    logging.error(
-                        f"Something is wrong in FIND_TASK, status {solver.StatusName(status)} and the log of the solve")
                     logging.error(self.job.__str__())
                     logging.error(self.model.Validate())
-                    logging.error(f"Something is wrong, status {self.solver.StatusName(self.status)} and the log of the solve")
+                    logging.error(f"Something is wrong, status {solver.StatusName(status)} and the log of the solve")
                     raise ValueError(f"case {self.job.case}, solver_seed {self.seed}, dist_seed {self.job.seed}")
-
-                    exit(2)
+        else:
+            pass
         return None
 
     def are_there_available_tasks(self):
@@ -487,6 +484,14 @@ class OverlapSchedule(Schedule):
                 if task.state is TaskState.AVAILABLE:
                     available_tasks[agent].append(task)
         return available_tasks
+
+    @staticmethod
+    def are_there_available_coworker_tasks(available_tasks):
+        for agent in available_tasks.keys():
+            for task in available_tasks[agent]:
+                if task.universal:
+                    return True
+        return False
 
     def get_mean_of_task_duration(self):
         return statistics.mean([v[0] for v in self.task_duration.values()])
