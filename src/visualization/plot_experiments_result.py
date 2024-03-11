@@ -10,7 +10,6 @@ from matplotlib import pyplot as plt
 import numpy as np
 import argparse
 import pandas as pd
-# from exp_scripts import experiments_path
 
 
 cases = [1, 2, 3, 4, 5, 6]
@@ -52,7 +51,10 @@ def read_data_to_df(files: list[Path], cols: dict[str, Any], ignore_missing:bool
 
         for col, default in cols.items():
             if col in stats:
-                raw_data[-1][col] = stats[col]
+                if isinstance(stats[col], list):
+                    raw_data[-1][col] = np.array(stats[col])
+                else:
+                    raw_data[-1][col] = stats[col]
             elif ignore_missing:
                 pass
             else:
@@ -65,10 +67,7 @@ def read_data_to_df(files: list[Path], cols: dict[str, Any], ignore_missing:bool
     return df
 
 
-def makespan_histogram_pd(extracted_files: list[Path], all_together: bool=False, save_path: Path|None=None):
-    folder_path = extracted_files[0].parent
-
-    df = read_data_to_df(extracted_files, {"makespan": -1, "FAIL": False})
+def makespan_histogram_pd(df: pd.DataFrame, save_path: Path|None=None):
 
     fig, ((ax0, ax1, ax2), (ax3, ax4, ax5)) = plt.subplots(nrows=2, ncols=3, figsize=(9, 6))
     axes = [ax0, ax1, ax2, ax3, ax4, ax5]
@@ -83,6 +82,7 @@ def makespan_histogram_pd(extracted_files: list[Path], all_together: bool=False,
                 df["schedule_seed"] != 0][df['method_name'] == method]
 
             # original_makespan: list[int] = np.array(list((df3.get("makespan"))))[:, 0]
+            # list_of_lists = [ast.literal_eval(l) for l in list(df3.get("makespan"))]
             makespans_other.append(np.array(list(df3.get("makespan")))[:, 1])
         _, ymax = set_density(ax, makespans_other)
             # ax.vlines(makespan_time_knowledge, ymin=0, ymax=ymax, color='red')
