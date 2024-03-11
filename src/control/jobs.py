@@ -72,7 +72,7 @@ class Job:
                 output.append(task.id)
         return output
 
-    def task_duration(self,  rand_gen: Optional[np.random.Generator] = None,  seed=None):
+    def task_duration(self,  rand_gen: np.random.Generator | None = None,  seed: int | None =None):
         if rand_gen is None:
             rand_gen = np.random.default_rng(seed)
         assert isinstance(rand_gen, np.random.Generator)
@@ -234,8 +234,9 @@ class Task(BaseModel):
             'start': copy.deepcopy(self.start),
             'finish': copy.deepcopy(self.finish)}
 
-    def get_duration(self, rand_gen: Optional[np.random.Generator] = None, seed=None, distribution_param=None):
+    def get_duration(self, rand_gen: np.random.Generator |None = None, seed: int | None=None, distribution_param=None):
         if rand_gen is None:
+            assert isinstance(seed, int)
             rand_gen = np.random.default_rng(seed + self.id)
         assert isinstance(rand_gen, np.random.Generator)
 
