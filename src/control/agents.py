@@ -18,12 +18,12 @@ class Agent(Sim):
     :param tasks: List of tasks assigned to the agent.
     :type tasks: list
     """
-    def __init__(self, name=None, job=None, seed:int=0, **kwargs):
+    def __init__(self, name:str, job:Job, seed:int=0, **kwargs):
         super().__init__(name, job, seed, **kwargs)
-        self.name = name
+        self.name: str = name
         self.state = AgentState.IDLE
         self.current_task = None
-        self.rejection_tasks = []
+        self.rejection_tasks: list[tuple[int,int]] = []
         self.delay = 0
         self.waiting = 0
 
@@ -69,7 +69,7 @@ class Agent(Sim):
         else:
             return f'is doing {self.current_task.action}'
 
-    def execute_task(self, task, job, current_time, **kwargs):
+    def execute_task(self, task:Task, job:Job, current_time:int, **kwargs):
         """
         Executes a task and logs the action.
 
