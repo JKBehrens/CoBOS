@@ -24,6 +24,8 @@ class MaxDuration(Solver):
         decision = {}
         self.update_tasks_status()
         for index, [agent_name, agent_state, agent_current_task, agent_rejection_tasks] in enumerate(observation_data):
+            if agent_state == AgentState.REJECTION:
+                agent_current_task.agent = [agent_name for agent_name in self.job.agents]
             if agent_state == AgentState.IDLE or agent_state == AgentState.REJECTION or agent_state == AgentState.DONE:
                 decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks)
             else:
