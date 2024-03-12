@@ -1,4 +1,4 @@
-from methods import OverlapSchedule, MaxDuration, RandomAllocation
+from methods import OverlapSchedule, MaxDuration, RandomAllocation, DynamicAllocation
 from control.control_logic import ControlLogic
 from inputs.data_generator import RandomCase
 from control.agents import Agent
@@ -7,7 +7,7 @@ import copy
 
 
 def test_refactoring_control_logic():
-    methods = [OverlapSchedule, MaxDuration, RandomAllocation]
+    methods = [OverlapSchedule, MaxDuration, RandomAllocation, DynamicAllocation]
     cases = [0,1,2,3,4,5,6,7,8]
     seed = 42
     sim_seed = 0
