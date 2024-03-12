@@ -1,3 +1,4 @@
+from itertools import combinations
 from pathlib import Path
 from methods import OverlapSchedule, MaxDuration, RandomAllocation, DynamicAllocation
 from control.control_logic import ControlLogic
@@ -33,8 +34,8 @@ def test_refactoring_control_logic(tmp_path: Path):
                 agents.append(Agent(name=agent_name, job=copy.deepcopy(job), seed=sim_seed, answer_seed=answer_seed))
 
             det_job = agents[0]._get_deterministic_job()
-            det_jobs.append(det_job)
-            jobs.append(job)
+            det_jobs.append(copy.deepcopy(det_job))
+            jobs.append(copy.deepcopy(job))
 
             solving_method = method(job=job, seed=schedule_seed)
             solving_method.prepare()
@@ -50,6 +51,9 @@ def test_refactoring_control_logic(tmp_path: Path):
 
             gantt = Vis(data=schedule, from_file=False)
             gantt.plot_schedule(tmp_path.joinpath(f"simulation_case_{case}_method_{method.name()}.png").__str__())
+
+        assert all([job1.job_description == job2.job_description for job1, job2 in combinations(jobs, 2)] )
+        assert all([job1.job_description == job2.job_description for job1, job2 in combinations(det_jobs, 2)] )
 
         
 
