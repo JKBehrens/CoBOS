@@ -332,10 +332,8 @@ class OverlapSchedule(Schedule):
                         end_value = task.start+self.task_duration[task.agent[0]][task.id][0]
 
                     # set end of interval to predictit from actual start time
-                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[
-                    :] = []
-                    self.model.Proto().variables[
-                        self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
+                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
+                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
                         cp_model.Domain(end_value, end_value).FlattenedIntervals())
 
 
@@ -432,8 +430,8 @@ class OverlapSchedule(Schedule):
             else:
                 decision[agent_name] = None
         return decision
-
-    def find_task(self, agent_name, agent_rejection_tasks, current_time):
+    
+    def find_task_old(self, agent_name, agent_rejection_tasks, current_time):
         # find allocated task
         available_tasks = self.are_there_available_tasks()
         logging.debug(f'Available tasks for agent {agent_name}')
@@ -476,6 +474,38 @@ class OverlapSchedule(Schedule):
         else:
             pass
         return None
+
+
+    def find_task(self, agent_name, agent_rejection_tasks, current_time):
+
+        self.refresh_variables(current_time)
+        # copy model
+        test_model = self.model.Clone()
+        solver = self.set_solver()
+        status = solver.Solve(test_model)
+        if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+            solver_info = self.get_solver_info_as_dict(solver)
+            solver_info['current_time'] = current_time
+            self.evaluation_run_time.append(solver_info)
+            self.schedule, self.current_makespan = self.solve(current_time=current_time)
+            # return self.find_task(agent_name, agent_rejection_tasks, current_time)
+            
+            available_tasks = self.are_there_available_tasks()
+            logging.debug(f'Available tasks for agent {agent_name}')
+            # a = [task.id  for agent in available_tasks.keys() for task in available_tasks[agent]]
+            if available_tasks[agent_name]:
+                for task in available_tasks[agent_name]:
+                    if task.id not in agent_rejection_tasks:
+                        if START_AVAILABLE_TASKS:
+                            return available_tasks[agent_name][0]
+                        else:
+                            if available_tasks[agent_name][0].start <= current_time:
+                                return available_tasks[agent_name][0]
+        else:
+            logging.error(self.job.__str__())
+            logging.error(self.model.Validate())
+            logging.error(f"Something is wrong, status {solver.StatusName(status)} and the log of the solve")
+            raise ValueError(f"case {self.job.case}, solver_seed {self.seed}, dist_seed {self.job.seed}")
 
     def are_there_available_tasks(self):
         available_tasks = {}
