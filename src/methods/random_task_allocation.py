@@ -1,4 +1,5 @@
 from control.agent_and_task_states import AgentState, TaskState
+from control.representation import Task
 from methods.solver import Solver
 import numpy as np
 
@@ -38,20 +39,21 @@ class RandomAllocation(Solver):
     def get_statistics(self):
         pass
 
-    def find_task(self, agent_name, agent_rejection_tasks):
-        available_tasks = []
-        if len(agent_rejection_tasks) != 0:
-            rejection_tasks = [task_id for task_id in agent_rejection_tasks]
-        else:
-            rejection_tasks = agent_rejection_tasks
+    def find_task(self, agent_name: str, agent_rejection_tasks: list[int]):
+        available_tasks: list[Task] = []
+        # if len(agent_rejection_tasks) != 0:
+        #     rejection_tasks = [task_id for task_id in agent_rejection_tasks]
+        # else:
+        #     rejection_tasks = agent_rejection_tasks
         for task in self.job.task_sequence:
             if task.state == TaskState.AVAILABLE and \
-                    ((task.universal and task.id not in rejection_tasks) or
-                     (agent_name in task.agent and task.id not in rejection_tasks)):
+                    ((task.universal and task.id not in agent_rejection_tasks) or
+                     (agent_name in task.agent and task.id not in agent_rejection_tasks)):
                 available_tasks.append(task)
 
         if available_tasks:
-            task = self.rand.choice(available_tasks, size=1)[0]
+            task: Task = self.rand.choice(available_tasks, size=1)[0]
+            assert isinstance(task, Task)
             if task.universal:
                 task.agent = [agent_name]
             return task
