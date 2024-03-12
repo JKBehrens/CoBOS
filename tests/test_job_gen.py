@@ -1,3 +1,4 @@
+from itertools import combinations
 import numpy as np
 from control.agents import Agent
 from control.jobs import Action, Job, Task
@@ -22,13 +23,17 @@ def test_random_job_gen():
     case = 8
     seed = 42
     job = Job(case, seed=seed, random_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
-
+    job2 = Job(case, seed=seed, random_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
+    jobs = [job, job2]
     assert isinstance(job.__str__(), str)
     assert 0.0 == job.progress()
 
     for task in job.task_sequence:
         assert isinstance(task, Task)
         assert isinstance(task.action, Action)
+
+    assert all([job1.job_description == job2.job_description for job1, job2 in combinations(jobs, 2)] )
+    # assert all([job1.job_description == job2.job_description for job1, job2 in combinations(det_jobs, 2)] )
 
 
 def test_job_sampling():
