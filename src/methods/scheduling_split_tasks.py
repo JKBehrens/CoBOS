@@ -441,15 +441,15 @@ class Schedule(Solver):
 
         return None
 
-    def update_tasks_status(self):
-        """
-        Updates the status of tasks based on their dependencies.
-        """
-        tasks_list = self.job.get_completed_and_in_progress_task_list()
-        for task in self.job.task_sequence:
-            if len(task.conditions) != 0 and task.state == TaskState.UNAVAILABLE:
-                if set(task.conditions).issubset(tasks_list):
-                    task.state = TaskState.AVAILABLE
+    # def update_tasks_status(self):
+    #     """
+    #     Updates the status of tasks based on their dependencies.
+    #     """
+    #     tasks_list = self.job.get_completed_and_in_progress_task_list()
+    #     for task in self.job.task_sequence:
+    #         if len(task.conditions) != 0 and task.state == TaskState.UNAVAILABLE:
+    #             if set(task.conditions).issubset(tasks_list):
+    #                 task.state = TaskState.AVAILABLE
 
     def update_schedule(self, current_time):
         for agent in self.schedule:

@@ -33,6 +33,8 @@ class Solver(ABC):
         """
         tasks_list = self.job.get_completed_and_in_progress_task_list()
         for task in self.job.task_sequence:
-            if len(task.conditions) != 0 and task.state == TaskState.UNAVAILABLE:
-                if set(task.conditions).issubset(tasks_list):
+            if set(task.conditions).issubset(tasks_list):
+                if not task.state in [TaskState.COMPLETED, TaskState.InProgress]:
                     task.state = TaskState.AVAILABLE
+            else:
+                task.state = TaskState.UNAVAILABLE
