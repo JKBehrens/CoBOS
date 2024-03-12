@@ -4,6 +4,7 @@
     @author: Marina Ionova, student of Cybernetics and Robotics at the CTu in Prague
     @contact: marina.ionova@cvut.cz
 """
+from pathlib import Path
 import pandas as pd
 from matplotlib import pyplot as plt
 import json
@@ -169,13 +170,14 @@ class Vis:
         # find the maximum "finish" time
         return finish_time
 
-    def plot_schedule(self, file_name='', video=False):
-        if 'simulation' in file_name:
+    def plot_schedule(self, file_name:Path|str="", video=False):
+        file_name = Path(file_name)
+        if 'simulation' in file_name.stem:
             title = ['Gantt Chart: initial', 'Gantt Chart: final']
             gs = gridspec.GridSpec(3, 3, height_ratios=[1, 1, 2])
             positions = [[311, 312], [313]]
             local_data = self.data
-        elif 'comparison' in file_name:
+        elif 'comparison' in file_name.stem:
             title = ['Gantt Chart: initial', 'Gantt Chart: final (same sampling seed)',
                      'Gantt Chart: final (different sampling seed)']
             gs = gridspec.GridSpec(4, 3, height_ratios=[1, 1, 1, 2])
@@ -188,7 +190,7 @@ class Vis:
             local_data = [self.data]
         horizon = self.set_horizon(local_data)
         for i, position in enumerate(positions[0]):
-            if 'comparison' in file_name:
+            if 'comparison' in file_name.stem:
                 if i != 0:
                     self.set_plot_param(title[i], gs[i, :], lim=horizon, reschedule_num=True)
                     colors = {0: 'red', 1: 'blue'}
@@ -246,7 +248,7 @@ class Vis:
                                   arrowprops=dict(arrowstyle="-", lw=2, color="red"))
 
         try:
-            if 'comparison' in file_name:
+            if 'comparison' in file_name.stem:
                 self.plot_dependency_graph(local_data[1], gs=gs[3:, :-1])
             else:
                 self.plot_dependency_graph(local_data[1], gs=gs[2:, :-1])
@@ -257,17 +259,13 @@ class Vis:
         # ------ create the legend
 
         plt.tight_layout()
-        if self.from_file:
-            plt.legend(self.h, self.l, loc='center left', bbox_to_anchor=(1.1, 0.5), fontsize="15",
-                       handler_map={MulticolorPatch: MulticolorPatchHandler()})
-            if file_name:
-                plt.savefig('./img/' + file_name)
-            # plt.show()
+        plt.legend(self.h, self.l, loc='center left', bbox_to_anchor=(1.1, 0.5), fontsize="15",
+                    handler_map={MulticolorPatch: MulticolorPatchHandler()})
+        if file_name:
+            plt.savefig(file_name.__str__())
         else:
-            plt.legend(self.h, self.l, loc='center left', bbox_to_anchor=(1.1, 0.5), fontsize="15",
-                       handler_map={MulticolorPatch: MulticolorPatchHandler()})
-            if not video:
-                plt.show()
+            plt.show()
+
 
     def online_plotting(self):
         data = pd.DataFrame({
