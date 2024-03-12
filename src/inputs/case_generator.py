@@ -161,7 +161,7 @@ def set_rejection_prob(
     return float(rand_gen.dirichlet(np.ones(2), size=1)[0][0])
 
 
-def set_input(case: int, seed: int, random_case_param: RandomCase = None) -> list[Task]:
+def set_input(case: int, seed: int, random_case_param: RandomCase = RandomCase()) -> list[Task]:
     rand_gen = np.random.default_rng(seed)
     assert isinstance(rand_gen, np.random.Generator)
 
