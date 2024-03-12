@@ -247,12 +247,12 @@ class Vis:
 
         try:
             if 'comparison' in file_name:
-                self.plot_dependency_graph(local_data[0], gs=gs[3:, :-1])
+                self.plot_dependency_graph(local_data[1], gs=gs[3:, :-1])
             else:
-                self.plot_dependency_graph(local_data[0], gs=gs[2:, :-1])
+                self.plot_dependency_graph(local_data[1], gs=gs[2:, :-1])
         except IndexError:
             # pass
-            self.plot_dependency_graph(local_data[0], gs=gs[1, :-1])
+            self.plot_dependency_graph(local_data[1], gs=gs[1, :-1])
 
         # ------ create the legend
 
@@ -353,8 +353,6 @@ class Vis:
                     for j in task["conditions"]:
                         G.add_edges_from([(get_task_from_id(j, local_data), task["action"]["place"])])
 
-        #TODO: @Marina these position tables don't work anymore with the dropping of object names and location names.
-        # the failure happens then in line 373.
         if task_number == 16:
             pos = { '0': (0, 3), '4': (1, 3), '8': (2, 3), '12': (3, 3),
                     '1': (0, 2), '5': (1, 2), '9': (2, 2), '13': (3, 2),
@@ -362,9 +360,9 @@ class Vis:
                     '3': (0, 0), '7': (1, 0), '11': (2, 0), '15': (3, 0)} # positions for all nodes
         elif task_number == 8:
             # for case 7
-            pos = {'A2': (0.5, 2.5), 'A1': (1.5, 2.5), 'A3': (2.5, 2.5),
-                   "A4": (0.5, 1.5), 'C1': (1.5, 1.5), 'B1': (2.5, 1.5),
-                   "B2": (0.5, 0.5), 'B4': (1.5, 0.5), 'B3': (2.5, 0.5)}
+            pos = {'1': (0.5, 2.5), '0': (1.5, 2.5), '2': (2.5, 2.5),
+                   "3": (0.5, 1.5), '8': (1.5, 1.5), '4': (2.5, 1.5),
+                   "5": (0.5, 0.5), '7': (1.5, 0.5), '6': (2.5, 0.5)}
         else:
             # TODO: fix graph plotting
             nx.draw(G)

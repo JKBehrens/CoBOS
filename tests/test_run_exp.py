@@ -3,14 +3,12 @@
 
 import json
 from exp_scripts.run_base_scheduling_exps import ExperimentRun, run_exp
-from methods.max_duration import MaxDuration
-from methods.overlap_method import OverlapSchedule
-from methods.random_task_allocation import RandomAllocation
+from methods import MaxDuration, OverlapSchedule, RandomAllocation, DynamicAllocation
 
 
 def test_run_exp():
 
-    methods = [OverlapSchedule, RandomAllocation, MaxDuration]
+    methods = [OverlapSchedule, RandomAllocation, MaxDuration, DynamicAllocation]
 
     # settings = {'dist_seed': 0, 'schedule_seed': 24, 'sim_seed': 0, 'det_job': False, 'answer_seed': 0, 'method_name': 'overlapschedule', 'case': 1}
     settings = {'case': 1, 'dist_seed': 0, 'schedule_seed': 13, 'sim_seed': 0, 'answer_seed': 0, 'method_name': 'overlapschedule', 'det_job': False}

@@ -160,7 +160,7 @@ class ControlLogic:
             output = {'Human': [], 'Robot': []}
             for task in self.job.task_sequence:
                 if len(task.agent) != 1:
-                    raise ValueError(f"Not a valid schedule. Task {task.id} is not allocated: {task.agent}")
+                    output[task.agent[0]].append(task.dict())
                 output[task.agent[0]].append(task.dict())
         else:
             output = {
