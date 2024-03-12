@@ -99,7 +99,7 @@ class ControlLogic:
             # ask planner to decide about next actions for robot and human
             decision_making_start = time.perf_counter()
             try:
-                selected_task = self.solving_method.decide(observation_data, self.current_time)
+                selected_task: dict[str, Task|None] = self.solving_method.decide(observation_data, self.current_time)
             except ValueError as e:
                 msg = f"{e} \nsim_seed {self.agents[0].seed}"
                 logging.error(msg=msg)
