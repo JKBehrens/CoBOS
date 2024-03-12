@@ -60,7 +60,7 @@ def gen_task_graph_mixed_cross_task_dependencies(param: RandomCase, rand_gen:  n
     G = nx.gnr_graph(graph_size, 0.1)
     for node in G.nodes():
         G.nodes[node]["agent"] = np.sort(rand_gen.choice([i for i in range(param.agent_number)],
-                                                      size=rand.choice([i+1 for i in range(param.agent_number)]),
+                                                      size=rand_gen.choice([i+1 for i in range(param.agent_number)]),
                                                       replace=False))
 
     connections = rand_gen.integers(0, graph_size, size=(2, param.condition_number))
