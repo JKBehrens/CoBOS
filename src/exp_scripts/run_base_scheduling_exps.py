@@ -5,6 +5,7 @@ from dask_jobqueue.slurm import SLURMCluster
 from distributed import Client, Future
 from dask.distributed import wait
 import tqdm
+from inputs.data_generator import RandomCase
 
 from methods import OverlapSchedule, RandomAllocation, MaxDuration
 
@@ -15,6 +16,7 @@ import logging
 from control.agents import Agent
 from control.control_logic import ControlLogic
 from control.jobs import Job
+from methods.dynamic_task_allocation import DynamicAllocation
 from methods.solver import Solver
 
 from pydantic import BaseModel
@@ -63,6 +65,8 @@ class ExperimentRun(BaseModel):
     answer_seed: int
     method_name: str
 
+    random_case: RandomCase = RandomCase()
+
     det_job: bool
 
 # settings = ExperimentSettings()
@@ -104,14 +108,17 @@ def run_exp(
     ** kwargs
 ) -> tuple[list[Any], dict[str, Any]]:
     
-    case: int = kwargs["case"]
-    dist_seed: int = kwargs["dist_seed"]
-    schedule_seed: int = kwargs["schedule_seed"]
-    sim_seed: int = kwargs["sim_seed"]
-    answer_seed: int = kwargs["answer_seed"]
-    det_job: bool = kwargs["det_job"]
+    
 
+    run_settings = ExperimentRun(**kwargs)
 
+    case: int = run_settings.case
+    dist_seed: int = run_settings.dist_seed
+    schedule_seed: int = run_settings.schedule_seed
+    sim_seed: int = run_settings.sim_seed
+    answer_seed: int = run_settings.answer_seed
+    det_job: bool = run_settings.det_job
+    rand_case: RandomCase = run_settings.random_case
 
     method = method
     # case = case
@@ -119,7 +126,8 @@ def run_exp(
     # sim_seed = sim_seed
     # schedule_seed = schedule_seed
     # answer_seed = answer_seed
-    job = Job(case, seed=dist_seed)
+
+    job = Job(case, seed=dist_seed, random_case_param=rand_case)
 
     agent_names = ["Human", "Robot"]
     agents: list[Agent] = []
@@ -164,13 +172,15 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
     exp_folder = exp_settings.exp_folder
     exp_folder.mkdir(parents=True, exist_ok=True)
 
-    methods = [OverlapSchedule, RandomAllocation, MaxDuration]
+    methods = [OverlapSchedule, RandomAllocation, MaxDuration, DynamicAllocation]
 
     # dist_seed, schedule_seed, sim_seed, answer_seed
+
+    rand_case = RandomCase(agent_number=2, task_number=30, condition_number=20)
     
 
     
-    for case in range(1, 7):
+    for case in range(1, 9):
         print(f"case: {case}")
         for method in methods:
             futures: dict[str, Future] = {}
@@ -190,6 +200,7 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
 
                 settings["method_name"] = method.name()
                 settings["case"] = case
+                settings["random_case"] = rand_case
 
                 settings = ExperimentRun(**settings)
                 
