@@ -8,13 +8,13 @@ import json
 
 
 class RandomCase(BaseModel):
-    agent_number: int
-    task_number: int
-    condition_number: int
+    agent_number: int = 2
+    task_number: int = 10
+    condition_number: int = 5
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
-        def default(self, o):
+        def default(self, o:object):
             if isinstance(o, np.ndarray):
                 return o.tolist()
             if isinstance(o, np.int64):
