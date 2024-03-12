@@ -57,7 +57,7 @@ def add_durations_to_graph(g: nx.DiGraph, seed:Optional[int]=None):
 def gen_task_graph_mixed_cross_task_dependencies(param: RandomCase, rand_gen:  np.random.Generator | None = None):
     graph_size = param.task_number
 
-    G = nx.gnr_graph(graph_size, 0.1)
+    G = nx.gnr_graph(graph_size, 0.1, seed=int(rand_gen.integers(0, 10000, 1)[0]))
     for node in G.nodes():
         G.nodes[node]["agent"] = np.sort(rand_gen.choice([i for i in range(param.agent_number)],
                                                       size=rand_gen.choice([i+1 for i in range(param.agent_number)]),
