@@ -108,7 +108,9 @@ class Agent(Sim):
     def _handle_rejected_task(self, task: Task, current_time: int):
         logging.info(f'Human rejects the task {task.id}. Place object {task.action.object} '
                      f'to {task.action.place}. TIME {current_time}')
-        self.rejection_tasks.append([task.id, current_time])
+        if task.state == TaskState.ASSIGNED:
+            task.state = TaskState.AVAILABLE
+        self.rejection_tasks.append((task.id, current_time))
 
     def get_feedback(self, current_time, **kwargs):
         """
