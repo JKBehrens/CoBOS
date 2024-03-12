@@ -201,7 +201,7 @@ def set_input(case: int, seed: int, random_case_param: RandomCase = None) -> lis
             if len(assigment_list[task_id]) != 1:
                 task_description["agent"] = ['Robot', 'Human']
             else:
-                task_description["agent"] = ['Robot'] if assigment_list[task_id][0] == 0 else ['Human']
+                task_description["agent"] = ['Robot'] if assigment_list[task_id][0]%2 == 0 else ['Human'] # for now even numbers go to the robot and odd numbers to the human
 
         if case == 0:
             task_description["conditions"] = TEST_CASE_CONDITIONS[task_id]
