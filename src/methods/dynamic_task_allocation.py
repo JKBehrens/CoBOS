@@ -32,6 +32,8 @@ class DynamicAllocation(Solver):
                     decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks)
                 else:
                     decision[agent_name] = None
+                if decision[agent_name] is not None:
+                    decision[agent_name].state = TaskState.ASSIGNED
         else:
             decision = {agent_name: None for agent_name in self.job.agents}
         return decision

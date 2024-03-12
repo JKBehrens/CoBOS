@@ -1,3 +1,5 @@
+import logging
+
 from control.agent_and_task_states import AgentState, TaskState
 from control.jobs import Job
 from methods.solver import Solver
@@ -24,12 +26,19 @@ class MaxDuration(Solver):
         decision = {}
         self.update_tasks_status()
         for index, [agent_name, agent_state, agent_current_task, agent_rejection_tasks] in enumerate(observation_data):
+            try:
+                logging.debug(f'agent {agent_name}, state {agent_state}, task {agent_current_task.id}')
+            except AttributeError:
+                logging.debug(f'agent {agent_name}, state {agent_state}, task None')
+
             if agent_state == AgentState.REJECTION:
                 agent_current_task.agent = [agent_name for agent_name in self.job.agents]
             if agent_state == AgentState.IDLE or agent_state == AgentState.REJECTION or agent_state == AgentState.DONE:
                 decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks)
             else:
                 decision[agent_name] = None
+            if decision[agent_name] is not None:
+                decision[agent_name].state = TaskState.ASSIGNED
         return decision
 
     def get_statistics(self):

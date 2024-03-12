@@ -19,3 +19,4 @@ class TaskState(IntEnum):
     AVAILABLE = 0
     InProgress = 1
     COMPLETED = 2
+    ASSIGNED = 3
