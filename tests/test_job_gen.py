@@ -46,6 +46,12 @@ def test_random_job_gen():
     assert all([job1.job_description == job2.job_description for job1, job2 in combinations(jobs, 2)] )
 
 
+    job2 = Job(case, seed=seed, random_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
+
+    for task1, task2 in zip(job.task_sequence, job2.task_sequence):
+        assert task1.conditions == task2.conditions
+
+
 
 def test_job_sampling():
     case = 5
@@ -104,4 +110,3 @@ def test_job_sampling():
     )
 
     assert job.get_universal_task_number() >= job2_rob.get_universal_task_number()
-
