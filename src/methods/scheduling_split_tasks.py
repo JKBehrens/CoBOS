@@ -227,10 +227,10 @@ class Schedule(Solver):
     def set_solver(self):
         # Creates the solver and solve.
         solver = cp_model.CpSolver()
-        solver.parameters.num_search_workers = 1
+        solver.parameters.num_search_workers = 8
         solver.parameters.random_seed = self.seed
         solver.parameters.max_time_in_seconds = 10.0
-        solver.parameters.enumerate_all_solutions = True
+        # solver.parameters.enumerate_all_solutions = True
         solver.parameters.log_search_progress = True if logging.getLogger().level == 10 else False
         solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
         return solver
