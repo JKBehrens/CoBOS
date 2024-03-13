@@ -21,10 +21,10 @@ class Sim:
     distribution of their duration, as well as the choice of a person
     who is offered to him by the control logic.
     """
-    def __init__(self, agent_name, job, seed, **kwargs):
+    def __init__(self, agent_name:str, job:Job, seed:int, **kwargs):
         self.agent_name = agent_name
         self.job: Job = copy.deepcopy(job)
-        self.agent_list = ['Human', 'Robot']
+        self.agent_list: list[str] = ['Human', 'Robot']
         self.task_duration = {agent: {} for agent in self.agent_list}
         self.prob = None
         self.seed = seed
