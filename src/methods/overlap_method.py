@@ -377,6 +377,17 @@ class OverlapSchedule(Schedule):
         self.allowedAgents[task.id] = self.model.AddAllowedAssignments(
             variables=[self.task_assignment_var[task.id]],
             tuples_list=[tuple([v]) for v in self.task_assignment[task.id] if v != self.agent_mapping[task.agent[0]]])
+        
+    def set_solver(self):
+        # Creates the solver and solve.
+        solver = cp_model.CpSolver()
+        solver.parameters.num_search_workers = 8
+        solver.parameters.random_seed = self.seed
+        solver.parameters.max_time_in_seconds = 10.0
+        # solver.parameters.enumerate_all_solutions = True
+        solver.parameters.log_search_progress = True if logging.getLogger().level == 10 else False
+        solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
+        return solver
 
     def set_list_of_possible_changes(self, available_tasks, agent_name, current_time, **kwargs):
         makespans = []

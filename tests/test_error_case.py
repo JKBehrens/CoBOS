@@ -3,6 +3,7 @@ from control.control_logic import ControlLogic
 from control.jobs import Job
 from control.agents import Agent
 from control.representation import JobDescription
+from inputs.data_generator import RandomCase
 from methods.overlap_method import OverlapSchedule
 import copy
 from exp_scripts.run_base_scheduling_exps import run_exp
@@ -100,13 +101,15 @@ def test_case():
 @example(3, [7,0,66,0], True)
 @example(4, [1,0,0,0], True)
 @example(1, [1280,0,773,0], False) # takes twice 10 secs for scheduling
-
+@example(8, [0,0,69,0], False)
 
 def test_case_x(case: int, data: list[int], det_job: bool):
     distribution_seed, sim_seed, schedule_seed, answer_seed = data
     METHOD = OverlapSchedule
 
-    job = Job(case, seed=distribution_seed)
+    random_case = RandomCase(agent_number=2, task_number=16, condition_number=8)
+
+    job = Job(case, seed=distribution_seed, random_case_param=random_case)
 
     agent_names = ["Human", "Robot"]
     agents: list[Agent] = []
