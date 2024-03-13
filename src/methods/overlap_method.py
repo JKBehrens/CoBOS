@@ -490,6 +490,9 @@ class OverlapSchedule(Schedule):
     def find_task(self, agent_name, agent_rejection_tasks, current_time):
 
         self.refresh_variables(current_time)
+        available_tasks = self.are_there_available_tasks()
+        if not any(len(value) > 0 for value in available_tasks.values()):
+            return None
         # copy model
         test_model = self.model.Clone()
         solver = self.set_solver()
