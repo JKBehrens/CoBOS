@@ -17,10 +17,10 @@ dependencies = [
     "graphviz",
     "pytest",
     "pydantic<2",
-    "dask-jobqueue",
     "tqdm",
     "scipy",
-    "hypothesis"
+    "hypothesis",
+    "dask[complete]"
 ]
 requires-python = ">=3.10"
 readme = "README.md"
