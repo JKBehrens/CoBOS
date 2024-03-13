@@ -155,6 +155,7 @@ def test_case_4_solver_seed_4_dist_seed_7_sim_seed_3():
         schedule_seed=solver_seed,
         sim_seed=sim_seed,
         answer_seed=sim_seed,
+        method_name=OverlapSchedule.name(),
         det_job = False
     )
 
@@ -257,6 +258,7 @@ def test_det_job_perf(tmp_path: Path):
     sim_seed = 4
     schedule, stats = run_exp(
         OverlapSchedule,
+        method_name=OverlapSchedule.name(),
         case=case,
         dist_seed=dist_seed,
         schedule_seed=solver_seed,
