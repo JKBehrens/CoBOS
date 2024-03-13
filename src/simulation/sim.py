@@ -21,7 +21,8 @@ class Sim:
     distribution of their duration, as well as the choice of a person
     who is offered to him by the control logic.
     """
-    def __init__(self, agent_name:str, job:Job, seed:int, **kwargs):
+
+    def __init__(self, agent_name: str, job: Job, seed: int, **kwargs):
         self.agent_name = agent_name
         self.job: Job = copy.deepcopy(job)
         self.agent_list: list[str] = ['Human', 'Robot']
@@ -30,7 +31,7 @@ class Sim:
         self.seed = seed
         self.rand = np.random.default_rng(seed=self.seed)
         self.fail_probability = []
-        self.task_execution = {agent: {'Start': 0, 'id': -1, 'Duration': [0,0,0,0]} for agent in self.agent_list}        
+        self.task_execution = {agent: {'Start': 0, 'id': -1, 'Duration': [0, 0, 0, 0]} for agent in self.agent_list}
         self.start_time = time.time()
 
         self.set_tasks_duration(**kwargs)
@@ -43,7 +44,6 @@ class Sim:
                 [v[0] for v in self.human_answer["execute_task"].values()],
             )
         )
-
 
         self.response_time = []
         self.set_response_time()
@@ -70,11 +70,11 @@ class Sim:
             elif task.universal and not self.task_acceptance[task.id]:
                 task.agent = self.agent_list.copy()
 
-                #TODO: When robots learn to also reject task, this needs to be refactored/fixed
+                # TODO: When robots learn to also reject task, this needs to be refactored/fixed
                 # task.agent.remove(self.agent_name)
                 agent_name = "Human"
                 task.agent.remove(agent_name)
-                
+
                 task.universal = False
                 task.rejection_prob = 0.0
             else:
@@ -132,23 +132,25 @@ class Sim:
         coworker_name = self.agent_list[self.agent_list.index(agent.name) - 1]
         if self.task_execution[coworker_name]['Duration'][0] != 0:
             coworker_preparation = self.task_execution[coworker_name]['Duration'][0] - \
-                                sum(self.task_execution[coworker_name]['Duration'][2:4])
+                                   sum(self.task_execution[coworker_name]['Duration'][2:4])
 
             overlapping = self.task_execution[coworker_name]['Start'] + \
-                        self.task_execution[coworker_name]['Duration'][0] \
-                        - self.task_execution[coworker_name]['Duration'][3] - current_time
-
+                          self.task_execution[coworker_name]['Duration'][0] - \
+                          self.task_execution[coworker_name]['Duration'][3] - current_time
+            if overlapping < 0:
+                overlapping = 0
             if self.task_execution[coworker_name]['Start'] + coworker_preparation >= \
-                current_time + sum(self.task_execution[agent.name]['Duration'][1:3]):
+                    current_time + sum(self.task_execution[agent.name]['Duration'][1:3]):
                 if self.waiting_for_dependent_task(agent.current_task.id, self.task_execution[coworker_name]['id']):
                     self.task_execution[agent.name]['Duration'][0] += overlapping - \
-                                                                    self.task_execution[agent.name]['Duration'][1]
+                                                                      self.task_execution[agent.name]['Duration'][1]
                 else:
                     pass
             elif self.task_execution[coworker_name]['Start'] + self.task_execution[coworker_name]['Duration'][0] - \
-                self.task_execution[coworker_name]['Duration'][3] > current_time + self.task_execution[agent.name]['Duration'][1]:
+                    self.task_execution[coworker_name]['Duration'][3] > current_time + \
+                    self.task_execution[agent.name]['Duration'][1]:
                 self.task_execution[agent.name]['Duration'][0] += overlapping - \
-                                                                self.task_execution[agent.name]['Duration'][1]
+                                                                  self.task_execution[agent.name]['Duration'][1]
             else:
                 pass
 
@@ -181,7 +183,7 @@ class Sim:
         """
         if self.task_execution['Robot']['Duration'][0] != 0:
             logging.debug(
-                f'Robot: start: {self.task_execution}') #["Robot"]["Start"]}, duration :{self.task_execution["Robot"]["Duration"]}')
+                f'Robot: start: {self.task_execution}')  # ["Robot"]["Start"]}, duration :{self.task_execution["Robot"]["Duration"]}')
             if current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][1]):
                 return AgentState.PREPARATION, -1
             elif current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][0] -
@@ -190,11 +192,11 @@ class Sim:
 
                 if self.task_execution[coworker_name]['Duration'] != [0, 0, 0, 0] and \
                         current_time < (self.task_execution['Robot']['Start'] +
-                                                      (self.task_execution['Robot']['Duration'][0] -
-                                                       self.task_execution['Robot']['Duration'][2] -
-                                                       self.task_execution['Robot']['Duration'][3])):
+                                        (self.task_execution['Robot']['Duration'][0] -
+                                         self.task_execution['Robot']['Duration'][2] -
+                                         self.task_execution['Robot']['Duration'][3])):
                     return AgentState.WAITING, current_time - (self.task_execution['Robot']['Start'] +
-                                                      self.task_execution['Robot']['Duration'][1])
+                                                               self.task_execution['Robot']['Duration'][1])
                 else:
                     return AgentState.EXECUTION, -1
 
@@ -223,7 +225,7 @@ class Sim:
         """
         if self.task_execution['Human']['Duration'] != 0:
             logging.debug(
-                f'Human: start: {self.task_execution}') #["Human"]["Start"]}, duration :{self.task_execution["Human"]["Duration"]}')
+                f'Human: start: {self.task_execution}')  # ["Human"]["Start"]}, duration :{self.task_execution["Human"]["Duration"]}')
 
             if (self.task_execution['Human']['Start'] + self.task_execution['Human']['Duration'][0]) \
                     > current_time:
@@ -233,7 +235,7 @@ class Sim:
                 time_info[0] += self.task_execution['Human']['Start']
                 self.task_execution['Human']['Start'] = 0
                 self.task_execution['Human']['Duration'] = [0, 0, 0, 0]
-                return AgentState.DONE, time_info 
+                return AgentState.DONE, time_info
         else:
             raise NotImplementedError("is this case relevant? DO we ever go here?")
 
@@ -243,9 +245,12 @@ class Sim:
         if seed:
             rand = np.random.default_rng(seed=seed)
             for task in self.job.task_sequence:
-                answer['execute_task'][task.id] = rand.choice(nameList, p=(1 - task.rejection_prob, task.rejection_prob), size=1)
+                answer['execute_task'][task.id] = rand.choice(nameList,
+                                                              p=(1 - task.rejection_prob, task.rejection_prob), size=1)
         else:
             nameList = [True, False]
             for task in self.job.task_sequence:
-                answer['execute_task'][task.id] = self.rand.choice(nameList, p=(1 - task.rejection_prob, task.rejection_prob), size=1)
+                answer['execute_task'][task.id] = self.rand.choice(nameList,
+                                                                   p=(1 - task.rejection_prob, task.rejection_prob),
+                                                                   size=1)
         return answer
