@@ -20,7 +20,7 @@ class Job:
     :type case: str
     """
 
-    def __init__(self, case: int, seed: int, random_case_param: RandomCase = RandomCase()):
+    def __init__(self, case: int, seed: int, random_case_param: RandomCase | dict[str,int] |None= None):
         self.case = case
         self.seed = seed
         from inputs import case_generator
