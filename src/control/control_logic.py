@@ -119,7 +119,11 @@ class ControlLogic:
                 agent.execute_task(task=selected_task[agent.name], job=self.job, current_time=self.current_time, coworker=coworker)
                 if online_plot:
                     self.plot.update_info(agent, start=True)
-
+            for task in selected_task.values():
+                if task is None:
+                    continue
+                if task.state == TaskState.ASSIGNED:
+                    raise ValueError(f"task {task.id} was left in state {task.state}. It will not be possible to execute the task.")
             self.current_time += 1
 
             if online_plot:
