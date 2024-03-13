@@ -266,6 +266,8 @@ class Vis:
         else:
             plt.show()
 
+        plt.close()
+
 
     def online_plotting(self):
         data = pd.DataFrame({
