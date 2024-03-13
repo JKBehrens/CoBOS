@@ -2,6 +2,7 @@ from pathlib import Path
 from control.control_logic import ControlLogic
 from control.jobs import Job
 from control.agents import Agent
+from control.representation import JobDescription
 from methods.overlap_method import OverlapSchedule
 import copy
 from exp_scripts.run_base_scheduling_exps import run_exp
@@ -66,6 +67,8 @@ def test_case():
     execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
     execute_job.run(animation=False)
 
+    assert job.validate()
+
     distribution_seed = 1
     job = Job(case, seed=distribution_seed)
 
@@ -91,11 +94,13 @@ def test_case():
 #     case 3, solver_seed 57, dist_seed 3 sim_seed 0
 #     case 3, solver_seed 66, dist_seed 7 sim_seed 0
 @settings(deadline=10000.0, max_examples=100, verbosity=Verbosity.verbose)
-@given(st.integers(min_value=0, max_value=7), st.lists(st.integers(min_value=0, max_value=2000), min_size=4, max_size=4), st.booleans())
+@given(st.integers(min_value=0, max_value=8), st.lists(st.integers(min_value=0, max_value=2000), min_size=4, max_size=4), st.booleans())
 @example(3, [0,0,44,0], True)
 @example(3, [3,0,57,0], True)
 @example(3, [7,0,66,0], True)
 @example(4, [1,0,0,0], True)
+@example(1, [1280,0,773,0], False) # takes twice 10 secs for scheduling
+
 
 def test_case_x(case: int, data: list[int], det_job: bool):
     distribution_seed, sim_seed, schedule_seed, answer_seed = data
@@ -122,7 +127,12 @@ def test_case_x(case: int, data: list[int], det_job: bool):
     solving_method.prepare()
 
     execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
-    schedue, stats = execute_job.run(animation=False, experiments=True)
+    schedule, stats = execute_job.run(animation=False, experiments=True)
+
+    assert job.validate()
+
+    # if det_job and sim_seed == schedule_seed == answer_seed:
+    #     assert stats["initial_makespan"] == stats["final_makespan"]
 
     
 
@@ -149,6 +159,9 @@ def test_case_4_solver_seed_4_dist_seed_7_sim_seed_3():
     )
 
     print(schedule)
+    # job = JobDescription.from_schedule(schedule)
+
+    # assert job.validate()
 
     assert "FAIL" not in stats or stats["FAIL"] == False
 
