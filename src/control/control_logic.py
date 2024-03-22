@@ -73,7 +73,7 @@ class ControlLogic:
 
         return output
 
-    def run(self, animation:bool=False, online_plot:bool=False, experiments:bool=True, save2file:bool=False):
+    def run(self, animation:bool=False, online_plot:bool=False, experiments:bool=True, save2file:bool=False, offline_video:bool=False):
         """
         Run the methods simulation.
         """
@@ -85,7 +85,19 @@ class ControlLogic:
             self.output_data.append([])
 
         if online_plot:
-            self.plot = Web_vis(data=self.schedule_as_dict())
+            self.plot = Web_vis(data=self.schedule_as_dict(hierarchy=True))
+
+        if offline_video:
+            self.plot = Vis(horizon=self.solving_method.horizon)
+            self.plot.delete_existing_file()
+            self.init_schedule = None
+            # self.plot.current_time = self.current_time
+            # self.init_schedule = copy.deepcopy(self.schedule_as_dict(hierarchy=True))
+            # self.plot.data = [self.init_schedule, self.schedule_as_dict(hierarchy=True)]
+            # self.plot.plot_schedule(self.plot.save_path.joinpath(f'{self.current_time:03d}.png'), video=True,
+            #                         stat=self.solving_method.get_statistics())
+            # # self.plot.data = self.job.__dict__
+            # self.plot.save_data()
 
         start_time = time.perf_counter()
 
@@ -124,14 +136,46 @@ class ControlLogic:
                     continue
                 if task.state == TaskState.ASSIGNED:
                     raise ValueError(f"task {task.id} was left in state {task.state}. It will not be possible to execute the task.")
-            self.current_time += 1
+
 
             if online_plot:
                 self.plot.current_time = self.current_time
-                self.plot.data = self.schedule_as_dict()
+                self.plot.data = self.schedule_as_dict(hierarchy=True)
                 self.plot.update_gantt_chart()
                 self.plot.update_dependency_graph()
                 time.sleep(1)
+
+            if self.current_time == 0:
+                try:
+                    self.output_data = []
+                    self.output_data.append(copy.deepcopy(self.schedule_as_dict(hierarchy=True)))
+                except KeyError:
+                    self.output_data.append([])
+                except ValueError:
+                    self.output_data.append([])
+
+            if offline_video:
+                # save current state
+                if self.current_time == 0:
+                    self.init_schedule = copy.deepcopy(self.schedule_as_dict(hierarchy=True))
+
+
+                if self.plot.current_time + 2 == self.current_time or self.current_time == 0:
+                    self.plot.current_time = self.current_time
+                    self.plot.data = [self.init_schedule, copy.deepcopy(self.schedule_as_dict(hierarchy=True))]
+                    self.plot.plot_schedule(self.plot.save_path.joinpath(f'{self.current_time:03d}.png'), video=True,
+                                            stat=self.solving_method.get_statistics())
+                    # self.plot.data = self.job.__dict__
+                    self.plot.save_data()
+            self.current_time += 1
+
+        if offline_video:
+            self.plot.current_time = self.current_time
+            self.plot.data = [self.init_schedule, copy.deepcopy(self.schedule_as_dict(hierarchy=True))]
+            self.plot.plot_schedule(self.plot.save_path.joinpath(f'{self.current_time:03d}.png'), video=True,
+                                    stat=self.solving_method.get_statistics())
+            # self.plot.data = self.job.__dict__
+            self.plot.save_data()
 
         logging.info('__________FINAL SCHEDULE___________')
         self.job.__str__()

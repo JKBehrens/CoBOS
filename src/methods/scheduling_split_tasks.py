@@ -44,6 +44,7 @@ class Schedule(Solver):
         self.start_var = [0] * self.job.task_number
         self.end_var = [0] * self.job.task_number
         self.tasks_with_final_var = []
+        self.tasks_with_deleted_constraints = []
         self.duration_constraints = [[0, 0] for i in range(self.job.task_number)]
         self.fix_agent = [0] * self.job.task_number
         self.border_constraints = [[[0, 0, 0, 0, 0]] * self.job.task_number] * self.job.task_number
@@ -227,10 +228,10 @@ class Schedule(Solver):
     def set_solver(self):
         # Creates the solver and solve.
         solver = cp_model.CpSolver()
-        solver.parameters.num_search_workers = 8
+        solver.parameters.num_search_workers = 1
         solver.parameters.random_seed = self.seed
-        solver.parameters.max_time_in_seconds = 10.0
-        # solver.parameters.enumerate_all_solutions = True
+        solver.parameters.max_time_in_seconds = 9.0
+        solver.parameters.enumerate_all_solutions = True
         solver.parameters.log_search_progress = True if logging.getLogger().level == 10 else False
         solver.parameters.search_branching = cp_model.AUTOMATIC_SEARCH
         return solver
@@ -357,10 +358,10 @@ class Schedule(Solver):
         self.set_max_horizon(**kwargs)
         self.set_variables()
         self.set_constraints()
-        self.schedule, self.current_makespan = self.solve(current_time=0)
-        self.print_schedule()
+        # self.schedule, self.current_makespan = self.solve(current_time=0)
+        # self.print_schedule()
         # self.fix_agents_var()
-        self.print_info()
+        # self.print_info()
         return self.schedule
 
     def set_list_of_possible_changes(self, available_tasks, agent_name, current_time, **kwargs):
@@ -458,7 +459,7 @@ class Schedule(Solver):
                 if task.state == TaskState.InProgress and task.finish[0] < current_time:
                     task.finish[0] = current_time
                     shift = True
-                elif shift and (task.state == TaskState.UNAVAILABLE or task.state == TaskState.InProgress):
+                elif shift and (task.state == TaskState.UNAVAILABLE or task.state == TaskState.AVAILABLE):
                     task.start += 1
                     task.finish[0] += 1
 
