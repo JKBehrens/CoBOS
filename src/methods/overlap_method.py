@@ -522,12 +522,10 @@ class OverlapSchedule(Schedule):
                         return task
         return None
 
-    def are_there_available_tasks(self, agent):
+    def are_there_available_tasks(self):
         for task in self.job.task_sequence:
             if task.state is TaskState.AVAILABLE:
-                for task_agent in task.agent:
-                    if agent == task_agent:
-                        return True
+                return True
         return False
 
     @staticmethod
