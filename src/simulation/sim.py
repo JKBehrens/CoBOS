@@ -181,32 +181,33 @@ class Sim:
         :return: Status of task and time information.
         :rtype: tuple
         """
-        if self.task_execution['Robot']['Duration'][0] != 0:
+        if self.task_execution[task.agent[0]]['Duration'][0] != 0:
             logging.debug(
-                f'Robot: start: {self.task_execution}')  # ["Robot"]["Start"]}, duration :{self.task_execution["Robot"]["Duration"]}')
-            if current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][1]):
+                f'{task.agent[0]}: start: {self.task_execution}')  # ["Robot"]["Start"]}, duration :{self.task_execution["Robot"]["Duration"]}')
+            if current_time < (self.task_execution[task.agent[0]]['Start'] + self.task_execution[task.agent[0]]['Duration'][1]):
                 return AgentState.PREPARATION, -1
-            elif current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][0] -
-                                 self.task_execution['Robot']['Duration'][3]):
+            elif current_time < (self.task_execution[task.agent[0]]['Start'] + self.task_execution[task.agent[0]]['Duration'][0] -
+                                 self.task_execution[task.agent[0]]['Duration'][3]):
                 coworker_name = self.agent_list[self.agent_list.index(task.agent[0]) - 1]
 
                 if self.task_execution[coworker_name]['Duration'] != [0, 0, 0, 0] and \
-                        current_time < (self.task_execution['Robot']['Start'] +
-                                        (self.task_execution['Robot']['Duration'][0] -
-                                         self.task_execution['Robot']['Duration'][2] -
-                                         self.task_execution['Robot']['Duration'][3])):
-                    return AgentState.WAITING, current_time - (self.task_execution['Robot']['Start'] +
-                                                               self.task_execution['Robot']['Duration'][1])
+                        current_time < (self.task_execution[task.agent[0]]['Start'] +
+                                        (self.task_execution[task.agent[0]]['Duration'][0] -
+                                         self.task_execution[task.agent[0]]['Duration'][2] -
+                                         self.task_execution[task.agent[0]]['Duration'][3])):
+                    return AgentState.WAITING, current_time - (self.task_execution[task.agent[0]]['Start'] +
+                                                               self.task_execution[task.agent[0]]['Duration'][1])
                 else:
-                    return AgentState.EXECUTION, -1
+                    return AgentState.EXECUTION, self.task_execution[task.agent[0]]['Start'] - \
+                           self.task_execution[task.agent[0]]['Duration'][2] - self.task_execution[task.agent[0]]['Duration'][3]
 
-            elif current_time < (self.task_execution['Robot']['Start'] + self.task_execution['Robot']['Duration'][0]):
-                return AgentState.COMPLETION, -1
+            elif current_time < (self.task_execution[task.agent[0]]['Start'] + self.task_execution[task.agent[0]]['Duration'][0]):
+                return AgentState.COMPLETION, self.task_execution[task.agent[0]]['Duration'][2]
             else:
-                time_info = self.task_execution['Robot']['Duration']
-                time_info[0] += self.task_execution['Robot']['Start']
-                self.task_execution['Robot']['Start'] = 0
-                self.task_execution['Robot']['Duration'] = [0, 0, 0, 0]
+                time_info = self.task_execution[task.agent[0]]['Duration']
+                time_info[0] += self.task_execution[task.agent[0]]['Start']
+                self.task_execution[task.agent[0]]['Start'] = 0
+                self.task_execution[task.agent[0]]['Duration'] = [0, 0, 0, 0]
                 return AgentState.DONE, time_info
         return AgentState.IDLE, -1
 

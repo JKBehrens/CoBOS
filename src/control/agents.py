@@ -127,12 +127,16 @@ class Agent(Sim):
         """
         coworker = kwargs['coworker']
         self.task_execution[coworker.name] = coworker.task_execution[coworker.name]
-        if self.name == 'Robot':
-            state, time_info = self.get_feedback_from_robot(self.current_task, current_time)
-            self.state = state
-        else:
-            state, time_info = self.check_human_task(current_time)
-            self.state = state
+
+        state, time_info = self.get_feedback_from_robot(self.current_task, current_time)
+        self.state = state
+
+        # if self.name == 'Robot':
+        #     state, time_info = self.get_feedback_from_robot(self.current_task, current_time)
+        #     self.state = state
+        # else:
+        #     state, time_info = self.check_human_task(current_time)
+        #     self.state = state
 
         if self.state == AgentState.DONE:
             self.finish_task(time_info)
