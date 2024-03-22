@@ -190,7 +190,7 @@ class OverlapSchedule(Schedule):
 
                 if len(ends) == 0:
                     continue
-                # assert start >= max(ends), f"dependency graph violation for task {task.id}."
+                assert start >= max(ends), f"dependency graph violation for task {task.id}."
             logging.info("The solution is valid. No dependency violation")
 
         elif self.status == cp_model.INFEASIBLE:
@@ -290,6 +290,7 @@ class OverlapSchedule(Schedule):
         """
         for i, task in enumerate(self.job.task_sequence):
             if task.state in [TaskState.InProgress, TaskState.COMPLETED]:
+                # TODO: this might lead to a bloated model. better do it only once and only on the domain.
                 idx = self.allowedAgents[task.id].Index()
                 self.model.Proto().constraints[idx].Clear()
                 self.allowedAgents[task.id] = self.model.AddAllowedAssignments(
