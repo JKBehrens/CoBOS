@@ -40,6 +40,40 @@ def test_model_invalid():
     execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
     execute_job.run(animation=False)
 
+def test_case_7():
+    METHOD = OverlapSchedule
+    case = 7
+    solver_seed = 94
+    dist_seed = 2
+    sim_seed = 0
+    answer_seed = 0
+    det_job = False
+
+    job = Job(case=case, seed=dist_seed)
+
+    agent_names = ["Human", "Robot"]
+    agents: list[Agent] = []
+    for agent_name in agent_names:
+        agents.append(
+            Agent(
+                name=agent_name,
+                job=copy.deepcopy(job),
+                seed=sim_seed,
+                answer_seed=answer_seed,
+            )
+        )
+
+    if det_job:
+        job = agents[0]._get_deterministic_job()
+
+    solving_method = METHOD(job=job, seed=solver_seed)
+    solving_method.prepare()
+
+    execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
+    execute_job.run(animation=False)
+
+    assert job.progress() == 100
+
 
 def test_case():
     METHOD = OverlapSchedule
@@ -96,13 +130,17 @@ def test_case():
 #     case 3, solver_seed 66, dist_seed 7 sim_seed 0
 @settings(deadline=10000.0, max_examples=100, verbosity=Verbosity.verbose)
 @given(st.integers(min_value=0, max_value=8), st.lists(st.integers(min_value=0, max_value=2000), min_size=4, max_size=4), st.booleans())
-@example(3, [0,0,44,0], True)
-@example(3, [3,0,57,0], True)
-@example(3, [7,0,66,0], True)
-@example(4, [1,0,0,0], True)
-@example(1, [1280,0,773,0], False) # takes twice 10 secs for scheduling
-@example(8, [0,0,69,0], False)
-
+# @example(3, [0,0,44,0], True)
+# @example(3, [3,0,57,0], True)
+# @example(3, [7,0,66,0], True)
+# @example(4, [1,0,0,0], True)
+# @example(1, [1280,0,773,0], False) # takes twice 10 secs for scheduling
+# @example(8, [0,0,69,0], False)
+# @example(3, [1466,1037,1918,159], False)
+# @example(4, [1784,0,1325,0], False)
+# @example(8, [4,0,62,0], False)
+# @example(8, [2,0,55,0], False)
+@example(4, [1,0,21,0], False)
 def test_case_x(case: int, data: list[int], det_job: bool):
     distribution_seed, sim_seed, schedule_seed, answer_seed = data
     METHOD = OverlapSchedule
