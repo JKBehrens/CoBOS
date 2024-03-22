@@ -288,6 +288,7 @@ class OverlapSchedule(Schedule):
         """
         Changes the variable domains according to what is happening to update the schedule.
         """
+        self.set_max_horizon()
         for i, task in enumerate(self.job.task_sequence):
             if task.state in [TaskState.InProgress, TaskState.COMPLETED]:
                 idx = self.allowedAgents[task.id].Index()
@@ -356,12 +357,28 @@ class OverlapSchedule(Schedule):
                 #         self.model.Proto().constraints[idx].Clear()
 
             elif task.state == TaskState.AVAILABLE or task.state == TaskState.UNAVAILABLE:
-                # set start of interval to current time
-                self.model.Proto().variables[self.task_intervals[task.id][0].StartExpr().Index()].domain[:] = []
-                self.model.Proto().variables[self.task_intervals[task.id][0].StartExpr().Index()].domain.extend(
-                    cp_model.Domain(int(current_time), self.horizon).FlattenedIntervals())
+                intervals = [[int(current_time), self.horizon], [int(current_time), self.horizon]]
+                self.refresh_task(self.model, task, intervals, intervals, intervals)
+                # # set start of interval to current time
+                # self.model.Proto().variables[self.task_intervals[task.id][0].StartExpr().Index()].domain[:] = []
+                # self.model.Proto().variables[self.task_intervals[task.id][0].StartExpr().Index()].domain.extend(
+                #     cp_model.Domain(int(current_time), self.horizon).FlattenedIntervals())
+
+
             else:
                 logging.warning(f'task {task.id} state {task.state} out of If Else')
+
+    def refresh_task(self, model, task, preps, execution, complition):
+        phase_intervals = [preps, execution, complition]
+        for phase in range(3):
+            # set end of interval to current end time of task
+            model.Proto().variables[self.task_intervals[task.id][phase].StartExpr().Index()].domain[:] = []
+            model.Proto().variables[self.task_intervals[task.id][phase].StartExpr().Index()].domain.extend(
+                cp_model.Domain(phase_intervals[phase][0][0], phase_intervals[phase][0][1]).FlattenedIntervals())
+
+            model.Proto().variables[self.task_intervals[task.id][phase].EndExpr().Index()].domain[:] = []
+            model.Proto().variables[self.task_intervals[task.id][phase].EndExpr().Index()].domain.extend(
+                cp_model.Domain(phase_intervals[phase][1][0], phase_intervals[phase][1][1]).FlattenedIntervals())
 
     def change_agent_in_model(self, task):
         """
@@ -455,6 +472,9 @@ class OverlapSchedule(Schedule):
             else:
                 logging.error(self.job.__str__())
                 logging.error(self.model.Validate())
+                self.model.export_to_file('model.txt')
+                if max(task.finish[0] for task in self.job.task_sequence) > self.horizon:
+                    logging.error(f'Horizon is incorrect. Horizon {self.horizon}, max finish {max(task.finish[0] for task in self.job.task_sequence)}')
                 logging.error(f"Something is wrong, status {solver.StatusName(status)} and the log of the solve")
                 raise ValueError(f"case {self.job.case}, solver_seed {self.seed}, dist_seed {self.job.seed}")
         else:
