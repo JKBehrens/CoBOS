@@ -341,12 +341,15 @@ class Schedule(Solver):
         Computes horizon dynamically as the sum of all durations.
         :return:
         """
-        self.horizon = 0
-        for task in self.job.task_sequence:
-            if task.universal:
-                self.horizon += max(self.task_duration['Human'][task.id][0], self.task_duration['Robot'][task.id][0])
-            else:
-                self.horizon += self.task_duration[task.agent[0]][task.id][0]
+        if self.horizon == 0 or self.job.task_sequence[0].finish is None:
+            for task in self.job.task_sequence:
+                if task.universal:
+                    self.horizon += max(self.task_duration['Human'][task.id][0], self.task_duration['Robot'][task.id][0])
+                else:
+                    self.horizon += self.task_duration[task.agent[0]][task.id][0]
+        else:
+            self.horizon = max(task.finish[0] for task in self.job.task_sequence) + 100
+
         self.horizon = int(self.horizon)
 
         self.horizon_ceil_1000 = int(np.ceil(self.horizon*0.001)*1000)
