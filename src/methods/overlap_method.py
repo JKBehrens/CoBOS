@@ -175,7 +175,7 @@ class OverlapSchedule(Schedule):
                     agent = self.solver.Value(self.task_assignment_var[task.id])
                     assert self.task_duration[agent][task.id][0] == \
                            self.solver.Value(self.task_intervals[task.id][2].EndExpr()) - \
-                           self.solver.Value(self.task_intervals[task.id][0].StartExpr()),\
+                           self.solver.Value(self.task_intervals[task.id][0].StartExpr()), \
                         f"Duration of task {task.id} is wrong."
             logging.info("All intervals have the correct duration.")
 
@@ -423,30 +423,56 @@ class OverlapSchedule(Schedule):
             return makespans
         else:
             return makespans
-        
+
     def decide(self, observation_data, current_time):
         decision = {}
         self.update_tasks_status()
         self.update_schedule(current_time)
-        for index, [agent_name, agent_state, agent_current_task, agent_rejection_tasks] in enumerate(observation_data):
-            logging.debug(f'TIME: {current_time}. Is {agent_name} available? {agent_state}')
-            if agent_state == AgentState.IDLE:
-                decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
-            elif agent_state == AgentState.REJECTION:
-                coworker = observation_data[index - 1]
-                self.change_agent(task=agent_current_task, coworker_name=coworker[0], current_time=current_time)
-                decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
-            elif agent_state == AgentState.DONE:
-                decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
+        if self.is_there_IDLE_agent(observation_data) and self.are_there_available_tasks():
+            self.refresh_variables(current_time)
+            # copy model
+            test_model = self.model.Clone()
+            solver = self.set_solver()
+            status = solver.Solve(test_model)
+            if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+                solver_info = self.get_solver_info_as_dict(solver)
+                solver_info['current_time'] = current_time
+                self.evaluation_run_time.append(solver_info)
+                self.schedule, self.current_makespan = self.solve(current_time=current_time)
+
+                for index, [agent_name, agent_state, agent_current_task, agent_rejection_tasks] in enumerate(observation_data):
+                    logging.debug(f'TIME: {current_time}. Is {agent_name} available? {agent_state}')
+                    if agent_state == AgentState.IDLE:
+                        decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
+                    elif agent_state == AgentState.REJECTION:
+                        coworker = observation_data[index - 1]
+                        self.change_agent(task=agent_current_task, coworker_name=coworker[0], current_time=current_time)
+                        decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
+                    elif agent_state == AgentState.DONE:
+                        decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks, current_time)
+                    else:
+                        decision[agent_name] = None
             else:
-                decision[agent_name] = None
+                logging.error(self.job.__str__())
+                logging.error(self.model.Validate())
+                logging.error(f"Something is wrong, status {solver.StatusName(status)} and the log of the solve")
+                raise ValueError(f"case {self.job.case}, solver_seed {self.seed}, dist_seed {self.job.seed}")
+        else:
+            decision = {agent_name:None for agent_name in self.job.agents}
+
         return decision
-    
+
+    def is_there_IDLE_agent(self, observation_data):
+        for index, [_, agent_state, _, _] in enumerate(observation_data):
+            if agent_state == AgentState.IDLE or agent_state == AgentState.DONE or agent_state == AgentState.REJECTION:
+                return True
+        return False
+
     def find_task_old(self, agent_name, agent_rejection_tasks, current_time):
         # find allocated task
         available_tasks = self.are_there_available_tasks()
         logging.debug(f'Available tasks for agent {agent_name}')
-        a = [task.id  for agent in available_tasks.keys() for task in available_tasks[agent]]
+        a = [task.id for agent in available_tasks.keys() for task in available_tasks[agent]]
         if available_tasks[agent_name]:
             for task in available_tasks[agent_name]:
                 if task.id not in agent_rejection_tasks:
@@ -486,49 +512,23 @@ class OverlapSchedule(Schedule):
             pass
         return None
 
-
     def find_task(self, agent_name, agent_rejection_tasks, current_time):
+        for task in self.schedule[agent_name]:
+            if task.state == TaskState.AVAILABLE:
+                if START_AVAILABLE_TASKS:
+                    return task
+                else:
+                    if task.start <= current_time:
+                        return task
+        return None
 
-        self.refresh_variables(current_time)
-        available_tasks = self.are_there_available_tasks()
-        if not any(len(value) > 0 for value in available_tasks.values()):
-            return None
-        # copy model
-        test_model = self.model.Clone()
-        solver = self.set_solver()
-        status = solver.Solve(test_model)
-        if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-            solver_info = self.get_solver_info_as_dict(solver)
-            solver_info['current_time'] = current_time
-            self.evaluation_run_time.append(solver_info)
-            self.schedule, self.current_makespan = self.solve(current_time=current_time)
-            # return self.find_task(agent_name, agent_rejection_tasks, current_time)
-            
-            available_tasks = self.are_there_available_tasks()
-            logging.debug(f'Available tasks for agent {agent_name}')
-            # a = [task.id  for agent in available_tasks.keys() for task in available_tasks[agent]]
-            if available_tasks[agent_name]:
-                for task in available_tasks[agent_name]:
-                    if task.id not in agent_rejection_tasks:
-                        if START_AVAILABLE_TASKS:
-                            return available_tasks[agent_name][0]
-                        else:
-                            if available_tasks[agent_name][0].start <= current_time:
-                                return available_tasks[agent_name][0]
-        else:
-            logging.error(self.job.__str__())
-            logging.error(self.model.Validate())
-            logging.error(f"Something is wrong, status {solver.StatusName(status)} and the log of the solve")
-            raise ValueError(f"case {self.job.case}, solver_seed {self.seed}, dist_seed {self.job.seed}")
-
-    def are_there_available_tasks(self):
-        available_tasks = {}
-        for agent in self.schedule.keys():
-            available_tasks[agent] = []
-            for task in self.schedule[agent]:
-                if task.state is TaskState.AVAILABLE:
-                    available_tasks[agent].append(task)
-        return available_tasks
+    def are_there_available_tasks(self, agent):
+        for task in self.job.task_sequence:
+            if task.state is TaskState.AVAILABLE:
+                for task_agent in task.agent:
+                    if agent == task_agent:
+                        return True
+        return False
 
     @staticmethod
     def are_there_available_coworker_tasks(available_tasks):
@@ -540,6 +540,3 @@ class OverlapSchedule(Schedule):
 
     def get_mean_of_task_duration(self):
         return statistics.mean([v[0] for v in self.task_duration.values()])
-
-
-
