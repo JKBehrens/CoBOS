@@ -37,6 +37,7 @@ class OverlapSchedule(Schedule):
         self.dependencies_constraints = {}
         self.no_overlap_execution_intervals = []
         self.no_overlap_execution_constraint = None
+        self.tasks_with_final_agent = []
 
     @classmethod
     def name(cls) -> str:
@@ -254,7 +255,6 @@ class OverlapSchedule(Schedule):
             'gap_integral': solver.ResponseProto().gap_integral
         }
 
-
     def get_task_assignment_list(self):
         task_assignment = {}
         for task in self.job.task_sequence:
@@ -291,42 +291,52 @@ class OverlapSchedule(Schedule):
         self.set_max_horizon()
         for i, task in enumerate(self.job.task_sequence):
             if task.state in [TaskState.InProgress, TaskState.COMPLETED]:
-                idx = self.allowedAgents[task.id].Index()
-                self.model.Proto().constraints[idx].Clear()
-                self.allowedAgents[task.id] = self.model.AddAllowedAssignments(
-                    variables=[self.task_assignment_var[task.id]],
-                    tuples_list=[tuple([self.agent_mapping[task.agent[0]]])])
+                if task.id not in self.tasks_with_final_agent:
+                    self.tasks_with_final_agent.append(task.id)
+                    idx = self.allowedAgents[task.id].Index()
+                    self.model.Proto().constraints[idx].Clear()
+                    self.allowedAgents[task.id] = self.model.AddAllowedAssignments(
+                        variables=[self.task_assignment_var[task.id]],
+                        tuples_list=[tuple([self.agent_mapping[task.agent[0]]])])
+                    # delete duration constraints
+                    for phase in range(3):
+                        idx = self.duration_constraints[task.id][phase].Index()
+                        self.model.Proto().constraints[idx].Clear()
 
                 if task.state == TaskState.COMPLETED:
                     if task.id in self.tasks_with_final_var:
                         continue
-                    # delete duration constraints
-                    for phase in range(3):
-                        idx = self.duration_constraints[task.id][phase].Index()
-                        self.model.Proto().constraints[idx].Clear()
+                    # # delete duration constraints
+                    # for phase in range(3):
+                    #     idx = self.duration_constraints[task.id][phase].Index()
+                    #     self.model.Proto().constraints[idx].Clear()
+                    preps_interval = [[int(task.start), int(task.start)],
+                                      [int(task.finish[0]-task.finish[2]-task.finish[3]),
+                                       int(task.finish[0]-task.finish[2]-task.finish[3])]]
+                    execution_interval = [[0, self.horizon], [int(task.finish[0]-task.finish[3]),
+                                                              int(task.finish[0]-task.finish[3])]]
+                    completion_interval = [[0, self.horizon], [int(task.finish[0]), int(task.finish[0])]]
+
 
                     # set end of interval to current end time of task
-                    self.model.Proto().variables[self.task_intervals[task.id][0].EndExpr().Index()].domain[:] = []
-                    self.model.Proto().variables[self.task_intervals[task.id][0].EndExpr().Index()].domain.extend(
-                        cp_model.Domain(int(task.finish[0]-task.finish[2]-task.finish[3]),
-                                        int(task.finish[0]-task.finish[2]-task.finish[3])).FlattenedIntervals())
-
-                    self.model.Proto().variables[self.task_intervals[task.id][1].EndExpr().Index()].domain[:] = []
-                    self.model.Proto().variables[self.task_intervals[task.id][1].EndExpr().Index()].domain.extend(
-                        cp_model.Domain(int(task.finish[0]-task.finish[3]),
-                                        int(task.finish[0]-task.finish[3])).FlattenedIntervals())
-
-                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
-                    self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
-                        cp_model.Domain(int(task.finish[0]), int(task.finish[0])).FlattenedIntervals())
+                    self.refresh_task(self.model, task, preps_interval, execution_interval, completion_interval)
+                    # self.model.Proto().variables[self.task_intervals[task.id][0].EndExpr().Index()].domain[:] = []
+                    # self.model.Proto().variables[self.task_intervals[task.id][0].EndExpr().Index()].domain.extend(
+                    #     cp_model.Domain(int(task.finish[0]-task.finish[2]-task.finish[3]),
+                    #                     int(task.finish[0]-task.finish[2]-task.finish[3])).FlattenedIntervals())
+                    #
+                    # self.model.Proto().variables[self.task_intervals[task.id][1].EndExpr().Index()].domain[:] = []
+                    # self.model.Proto().variables[self.task_intervals[task.id][1].EndExpr().Index()].domain.extend(
+                    #     cp_model.Domain(int(task.finish[0]-task.finish[3]),
+                    #                     int(task.finish[0]-task.finish[3])).FlattenedIntervals())
+                    #
+                    # self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain[:] = []
+                    # self.model.Proto().variables[self.task_intervals[task.id][2].EndExpr().Index()].domain.extend(
+                    #     cp_model.Domain(int(task.finish[0]), int(task.finish[0])).FlattenedIntervals())
 
                     self.tasks_with_final_var.append(task.id)
                     logging.debug(f'Task {task.id}, new var: finish {task.finish[0]}')
                 elif task.state == TaskState.InProgress:
-                    # delete duration constraints
-                    for phase in range(3):
-                        idx = self.duration_constraints[task.id][phase].Index()
-                        self.model.Proto().constraints[idx].Clear()
                     if current_time > task.start+self.task_duration[task.agent[0]][task.id][0]:
                         end_value = current_time
                     else:
@@ -368,8 +378,8 @@ class OverlapSchedule(Schedule):
             else:
                 logging.warning(f'task {task.id} state {task.state} out of If Else')
 
-    def refresh_task(self, model, task, preps, execution, complition):
-        phase_intervals = [preps, execution, complition]
+    def refresh_task(self, model, task, preps, execution, completion):
+        phase_intervals = [preps, execution, completion]
         for phase in range(3):
             # set end of interval to current end time of task
             model.Proto().variables[self.task_intervals[task.id][phase].StartExpr().Index()].domain[:] = []
