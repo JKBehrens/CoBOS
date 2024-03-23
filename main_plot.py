@@ -1,36 +1,68 @@
 import argparse
+import logging
+import os
+from pathlib import Path
+import re
 import json
-import time
-
+from typing import Any
+from pydantic import BaseModel
+from scipy.stats import gaussian_kde
+from matplotlib import pyplot as plt
 import numpy as np
-
-from visualization import Vis, initial_and_final_schedule_save_file_name, schedule_save_file_name, video_parser, comparison_save_file_name
+import pandas as pd
+import dask
+dask.config.set({'dataframe.query-planning': True})
+import dask.dataframe as dd
+from visualization.plot_experiments_result import read_data_to_df
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", type=str,
-                        help='Select the simulation you want to render: sim_vis, comparison, plot_schedule')
+    parser.add_argument("path", type=str,
+                        help='write path with experiments result')
     args = parser.parse_args()
 
-    save_file_name = ''
-    if args.mode == "video":
-        video_parser()
-    elif args.mode == "sim_vis":
-        with open(initial_and_final_schedule_save_file_name, "r+") as json_file:
-            data = json.load(json_file)
-        save_file_name = 'simulation1.png'
-    elif args.mode == "comparison":
-        with open(comparison_save_file_name, "r+") as json_file:
-            data = json.load(json_file)
-        save_file_name = 'comparison.png'
-    else:
-        with open(initial_and_final_schedule_save_file_name, "r+") as json_file:
-            data = json.load(json_file)
-            if len(data) == 2:
-                data = data[1]
-            elif len(data) == 1:
-                data = data[0]
-        save_file_name = 'schedule.png'
+    experiments_path = Path(args.path).expanduser()
 
-    gantt = Vis(data=data, from_file=True)
-    gantt.plot_schedule(save_file_name)
+    methods = ['overlapschedule', 'randomallocation', 'maxduration', 'dynamicallocation']
+
+    df = read_data_to_df(experiments_path.glob("*.json"),
+                         cols={"initial_makespan": -1, "final_makespan": -1, "FAIL": False})
+    if df.empty:
+        raise FileNotFoundError(f'There is no experiment data in the following path {experiments_path.__str__()}')
+
+    dask_df = dd.from_pandas(df, chunksize=10000)
+
+    # BARPLOT
+    df['ms_norm'] = pd.Series(dtype=float)
+    fig, ax = plt.subplots()
+
+    selected_methods = ['overlapschedule', 'dynamicallocation']
+    data1 = np.empty((0,))
+    data2 = np.empty((0,))
+
+    legend: list[str] = []
+    for case in [8]:
+        makespans_other: list[list[int]] = []
+        for dist_seed in np.unique(np.array(df["dist_seed"])):
+            df_one_exp = df[df["case_number"] == case][df["dist_seed"] == dist_seed]
+            ms_lb = min(df_one_exp["initial_makespan"][df["det_job"] == True][df["method_name"] == "overlapschedule"][
+                            df_one_exp["sim_seed"] == df_one_exp["schedule_seed"]])
+
+            df.loc[df_one_exp.index, "ms_norm"] = df_one_exp["final_makespan"] / ms_lb
+        data = []
+        for method in methods:
+            data.append(np.array(list(df["ms_norm"][df["case_number"] == case][df["method_name"] == method])[:]))
+
+    bp = ax.boxplot(data, positions=[4, 3, 2, 1], patch_artist=True, notch=True, vert=False,
+                    labels=['CoBOS(ours)', 'RA', 'MD', 'DA'])
+    colors = ['cornflowerblue', 'cornflowerblue', 'cornflowerblue', 'cornflowerblue']
+    for box, color in zip(bp['boxes'], colors):
+        box.set_facecolor(color)
+    for median in bp['medians']:
+        median.set(color='royalblue',
+                   linewidth=1)
+    ax.set_xlabel('Normalised makespan')
+    ax.set_xlim(0.98, 1.63)
+    plt.grid()
+    plt.savefig('boxplot_case_8_grid.png')
+
