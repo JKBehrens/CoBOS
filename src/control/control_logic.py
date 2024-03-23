@@ -14,6 +14,7 @@ import logging
 import json
 import time
 import copy
+import os
 
 
 
@@ -176,6 +177,8 @@ class ControlLogic:
                                     stat=self.solving_method.get_statistics())
             # self.plot.data = self.job.__dict__
             self.plot.save_data()
+            os.system("ffmpeg -framerate 5 -pattern_type glob -i '*.png' -c:v libx264 -pix_fmt yuv420p simulation.mp4")
+            logging.info(f'The video was saved to simulation.mp4')
 
         logging.info('__________FINAL SCHEDULE___________')
         self.job.__str__()
@@ -189,6 +192,7 @@ class ControlLogic:
         if save2file:
             with open(initial_and_final_schedule_save_file_name, 'w') as f:
                 json.dump(self.output_data, f, indent=4)
+            logging.info(f'The data was saved to {initial_and_final_schedule_save_file_name}')
 
         if experiments:
             statistics = {}
