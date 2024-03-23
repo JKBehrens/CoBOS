@@ -30,30 +30,34 @@ You can choose one of these cases:
 ![Screenshot](cases.png)
 
 ### Run simulation
-Run online visualisation of simulation in web browser:
-```
-streamlit run main.py [case]
-```
-positional arguments: <br />
-  case - 1, 2, 3, 4, 5, 6
 Run offline simulation:
 ```
-python main.py [case] --offline
-```
-after offline simulation, you can convert the simulation to video with the command:
-```
-python main_plot.py sim_vis
-```
-
-
-### Create schedule
-Create only schedule. The schedule will be saved in a json file and as an image.
-```
-python main.py [case] --only_schedule
+python main.py [case]
 ```
 The schedule will be saved in a json file and as an image.
 positional arguments: <br />
-  case - 1, 2, 3, 4, 5, 6
+*  case - 1, 2, 3, 4, 5, 6
+options:
+*  -h, --help            show help message and exit
+*  --only_schedule, --no-only_schedule - show only initial schedule
+*  --save_gt, --no-save_gt - save simulation Gant Chart to file
+*  --save2file, --no-save2file - save simulation result to file
+*  --offline_video, --no-offline_video - make video from the simulation
+
+### Run experiments
+Run experiment script:
+```
+python src/exp_scripts/run_base_scheduling_exps.py
+```
+Plot barplot:
+```
+python main_plot.py
+```
+options:
+*  -h, --help   Show help message and exit
+*  --path PATH  Path to the experiments result
+*  --case CASE  Add case number (default case is 8)
+
 
 
 [//]: # (### Replay graph offline)
@@ -83,10 +87,15 @@ positional arguments: <br />
 * mean_min (mean_max) - boundaries for a distribution mean value of phase duration  
 * deviation_min (deviation_max) - boundaries for a distribution deviation value of phase duration
 
-* ## Plot comparison
+[//]: # (* ## Plot comparison)
 
-In `main.py` change seeds, then run
-```
-python main.py [case] --comparison
-python main_plot.py comparison
-```
+[//]: # ()
+[//]: # (In `main.py` change seeds, then run)
+
+[//]: # (```)
+
+[//]: # (python main.py [case] --comparison)
+
+[//]: # (python main_plot.py comparison)
+
+[//]: # (```)
