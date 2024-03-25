@@ -1,6 +1,12 @@
 # Scheduling and reactive control in HRC
 
-The block presented in this repository is designed for scheduling tasks between a human and a robot and adapting it in case of changes triggered by uncertainties.  
+The code presented in this repository is designed for scheduling tasks between a human and a robot and adapting it in case of changes triggered by uncertainties. 
+
+Relevant publication (in submission):
+
+**CoBOS: Constraint-Based Online Scheduler for Human-Robot Collaboration**
+by Marina Ionova and [Jan Kristof Behrens](www.behrens-jan.de).
+
 
 ## About scheduling 
 Scheduling is an integer constraint programming problem that is solved by using [Google Optimization Tools][about-ortool]
@@ -20,9 +26,9 @@ pip install -e .
 
 Clone the repository, install [pdm](https://pdm-project.org/latest/) (if you haven't done so before) go to the repository root folder and install it via:
 
-pdm install
+`pdm install`
 
-Before pushing your commits, you can check the code formating with pdm lint and tests with pdm test.
+Before pushing your commits, you can check the code formating with `pdm lint` and tests with `pdm test`.
 
 
 ## Quick Start
@@ -45,10 +51,13 @@ options:
 *  --offline_video, --no-offline_video - make video from the simulation
 
 ### Run experiments
-Run experiment script:
+
+To run all experiments prsented in the paper, run the following script (it will run for a few hours)
 ```
 python src/exp_scripts/run_base_scheduling_exps.py
 ```
+or just download our [files](https://drive.google.com/file/d/1dQ6fqjqmdjptIeFad1utaPkyIB6cPHCj/view?usp=sharing). 
+
 Plot barplot:
 ```
 python main_plot.py
