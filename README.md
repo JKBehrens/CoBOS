@@ -13,7 +13,7 @@ Scheduling is an integer constraint programming problem that is solved by using 
 
 [about-ortool]: https://github.com/google/or-tools
 
-Here you can see the animation of the simulation with and without perfect knowledge. #TODO: add links to gif on github
+Here you can see the animation of the simulation [with](img/simulation.gif) and [without](img/simulation_with_perfect_knowledge.gif) perfect knowledge. 
 
 ## Installation 
 
@@ -109,17 +109,17 @@ You can choose one of these cases:
 
 # Case description
 
-**Case 1**: Simple pick and place operation. The robot and the human have fixed tasks assigned, i.e., they pick up an object from a specified location and place it at designated spots. The decisions concern only the ordering of tasks and their exact timing. Timing uncertainties are present. This task contains no dependencies (ND).
+[**Case 1**](img/schedule_case_1.pdf): Simple pick and place operation. The robot and the human have fixed tasks assigned, i.e., they pick up an object from a specified location and place it at designated spots. The decisions concern only the ordering of tasks and their exact timing. Timing uncertainties are present. This task contains no dependencies (ND).
 
-**Case 2**: Collaborative assembly. The robot and the human worker need to coordinate their work together to assemble a set of simple structures. The tasks concerning each structure are subject to ordering constraints. No tasks are allocatable; hence, the cross-schedule dependencies arise (XD).
+[**Case 2**](img/schedule_case_2.pdf): Collaborative assembly. The robot and the human worker need to coordinate their work together to assemble a set of simple structures. The tasks concerning each structure are subject to ordering constraints. No tasks are allocatable; hence, the cross-schedule dependencies arise (XD).
 
-**Case 3**: Complex assembly with more parts and dependencies. No task allocation (CD).
+[**Case 3**](img/schedule_case_3.pdf): Complex assembly with more parts and dependencies. No task allocation (CD).
 
-**Case 4**: Same as Task 1 but with the additional freedom to allocate a subset of the tasks freely. This can be used to balance the workload and thus reduce the makespan. The human worker can reject allocatable tasks. However, this also leads to Complex dependencies because multiple task decompositions exist.
+[**Case 4**](img/schedule_case_4.pdf): Same as Task 1 but with the additional freedom to allocate a subset of the tasks freely. This can be used to balance the workload and thus reduce the makespan. The human worker can reject allocatable tasks. However, this also leads to Complex dependencies because multiple task decompositions exist.
 
-**Case 5**: Same as Task 3 but with allocatable tasks. This makes the dependencies complex (CD) and good schedules harder to establish.
+[**Case 5**](img/schedule_case_5.pdf): Same as Task 3 but with allocatable tasks. This makes the dependencies complex (CD) and good schedules harder to establish.
 
-**Case 6**: Same as task 5 but with allocatable tasks, which leads to complex dependencies (CD).
+[**Case 6**](img/schedule_case_6.pdf): Same as task 5 but with allocatable tasks, which leads to complex dependencies (CD).
 
 **Case 7**: Randomly generated tasks with more tasks, generated dependency graphs, and task allocation options (CD). 
 
