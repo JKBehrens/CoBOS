@@ -48,6 +48,8 @@ class OverlapSchedule(Schedule):
         Sets constraints for schedule
         """
 
+        self.horizon = self.horizon_ceil_1000
+
         number_agents = len(self.all_agents)
         no_overlap_task_intervals = []
 
