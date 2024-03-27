@@ -40,9 +40,9 @@ def test_model_invalid():
     execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
     execute_job.run(animation=False)
 
-def test_case_7():
+def test_case_8():
     METHOD = OverlapSchedule
-    case = 7
+    case = 8
     solver_seed = 94
     dist_seed = 2
     sim_seed = 0
@@ -135,11 +135,11 @@ def test_case():
 # @example(3, [7,0,66,0], True)
 # @example(4, [1,0,0,0], True)
 # @example(1, [1280,0,773,0], False) # takes twice 10 secs for scheduling
-# @example(8, [0,0,69,0], False)
+# @example(7, [0,0,69,0], False)
 # @example(3, [1466,1037,1918,159], False)
 # @example(4, [1784,0,1325,0], False)
-# @example(8, [4,0,62,0], False)
-# @example(8, [2,0,55,0], False)
+# @example(7, [4,0,62,0], False)
+# @example(7, [2,0,55,0], False)
 @example(4, [1,0,21,0], False)
 def test_case_x(case: int, data: list[int], det_job: bool):
     distribution_seed, sim_seed, schedule_seed, answer_seed = data

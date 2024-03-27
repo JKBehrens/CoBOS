@@ -99,7 +99,8 @@ CONDITIONS = {
         [],
         [],
     ],
-    7: [[], [], [], [0, 1], [0, 2], [3], [4], [3, 4]],
+    8: [[], [], [], [0, 1], [0, 2], [], [4]],
+    # 8: [[], [], [], [0, 1], [0, 2], [3], [4], [3, 4]],
     0: TEST_CASE_CONDITIONS
 }
 # X = ["A", "B", "C", "D", "E", "F", "G", "H"]
@@ -165,7 +166,7 @@ def set_input(case: int, seed: int, random_case_param: RandomCase |None= None) -
     rand_gen = np.random.default_rng(seed)
     assert isinstance(rand_gen, np.random.Generator)
 
-    if case == 8:
+    if case == 7:
         g = gen_task_graph_mixed_cross_task_dependencies(random_case_param, rand_gen)
         assigment_list = nx.get_node_attributes(g, "agent")
         condition_list = nx.to_dict_of_lists(g)
@@ -186,7 +187,7 @@ def set_input(case: int, seed: int, random_case_param: RandomCase |None= None) -
     job_description = []
 
     for task_id in assigment_list.keys():
-        if case == 7 and task_id == 7:
+        if case == 8 and task_id == 7:
             break
         task_description = {"id": task_id, "action": {"object": task_id, "place": task_id}}
 
