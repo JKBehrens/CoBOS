@@ -70,9 +70,9 @@ options:
 *  --offline_video, --no-offline_video - make video from the simulation
 
 
-## Quick Start
+<!-- ## Quick Start
 You can choose one of these cases:
-![Screenshot](cases.png)
+![Screenshot](cases.png) -->
 
 
 
@@ -107,15 +107,19 @@ You can choose one of these cases:
 * mean_min (mean_max) - boundaries for a distribution mean value of phase duration  
 * deviation_min (deviation_max) - boundaries for a distribution deviation value of phase duration
 
-[//]: # (* ## Plot comparison)
+# Case description
 
-[//]: # ()
-[//]: # (In `main.py` change seeds, then run)
+**Case 1**: Simple pick and place operation. The robot and the human have fixed tasks assigned, i.e., they pick up an object from a specified location and place it at designated spots. The decisions concern only the ordering of tasks and their exact timing. Timing uncertainties are present. This task contains no dependencies (ND).
 
-[//]: # (```)
+**Case 2**: Collaborative assembly. The robot and the human worker need to coordinate their work together to assemble a set of simple structures. The tasks concerning each structure are subject to ordering constraints. No tasks are allocatable; hence, the cross-schedule dependencies arise (XD).
 
-[//]: # (python main.py [case] --comparison)
+**Case 3**: Complex assembly with more parts and dependencies. No task allocation (CD).
 
-[//]: # (python main_plot.py comparison)
+**Case 4**: Same as Task 1 but with the additional freedom to allocate a subset of the tasks freely. This can be used to balance the workload and thus reduce the makespan. The human worker can reject allocatable tasks. However, this also leads to Complex dependencies because multiple task decompositions exist.
 
-[//]: # (```)
+**Case 5**: Same as Task 3 but with allocatable tasks. This makes the dependencies complex (CD) and good schedules harder to establish.
+
+**Case 6**: Same as task 5 but with allocatable tasks, which leads to complex dependencies (CD).
+
+**Case 7**: Randomly generated tasks with more tasks, generated dependency graphs, and task allocation options (CD). 
+
