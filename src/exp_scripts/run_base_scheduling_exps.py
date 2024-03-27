@@ -166,7 +166,7 @@ def run_exp(
     sim_seed: int = run_settings.sim_seed
     answer_seed: int = run_settings.answer_seed
     det_job: bool = run_settings.det_job
-    rand_case: RandomCase = RandomCase(**run_settings.random_case)
+    rand_case: RandomCase = run_settings.random_case # RandomCase(**run_settings.random_case)
 
     method = method
     # case = case
