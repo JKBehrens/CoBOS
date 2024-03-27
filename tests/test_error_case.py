@@ -2,7 +2,6 @@ from pathlib import Path
 from control.control_logic import ControlLogic
 from control.jobs import Job
 from control.agents import Agent
-from control.representation import JobDescription
 from inputs.data_generator import RandomCase
 from methods.overlap_method import OverlapSchedule
 import copy

@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import numpy as np
 from visualization.plot_experiments_result import makespan_histogram_pd, read_data_to_df
 from exp_scripts.run_base_scheduling_exps import ExperimentSettings, start_cluster, run_exps
 import pandas as pd
