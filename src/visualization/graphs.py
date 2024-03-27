@@ -115,7 +115,8 @@ class Vis:
         self.gnt.grid(True)
 
         # ------ choose some colors
-        colors1 = ['royalblue', 'mediumslateblue']  # 'lightsteelblue', 'cornflowerblue',['thistle', 'plum', 'violet']
+        colors1 = ['royalblue']  # 'lightsteelblue', 'cornflowerblue',['thistle', 'plum', 'violet']
+        colors11 = [ 'mediumslateblue']
         colors2 = ['lightseagreen']  # 'paleturquoise', 'turquoise',
         colors5 = ['royalblue', 'lightseagreen', 'mediumslateblue']
         colors4 = ['cornflowerblue', 'turquoise', '#a993e3']
@@ -126,10 +127,12 @@ class Vis:
 
         # ------ append the multicolor legend patches
         self.h.append(MulticolorPatch(colors1))
-        self.l.append("Non-allocatable")
+        self.l.append("Robot task")
+        self.h.append(MulticolorPatch(colors11))
+        self.l.append("Human task")
 
         self.h.append(MulticolorPatch(colors2))
-        self.l.append("Allocatable")
+        self.l.append("Allocatable task")
 
         self.h.append(MulticolorPatch(colors3))
         self.l.append("Preparation")
@@ -176,7 +179,7 @@ class Vis:
         # find the maximum "finish" time
         return finish_time
 
-    def plot_schedule(self, file_name:Path|str="", video=False, stat=None):
+    def plot_schedule(self, file_name:Path|str="", video=False, stat=None, case=None):
         self.fig = plt.figure(figsize=(12, 10)) #, facecolor="#EDE7E4")
         if not isinstance(file_name, Path):
             file_name = Path(file_name)
@@ -204,12 +207,11 @@ class Vis:
             local_data = self.data['schedule']
             # local_data = self.data
         else:
-            title = ['Gantt Chart']
+            title = [f'Gantt Chart for case {case}']
             gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1])
             positions = [[211], [212]]
             local_data = [self.data]
-        horizon = 205
-        # horizon = self.set_horizon(local_data)
+        horizon = self.set_horizon(local_data)
         for i, position in enumerate(positions[0]):
             if 'comparison' in file_name.stem or (video and stat is not None):
                 if i != 0:
@@ -295,11 +297,11 @@ class Vis:
                 self.plot_dependency_graph(local_data[1], gs=gs[2:, :-1], video=video)
         except IndexError:
             # pass
-            self.plot_dependency_graph(local_data[1], gs=gs[1, :-1], video=video)
+            self.plot_dependency_graph(local_data[0], gs=gs[1, :-1], video=video)
 
         # ------ create the legend
         plt.tight_layout()
-        plt.legend(self.h, self.l, loc='center left', bbox_to_anchor=(1.1, 0.5), fontsize="15",
+        plt.legend(self.h, self.l, loc='center left', bbox_to_anchor=(1.35, 0.5), fontsize="15",
                     handler_map={MulticolorPatch: MulticolorPatchHandler()})
         if file_name:
             if '.' in file_name.__str__():
@@ -433,10 +435,10 @@ class Vis:
         nx.draw_networkx_edges(G, pos, width=1.7, alpha=0.7, node_size=node_size)
         nx.draw_networkx_labels(G, pos, labels, font_size=14, font_color="whitesmoke")
 
-        if not video:
-            nx.draw_networkx_nodes(G, pos, nodelist=allocability[False], node_color='royalblue', node_size=node_size)
-            nx.draw_networkx_nodes(G, pos, nodelist=allocability[True], node_color='lightseagreen', node_size=node_size)
-        else:
+        # if not video:
+        #     nx.draw_networkx_nodes(G, pos, nodelist=allocability[False], node_color='royalblue', node_size=node_size)
+        #     nx.draw_networkx_nodes(G, pos, nodelist=allocability[True], node_color='lightseagreen', node_size=node_size)
+        # else:
             # for node in G.nodes:
             #     node.
             # nx.draw_networkx_nodes(G, pos, nodelist=colors['royalblue'], node_color='royalblue', node_size=node_size)
@@ -444,12 +446,12 @@ class Vis:
             # nx.draw_networkx_nodes(G, pos, nodelist=colors['lightseagreen'], node_color='lightseagreen', node_size=node_size)
 
             # node_color = ["lightcoral", "lightcoral", "gold", "lightgreen", "silver"]
-            state_color_map = {None: "lightcoral", -1: "lightcoral", 0: "gold", 1: "lightgreen", 2: "silver"}
-            for color in colors.keys():
-                for state in states.keys():
-                    nx.draw_networkx_nodes(G, pos, nodelist=list(set(colors[color]) & set(states[state])),
-                                           node_color=color, edgecolors=state_color_map[state],
-                                           node_size=node_size, linewidths=linewidths)
+        state_color_map = {None: "lightcoral", -1: "lightcoral", 0: "gold", 1: "lightgreen", 2: "silver"}
+        for color in colors.keys():
+            for state in states.keys():
+                nx.draw_networkx_nodes(G, pos, nodelist=list(set(colors[color]) & set(states[state])),
+                                       node_color=color, edgecolors=state_color_map[state],
+                                       node_size=node_size, linewidths=linewidths)
 
 
             # nx.draw_networkx_nodes(G, pos, nodelist=list(set(colors['violet']) & set(state[None])), node_color='violet',

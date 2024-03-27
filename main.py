@@ -14,7 +14,7 @@ import json
 
 METHOD = OverlapSchedule    # RandomAllocation, MaxDuration, DynamicAllocation
 solver_seed = 42
-dist_seed = 8
+dist_seed = 7
 sim_seed = 42
 answer_seed = 42
 det_job = True
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         raise SystemExit(1)
 
     # create job description
-    if case == 8:
+    if case == 7:
         job = Job(int(case), seed=dist_seed, random_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
     else:
         job = Job(int(case), seed=dist_seed)
@@ -131,6 +131,9 @@ if __name__ == '__main__':
         control_logic.solving_method.decide(control_logic.get_observation_data(), 0)
         assert job.validate()
         perfect_schedule = copy.deepcopy(control_logic.schedule_as_dict(hierarchy=True))
+        if save_gt:
+            gantt = Vis(data=perfect_schedule, from_file=False)
+            gantt.plot_schedule(file_name=f'schedule_case_{case}.pdf', case=case)
         job.__str__()
 
     else:
