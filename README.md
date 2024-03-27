@@ -39,6 +39,8 @@ python src/exp_scripts/run_base_scheduling_exps.py
 ```
 or just download our files:
 ```
+sudo apt update
+pip3 install gdown
 gdown https://drive.google.com/uc?id=1dQ6fqjqmdjptIeFad1utaPkyIB6cPHCj -O sched_exps.zip
 unzip sched_exps.zip -d ~/sched_exps
 ```
