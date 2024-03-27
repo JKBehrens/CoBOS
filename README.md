@@ -13,7 +13,15 @@ Scheduling is an integer constraint programming problem that is solved by using 
 
 [about-ortool]: https://github.com/google/or-tools
 
-Here you can see the animation of the simulation [with](img/simulation.gif) and [without](img/simulation_with_perfect_knowledge.gif) perfect knowledge. 
+Here you can see the animation of the simulation with uncertainty
+
+![sim_uncertain](img/simulation.gif) 
+and with perfect knowledge.
+![sim_uncertain](img/simulation_with_perfect_knowledge.gif)
+
+
+
+
 
 ## Installation 
 
