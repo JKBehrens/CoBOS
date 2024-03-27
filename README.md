@@ -13,14 +13,9 @@ Scheduling is an integer constraint programming problem that is solved by using 
 
 [about-ortool]: https://github.com/google/or-tools
 
-Here you can see the animation of the simulation with uncertainty
+Below you can see the animation of the simulation with uncertainty. A rollout with perfect knowledge is [here](img/simulation_with_perfect_knowledge.gif)
 
 ![sim_uncertain](img/simulation.gif) 
-and with perfect knowledge.
-![sim_uncertain](img/simulation_with_perfect_knowledge.gif)
-
-
-
 
 
 ## Installation 
