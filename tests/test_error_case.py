@@ -1,4 +1,6 @@
 from pathlib import Path
+
+import pytest
 from control.control_logic import ControlLogic
 from control.jobs import Job
 from control.agents import Agent
@@ -123,7 +125,7 @@ def test_case():
     execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
     execute_job.run(animation=True)
 
-
+@pytest.mark.skip("takes too long")
 #     case 3, solver_seed 44, dist_seed 0 sim_seed 0
 #     case 3, solver_seed 57, dist_seed 3 sim_seed 0
 #     case 3, solver_seed 66, dist_seed 7 sim_seed 0

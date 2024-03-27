@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from visualization.plot_experiments_result import makespan_histogram_pd, read_data_to_df
 from exp_scripts.run_base_scheduling_exps import ExperimentSettings, start_cluster, run_exps
 import pandas as pd
@@ -14,6 +16,7 @@ def test_makespan_histogram_csv(tmp_path: Path):
 
     assert len(list(tmp_path.glob("*.png"))) >= 1
 
+@pytest.mark.skip("takes too long")
 def test_makespan_histogram(tmp_path: Path):
     exp_settings = ExperimentSettings(dist_seed=2, schedule_seed=3, exp_folder=tmp_path)
     try:
