@@ -7,7 +7,10 @@ from exp_scripts.run_base_scheduling_exps import ExperimentSettings, start_clust
 import pandas as pd
 
 def test_makespan_histogram_csv(tmp_path: Path):
-    df: pd.DataFrame = pd.read_parquet("tests/data/test_data.parquet")
+    try:
+        df: pd.DataFrame = pd.read_parquet("tests/data/test_data.parquet")
+    except FileNotFoundError:
+        df: pd.DataFrame = pd.read_parquet("data/test_data.parquet")
 
     makespan_histogram_pd(
         df=df,

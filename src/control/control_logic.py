@@ -148,6 +148,10 @@ class ControlLogic:
 
             if self.current_time == 0:
                 try:
+                    try:
+                        self.job.predicted_makespan = self.job.get_current_makespan()
+                    except TypeError:
+                        pass
                     self.output_data = []
                     self.output_data.append(copy.deepcopy(self.schedule_as_dict(hierarchy=True)))
                 except KeyError:

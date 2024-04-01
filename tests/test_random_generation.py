@@ -104,9 +104,9 @@ def test_schedule():
     job = Job(task_case, seed=seed)
 
     schedule_model1 = OverlapSchedule(job, seed=seed)
-    output1, _ = schedule_model1.prepare()
+    output1 = schedule_model1.prepare()
 
     schedule_model2 = OverlapSchedule(job, seed=seed)
-    output2, _ = schedule_model2.prepare()
+    output2 = schedule_model2.prepare()
 
     assert output1 == output2

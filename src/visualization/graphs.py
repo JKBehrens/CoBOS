@@ -236,7 +236,7 @@ class Vis:
             else:
                 self.set_plot_param(title[i], gs[i, :], lim=horizon)
 
-            if local_data[i]['Robot'][0]['start'] is None:
+            if local_data[i]['Robot'][1]['start'] is None:
                 continue
 
             for agent in local_data[i]:
