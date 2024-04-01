@@ -41,6 +41,7 @@ def test_model_invalid():
     execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
     execute_job.run(animation=False)
 
+
 def test_case_8():
     METHOD = OverlapSchedule
     case = 8
@@ -125,12 +126,17 @@ def test_case():
     execute_job = ControlLogic(job=job, agents=agents, method=solving_method)
     execute_job.run(animation=True)
 
+
 @pytest.mark.skip("takes too long")
 #     case 3, solver_seed 44, dist_seed 0 sim_seed 0
 #     case 3, solver_seed 57, dist_seed 3 sim_seed 0
 #     case 3, solver_seed 66, dist_seed 7 sim_seed 0
 @settings(deadline=10000.0, max_examples=100, verbosity=Verbosity.verbose)
-@given(st.integers(min_value=0, max_value=8), st.lists(st.integers(min_value=0, max_value=2000), min_size=4, max_size=4), st.booleans())
+@given(
+    st.integers(min_value=0, max_value=8),
+    st.lists(st.integers(min_value=0, max_value=2000), min_size=4, max_size=4),
+    st.booleans(),
+)
 # @example(3, [0,0,44,0], True)
 # @example(3, [3,0,57,0], True)
 # @example(3, [7,0,66,0], True)
@@ -141,7 +147,7 @@ def test_case():
 # @example(4, [1784,0,1325,0], False)
 # @example(7, [4,0,62,0], False)
 # @example(7, [2,0,55,0], False)
-@example(4, [1,0,21,0], False)
+@example(4, [1, 0, 21, 0], False)
 def test_case_x(case: int, data: list[int], det_job: bool):
     distribution_seed, sim_seed, schedule_seed, answer_seed = data
     METHOD = OverlapSchedule
@@ -176,9 +182,6 @@ def test_case_x(case: int, data: list[int], det_job: bool):
     # if det_job and sim_seed == schedule_seed == answer_seed:
     #     assert stats["initial_makespan"] == stats["final_makespan"]
 
-    
-
-
     pass
 
 
@@ -198,7 +201,7 @@ def test_case_4_solver_seed_4_dist_seed_7_sim_seed_3():
         sim_seed=sim_seed,
         answer_seed=sim_seed,
         method_name=OverlapSchedule.name(),
-        det_job = False
+        det_job=False,
     )
 
     print(schedule)
@@ -306,7 +309,7 @@ def test_det_job_perf(tmp_path: Path):
         schedule_seed=solver_seed,
         sim_seed=sim_seed,
         answer_seed=sim_seed,
-        det_job = True
+        det_job=True,
     )
 
     print(schedule)
@@ -316,4 +319,3 @@ def test_det_job_perf(tmp_path: Path):
 
     assert "FAIL" not in stats or stats["FAIL"] == False
     assert stats["initial_makespan"] == stats["final_makespan"]
-

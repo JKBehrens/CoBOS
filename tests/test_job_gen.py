@@ -18,14 +18,30 @@ def test_job_gen():
         assert isinstance(task.action, Action)
 
 
-    
 def test_random_job_gen():
     case = 8
     seed = 42
-    job = Job(case, seed=seed, random_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
-    job2 = Job(case, seed=seed, random_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
+    job = Job(
+        case,
+        seed=seed,
+        random_case_param=RandomCase(
+            agent_number=4, task_number=15, condition_number=10
+        ),
+    )
+    job2 = Job(
+        case,
+        seed=seed,
+        random_case_param=RandomCase(
+            agent_number=4, task_number=15, condition_number=10
+        ),
+    )
     jobs = [job, job2]
-    assert all([job1.job_description == job2.job_description for job1, job2 in combinations(jobs, 2)] )
+    assert all(
+        [
+            job1.job_description == job2.job_description
+            for job1, job2 in combinations(jobs, 2)
+        ]
+    )
 
     assert isinstance(job.__str__(), str)
     assert 0.0 == job.progress()
@@ -37,14 +53,22 @@ def test_random_job_gen():
     agent = Agent(name="Human", job=job2, seed=seed)
     det_jobs.append(agent._get_deterministic_job())
 
-
     for task in job.task_sequence:
         assert isinstance(task, Task)
         assert isinstance(task.action, Action)
 
-    assert all([job1.job_description == job2.job_description for job1, job2 in combinations(det_jobs, 2)] )
-    assert all([job1.job_description == job2.job_description for job1, job2 in combinations(jobs, 2)] )
-
+    assert all(
+        [
+            job1.job_description == job2.job_description
+            for job1, job2 in combinations(det_jobs, 2)
+        ]
+    )
+    assert all(
+        [
+            job1.job_description == job2.job_description
+            for job1, job2 in combinations(jobs, 2)
+        ]
+    )
 
 
 def test_job_sampling():
@@ -85,9 +109,10 @@ def test_job_sampling():
 
     assert job.get_universal_task_number() >= job2.get_universal_task_number()
 
-
     agent_name = "Robot"
-    agent_robot = Agent(name=agent_name, job=job, seed=sim_seed, answer_seed=answer_seed)
+    agent_robot = Agent(
+        name=agent_name, job=job, seed=sim_seed, answer_seed=answer_seed
+    )
     job2_rob = agent_robot._get_deterministic_job()
 
     assert all(
@@ -104,4 +129,3 @@ def test_job_sampling():
     )
 
     assert job.get_universal_task_number() >= job2_rob.get_universal_task_number()
-

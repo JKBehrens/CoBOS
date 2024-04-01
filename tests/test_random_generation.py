@@ -16,17 +16,21 @@ def test_randon_number_gen():
 
     schedule_model = Schedule(job, seed=seed)
 
-    array1 = np.array(list(schedule_model.task_duration['Human'].values()), dtype=float)
-    array2 = np.array(list(h_agent_1.task_duration['Human'].values()), dtype=float)
+    array1 = np.array(list(schedule_model.task_duration["Human"].values()), dtype=float)
+    array2 = np.array(list(h_agent_1.task_duration["Human"].values()), dtype=float)
     assert np.allclose(array1, array2)
 
-    array3 = np.array(list(schedule_model.task_duration['Robot'].values()), dtype=float)
-    array4 = np.array(list(h_agent_2.task_duration['Robot'].values()), dtype=float)
+    array3 = np.array(list(schedule_model.task_duration["Robot"].values()), dtype=float)
+    array4 = np.array(list(h_agent_2.task_duration["Robot"].values()), dtype=float)
     assert np.allclose(array3, array4)
 
-    rejection_prob1 = np.array([task.rejection_prob for task in job.task_sequence], dtype=float)
+    rejection_prob1 = np.array(
+        [task.rejection_prob for task in job.task_sequence], dtype=float
+    )
     job = Job(task_case, seed=seed)
-    rejection_prob2 = np.array([task.rejection_prob for task in job.task_sequence], dtype=float)
+    rejection_prob2 = np.array(
+        [task.rejection_prob for task in job.task_sequence], dtype=float
+    )
     assert np.allclose(rejection_prob1, rejection_prob2)
 
     # schedule = schedule_model.set_schedule(seed=seed, fail_prob=fail_prob, second_mode=second_mode, scale=scale)
@@ -39,14 +43,14 @@ def test_randon_number_gen():
     # assert not np.allclose(array1, schedule_model.task_duration[agent])
 
 
-def get_random_number(rand_gen:Optional[np.random.Generator]=None, seed=None):
+def get_random_number(rand_gen: Optional[np.random.Generator] = None, seed=None):
     if rand_gen is None:
         rand_gen = np.random.default_rng(seed)
 
     return [rand_gen.random(size=1), rand_gen.random(size=1)]
 
 
-def some_function_with_using_random(rand_gen:Optional[np.random.Generator], seed):
+def some_function_with_using_random(rand_gen: Optional[np.random.Generator], seed):
     rand_gen.random(size=1)
     if rand_gen is None:
         rand_gen = np.random.default_rng(seed)

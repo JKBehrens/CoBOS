@@ -1,4 +1,3 @@
-
 import json
 from methods.solver_wrapper import SolverRunLog, SolverWrapper, CpModel, CpSolver
 from ortools.sat.python import cp_model
@@ -17,7 +16,7 @@ def test_solve_save_reload():
 
     status = solver.Solve(model=model)
     solver_conf = solver.get_run_log()
-    
+
     assert status in [cp_model.OPTIMAL, cp_model.FEASIBLE]
 
     x_val: int = solver.Value(x)
@@ -38,7 +37,10 @@ def test_solve_save_reload():
     status = configured_solver.Solve(logged_model)
 
     # cheack that the solution is same
-    assert solver_conf.stats.solution_fingerprint == configured_solver.get_run_log().stats.solution_fingerprint
+    assert (
+        solver_conf.stats.solution_fingerprint
+        == configured_solver.get_run_log().stats.solution_fingerprint
+    )
 
     # start again from that model
     logged_model = run_log.get_model()
@@ -51,11 +53,14 @@ def test_solve_save_reload():
     status = configured_solver.Solve(logged_model)
 
     # check that the solution is different
-    assert not solver_conf.stats.solution_fingerprint == configured_solver.get_run_log().stats.solution_fingerprint
+    assert (
+        not solver_conf.stats.solution_fingerprint
+        == configured_solver.get_run_log().stats.solution_fingerprint
+    )
 
 
 def test_make_model_from_string_and_back():
-    """ adapted from https://github.com/google/or-tools/blob/d37317b17ca16658451cafe05085fc22c39dd6c8/ortools/sat/python/swig_helper_test.py#L93
+    """adapted from https://github.com/google/or-tools/blob/d37317b17ca16658451cafe05085fc22c39dd6c8/ortools/sat/python/swig_helper_test.py#L93
     testing how to save and load models, configurations and responses to human readble strings.
     """
     model_string = """
@@ -95,7 +100,7 @@ def test_make_model_from_string_and_back():
     model_string2 = text_format.MessageToString(model, as_utf8=True)
     model2 = cp_model_pb2.CpModelProto()
     assert text_format.Parse(model_string2, model2)
-    
+
     assert model == model2
 
     parameters = sat_parameters_pb2.SatParameters()
@@ -130,7 +135,3 @@ def test_make_model_from_string_and_back():
 
     assert cp_model.OPTIMAL == status
     assert 30.0 == solver.ObjectiveValue()
-
-
-
-

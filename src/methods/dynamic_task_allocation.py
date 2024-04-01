@@ -25,11 +25,24 @@ class DynamicAllocation(Solver):
         self.update_tasks_status()
         available_tasks = self.are_there_available_tasks()
         if len(available_tasks) != 0:
-            for index, [agent_name, agent_state, agent_current_task, agent_rejection_tasks] in enumerate(observation_data):
+            for index, [
+                agent_name,
+                agent_state,
+                agent_current_task,
+                agent_rejection_tasks,
+            ] in enumerate(observation_data):
                 if agent_state == AgentState.REJECTION:
-                    agent_current_task.agent = [agent_name for agent_name in self.job.agents]
-                if agent_state == AgentState.IDLE or agent_state == AgentState.REJECTION or agent_state == AgentState.DONE:
-                    decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks)
+                    agent_current_task.agent = [
+                        agent_name for agent_name in self.job.agents
+                    ]
+                if (
+                    agent_state == AgentState.IDLE
+                    or agent_state == AgentState.REJECTION
+                    or agent_state == AgentState.DONE
+                ):
+                    decision[agent_name] = self.find_task(
+                        agent_name, agent_rejection_tasks
+                    )
                 else:
                     decision[agent_name] = None
                 if decision[agent_name] is not None:
@@ -38,7 +51,12 @@ class DynamicAllocation(Solver):
             decision = {agent_name: None for agent_name in self.job.agents}
         return decision
 
-    def are_there_available_tasks(self, rejection_tasks: list[int] = None, agent: str = None, universal: bool = False):
+    def are_there_available_tasks(
+        self,
+        rejection_tasks: list[int] = None,
+        agent: str = None,
+        universal: bool = False,
+    ):
         available_tasks = []
         if agent is None:
             for task in self.job.task_sequence:
@@ -46,8 +64,12 @@ class DynamicAllocation(Solver):
                     available_tasks.append(task)
         else:
             for task in self.job.task_sequence:
-                if task.state is TaskState.AVAILABLE and task.universal == universal and agent in task.agent and \
-                        task.id not in rejection_tasks:
+                if (
+                    task.state is TaskState.AVAILABLE
+                    and task.universal == universal
+                    and agent in task.agent
+                    and task.id not in rejection_tasks
+                ):
                     available_tasks.append(task)
         return available_tasks
 
@@ -55,18 +77,31 @@ class DynamicAllocation(Solver):
         pass
 
     def find_task(self, agent_name, agent_rejection_tasks):
-        available_tasks_for_agent = self.are_there_available_tasks(agent_rejection_tasks, agent_name, universal=False)
+        available_tasks_for_agent = self.are_there_available_tasks(
+            agent_rejection_tasks, agent_name, universal=False
+        )
         if len(available_tasks_for_agent) != 0:
-            durations = np.array([self.task_duration[agent_name][task.id][0] for task in available_tasks_for_agent])
+            durations = np.array(
+                [
+                    self.task_duration[agent_name][task.id][0]
+                    for task in available_tasks_for_agent
+                ]
+            )
             min_index = np.argmin(durations)
             return available_tasks_for_agent[min_index]
 
-        available_universal_tasks = self.are_there_available_tasks(agent_rejection_tasks, agent_name, universal=True)
+        available_universal_tasks = self.are_there_available_tasks(
+            agent_rejection_tasks, agent_name, universal=True
+        )
         if len(available_universal_tasks) != 0:
             coworker_name = self.job.agents[self.job.agents.index(agent_name) - 1]
-            time_advantage = np.array([self.task_duration[coworker_name][task.id][0] -
-                                       self.task_duration[agent_name][task.id][0]
-                                       for task in available_universal_tasks])
+            time_advantage = np.array(
+                [
+                    self.task_duration[coworker_name][task.id][0]
+                    - self.task_duration[agent_name][task.id][0]
+                    for task in available_universal_tasks
+                ]
+            )
             max_index = np.argmax(time_advantage)
             available_universal_tasks[max_index].agent = [agent_name]
             return available_universal_tasks[max_index]

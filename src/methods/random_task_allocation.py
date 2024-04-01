@@ -23,11 +23,22 @@ class RandomAllocation(Solver):
     def decide(self, observation_data, current_time):
         decision = {}
         self.update_tasks_status()
-        for index, [agent_name, agent_state, agent_current_task, agent_rejection_tasks] in enumerate(observation_data):
+        for index, [
+            agent_name,
+            agent_state,
+            agent_current_task,
+            agent_rejection_tasks,
+        ] in enumerate(observation_data):
             if agent_state == AgentState.REJECTION:
-                agent_current_task.agent = [agent_name for agent_name in self.job.agents]
+                agent_current_task.agent = [
+                    agent_name for agent_name in self.job.agents
+                ]
 
-            if agent_state == AgentState.IDLE or agent_state == AgentState.REJECTION or agent_state == AgentState.DONE:
+            if (
+                agent_state == AgentState.IDLE
+                or agent_state == AgentState.REJECTION
+                or agent_state == AgentState.DONE
+            ):
                 decision[agent_name] = self.find_task(agent_name, agent_rejection_tasks)
             else:
                 decision[agent_name] = None
@@ -46,9 +57,10 @@ class RandomAllocation(Solver):
         # else:
         #     rejection_tasks = agent_rejection_tasks
         for task in self.job.task_sequence:
-            if task.state == TaskState.AVAILABLE and \
-                    ((task.universal and task.id not in agent_rejection_tasks) or
-                     (agent_name in task.agent and task.id not in agent_rejection_tasks)):
+            if task.state == TaskState.AVAILABLE and (
+                (task.universal and task.id not in agent_rejection_tasks)
+                or (agent_name in task.agent and task.id not in agent_rejection_tasks)
+            ):
                 available_tasks.append(task)
 
         if available_tasks:

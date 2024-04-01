@@ -101,7 +101,7 @@ CONDITIONS = {
     ],
     8: [[], [], [], [0, 1], [0, 2], [], [4]],
     # 8: [[], [], [], [0, 1], [0, 2], [3], [4], [3, 4]],
-    0: TEST_CASE_CONDITIONS
+    0: TEST_CASE_CONDITIONS,
 }
 # X = ["A", "B", "C", "D", "E", "F", "G", "H"]
 # Y = ["1", "2", "3", "4"]
@@ -162,7 +162,9 @@ def set_rejection_prob(
     return float(rand_gen.dirichlet(np.ones(2), size=1)[0][0])
 
 
-def set_input(case: int, seed: int, random_case_param: RandomCase |None= None) -> list[Task]:
+def set_input(
+    case: int, seed: int, random_case_param: RandomCase | None = None
+) -> list[Task]:
     rand_gen = np.random.default_rng(seed)
     assert isinstance(rand_gen, np.random.Generator)
 
@@ -178,18 +180,21 @@ def set_input(case: int, seed: int, random_case_param: RandomCase |None= None) -
         cubes_sequence = set_random_sequence(case, rand_gen)
         assigment_list = {}
         for i, cube in enumerate(cubes_sequence):
-            if 'h' in cube:
-                assigment_list[i] = ['Human']
-            elif 'r' in cube:
-                assigment_list[i] = ['Robot']
+            if "h" in cube:
+                assigment_list[i] = ["Human"]
+            elif "r" in cube:
+                assigment_list[i] = ["Robot"]
             else:
-                assigment_list[i] = ['Robot', 'Human']
+                assigment_list[i] = ["Robot", "Human"]
     job_description = []
 
     for task_id in assigment_list.keys():
         if case == 8 and task_id == 7:
             break
-        task_description = {"id": task_id, "action": {"object": task_id, "place": task_id}}
+        task_description = {
+            "id": task_id,
+            "action": {"object": task_id, "place": task_id},
+        }
 
         if len(assigment_list[task_id]) != 1:
             task_description["universal"] = True
@@ -200,9 +205,11 @@ def set_input(case: int, seed: int, random_case_param: RandomCase |None= None) -
             task_description["agent"] = assigment_list[task_id]
         else:
             if len(assigment_list[task_id]) != 1:
-                task_description["agent"] = ['Robot', 'Human']
+                task_description["agent"] = ["Robot", "Human"]
             else:
-                task_description["agent"] = ['Robot'] if assigment_list[task_id][0]%2 == 0 else ['Human'] # for now even numbers go to the robot and odd numbers to the human
+                task_description["agent"] = (
+                    ["Robot"] if assigment_list[task_id][0] % 2 == 0 else ["Human"]
+                )  # for now even numbers go to the robot and odd numbers to the human
 
         if case == 0:
             task_description["conditions"] = TEST_CASE_CONDITIONS[task_id]

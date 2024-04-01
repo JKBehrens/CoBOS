@@ -6,14 +6,24 @@ import time
 from graphviz import Digraph
 
 # Sample data
-data = pd.DataFrame({
-    "ID": [0, 1, 2, 3, 4, 5, 6],
-    "Conditions": [[], [], [4], [1, 4], [], [0], [0, 2]],
-    "Status": ["Completed", "In progress", "Available", "Non available", "Completed", "In progress", "Available"],
-    "Start": [0, 7, 14, 23, 0, 10, 17],
-    "End": [7, 14, 23, 30, 10, 17, 26],
-    "Agent": ["Human", "Human", "Human", "Human", "Robot", "Robot", "Robot"]
-})
+data = pd.DataFrame(
+    {
+        "ID": [0, 1, 2, 3, 4, 5, 6],
+        "Conditions": [[], [], [4], [1, 4], [], [0], [0, 2]],
+        "Status": [
+            "Completed",
+            "In progress",
+            "Available",
+            "Non available",
+            "Completed",
+            "In progress",
+            "Available",
+        ],
+        "Start": [0, 7, 14, 23, 0, 10, 17],
+        "End": [7, 14, 23, 30, 10, 17, 26],
+        "Agent": ["Human", "Human", "Human", "Human", "Robot", "Robot", "Robot"],
+    }
+)
 
 # Define the initial current_time
 current_time = 0
@@ -21,14 +31,14 @@ current_time = 0
 
 def graph(data):
     # Create a directed graph
-    graph = Digraph('Dependency Graph')
+    graph = Digraph("Dependency Graph")
 
     # Color mapping for Status
     status_colors = {
-        'Completed': '#1f77b4',
-        'In progress': '#2ca02c',
-        'Available': '#ff7f0e',
-        'Non available': '#d62728'
+        "Completed": "#1f77b4",
+        "In progress": "#2ca02c",
+        "Available": "#ff7f0e",
+        "Non available": "#d62728",
     }
 
     # Add nodes to the graph with colors based on 'Status'
@@ -46,24 +56,31 @@ def graph(data):
 
 
 def encode(data, current_time):
-    chart = alt.Chart(data).mark_bar().encode(
-        y=alt.Y('Agent:N', title='Agent'),
-        x=alt.X('Start:Q', title='Time'),
-        x2='End:Q',
-        color=alt.Color('Status:N', legend=alt.Legend(title='Status'), scale=alt.Scale(scheme='category20b')),
-        tooltip=['Agent:N', 'Start:Q', 'End:Q', 'Status:N']
-    ).properties(
-        title='Gantt Chart of Task Status',
-        width=600
+    chart = (
+        alt.Chart(data)
+        .mark_bar()
+        .encode(
+            y=alt.Y("Agent:N", title="Agent"),
+            x=alt.X("Start:Q", title="Time"),
+            x2="End:Q",
+            color=alt.Color(
+                "Status:N",
+                legend=alt.Legend(title="Status"),
+                scale=alt.Scale(scheme="category20b"),
+            ),
+            tooltip=["Agent:N", "Start:Q", "End:Q", "Status:N"],
+        )
+        .properties(title="Gantt Chart of Task Status", width=600)
     )
 
     # Add a vertical line for the current time
-    current_time_rule = alt.Chart(pd.DataFrame({'current_time': [current_time]})).mark_rule(color='red').encode(
-        x='current_time',
-        size=alt.value(2)
+    current_time_rule = (
+        alt.Chart(pd.DataFrame({"current_time": [current_time]}))
+        .mark_rule(color="red")
+        .encode(x="current_time", size=alt.value(2))
     )
 
-    return (chart + current_time_rule)
+    return chart + current_time_rule
 
 
 # Create a function to continuously update the current_time

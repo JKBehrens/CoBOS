@@ -12,7 +12,7 @@ from visualization.graphs import Vis
 
 def test_refactoring_control_logic(tmp_path: Path):
     methods = [OverlapSchedule, MaxDuration, RandomAllocation, DynamicAllocation]
-    cases = [1,2,3,4,5,6,7]
+    cases = [1, 2, 3, 4, 5, 6, 7]
     dist_seed = 42
     sim_seed = 0
     schedule_seed = 0
@@ -23,7 +23,13 @@ def test_refactoring_control_logic(tmp_path: Path):
         det_jobs: list[Job] = []
         for method in methods:
             if case == 7:
-                job = Job(case, seed=dist_seed, random_case_param=RandomCase(agent_number=4, task_number=15, condition_number=10))
+                job = Job(
+                    case,
+                    seed=dist_seed,
+                    random_case_param=RandomCase(
+                        agent_number=4, task_number=15, condition_number=10
+                    ),
+                )
             else:
                 job = Job(case, seed=dist_seed)
 
@@ -31,7 +37,14 @@ def test_refactoring_control_logic(tmp_path: Path):
             agents: list[Agent] = []
 
             for agent_name in agent_names:
-                agents.append(Agent(name=agent_name, job=copy.deepcopy(job), seed=sim_seed, answer_seed=answer_seed))
+                agents.append(
+                    Agent(
+                        name=agent_name,
+                        job=copy.deepcopy(job),
+                        seed=sim_seed,
+                        answer_seed=answer_seed,
+                    )
+                )
 
             det_job = agents[0]._get_deterministic_job()
             det_jobs.append(copy.deepcopy(det_job))
@@ -43,19 +56,29 @@ def test_refactoring_control_logic(tmp_path: Path):
             control_logic = ControlLogic(job=job, agents=agents, method=solving_method)
             schedule, statistics = control_logic.run(experiments=True)
 
-            assert job.validate(), f'method {method}, case {case}'
-            assert job.progress() == 100,  f'method {method}, case {case}'
+            assert job.validate(), f"method {method}, case {case}"
+            assert job.progress() == 100, f"method {method}, case {case}"
 
             assert control_logic.job == job
             assert control_logic.agents[0] == agents[0]
 
             gantt = Vis(data=schedule, from_file=False)
-            gantt.plot_schedule(tmp_path.joinpath(f"simulation_case_{case}_method_{method.name()}.png").__str__(), case=case)
+            gantt.plot_schedule(
+                tmp_path.joinpath(
+                    f"simulation_case_{case}_method_{method.name()}.png"
+                ).__str__(),
+                case=case,
+            )
 
-        assert all([job1.job_description == job2.job_description for job1, job2 in combinations(jobs, 2)] )
-        assert all([job1.job_description == job2.job_description for job1, job2 in combinations(det_jobs, 2)] )
-
-        
-
-
-
+        assert all(
+            [
+                job1.job_description == job2.job_description
+                for job1, job2 in combinations(jobs, 2)
+            ]
+        )
+        assert all(
+            [
+                job1.job_description == job2.job_description
+                for job1, job2 in combinations(det_jobs, 2)
+            ]
+        )
