@@ -28,3 +28,17 @@ def test_to_json():
     user2 = User(**json.loads(dump_str))
 
     assert user == user2
+
+def test_to_dict():
+    external_data = {
+        "id": "123",
+        "signup_ts": "2019-06-01 12:22",
+        "friends": [1, 2, "3"],
+    }
+    user = User(**external_data)
+
+    dump_str = json.dumps(user.dict(), cls=EnhancedJSONEncoder)
+
+    user2 = User(**json.loads(dump_str))
+
+    assert user.dict() == user2.dict()
