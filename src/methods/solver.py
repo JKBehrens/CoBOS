@@ -6,7 +6,7 @@ from control.jobs import Job
 class Solver(ABC):
 
     @abstractmethod
-    def __init__(self, job:Job, seed:int):
+    def __init__(self, job: Job, seed: int):
         self.job = job
         self.seed = seed
         self.horizon = None

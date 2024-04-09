@@ -31,7 +31,7 @@ class ExperimentSettings(BaseModel):
     exp_folder: Path = Path("~/sched_exps/").expanduser().joinpath("base_sched")
     cases: list[int] = []
 
-    dist_seed: int = 10 
+    dist_seed: int = 10
     schedule_seed: int = 100
     sim_seed: int = 1
 
@@ -39,14 +39,11 @@ class ExperimentSettings(BaseModel):
 
     variation_int_var_lst: list[str] = ["dist_seed", "schedule_seed", "sim_seed"]
     variation_list_var_lst: list[str] = ["det_job"]
-    
 
     def get_iter(self) -> Iterable:
 
         attr_list = [getattr(self, attr) for attr in self.variation_int_var_lst]
-        range_lst = list(map(
-            range, attr_list
-        ))
+        range_lst = list(map(range, attr_list))
         lst_attr_list = [getattr(self, attr) for attr in self.variation_list_var_lst]
         seed_iter = product(*range_lst, *lst_attr_list)
 
@@ -68,6 +65,7 @@ class ExperimentRun(BaseModel):
     random_case: RandomCase = RandomCase()
 
     det_job: bool
+
 
 # settings = ExperimentSettings()
 # s = json.dumps(settings.dict(), cls=EnhancedJSONEncoder)
@@ -96,11 +94,11 @@ def start_cluster(exp_settings: ExperimentSettings) -> Client:
     else:
         return Client()
 
+
 def run_exp2(**kwargs) -> tuple[list[Any], dict[str, Any]]:
     method = kwargs.get("method")
 
     # logging.error(list(kwargs.keys()))
-    
 
     # run_settings = ExperimentRun(**kwargs)
 
@@ -111,11 +109,11 @@ def run_exp2(**kwargs) -> tuple[list[Any], dict[str, Any]]:
     answer_seed: int = kwargs.get("answer_seed")
     det_job: bool = kwargs.get("det_job")
     random_case = kwargs.get("random_case")
-    
+
     rand_case: RandomCase = RandomCase(**kwargs.get("random_case"))
 
     # method = method
-    
+
     job = Job(case, seed=dist_seed, random_case_param=rand_case)
 
     agent_names = ["Human", "Robot"]
@@ -138,12 +136,12 @@ def run_exp2(**kwargs) -> tuple[list[Any], dict[str, Any]]:
     control_logic = ControlLogic(job=job, agents=agents, method=solving_method)
     schedule, statistics = control_logic.run(experiments=True)
 
-
     if not job.validate() or not job.progress() == 100:
         statistics["FAIL"] = True
 
     # return case
     return schedule, statistics
+
 
 def run_exp(
     method: Solver.__class__,
@@ -153,10 +151,8 @@ def run_exp(
     # sim_seed: int,
     # answer_seed: int,
     # det_job: bool,
-    ** kwargs
+    **kwargs,
 ) -> tuple[list[Any], dict[str, Any]]:
-    
-    
 
     run_settings = ExperimentRun(**kwargs)
 
@@ -166,7 +162,9 @@ def run_exp(
     sim_seed: int = run_settings.sim_seed
     answer_seed: int = run_settings.answer_seed
     det_job: bool = run_settings.det_job
-    rand_case: RandomCase = run_settings.random_case # RandomCase(**run_settings.random_case)
+    rand_case: RandomCase = (
+        run_settings.random_case
+    )  # RandomCase(**run_settings.random_case)
 
     method = method
     # case = case
@@ -197,19 +195,27 @@ def run_exp(
     control_logic = ControlLogic(job=job, agents=agents, method=solving_method)
     schedule, statistics = control_logic.run(experiments=True)
 
-
     if not job.validate() or not job.progress() == 100:
         statistics["FAIL"] = True
 
     return schedule, statistics
 
 
-def save_data(exp_folder: Path, fname: str, schedule_stats: tuple[Any, Any], settings: dict[str, Any]):
+def save_data(
+    exp_folder: Path,
+    fname: str,
+    schedule_stats: tuple[Any, Any],
+    settings: dict[str, Any],
+):
     schedule, stats = schedule_stats
     with open(exp_folder.joinpath(fname), "w") as outfile:
         # schedule, stats = res
         # settings = run_settings[fname]
-        json.dump(out:={"schedule": schedule, "statistics": stats, "settings": settings}, outfile, cls=EnhancedJSONEncoder)
+        json.dump(
+            out := {"schedule": schedule, "statistics": stats, "settings": settings},
+            outfile,
+            cls=EnhancedJSONEncoder,
+        )
         logging.info(f"Save data to {fname}")
 
     return out
@@ -225,9 +231,7 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
     # dist_seed, schedule_seed, sim_seed, answer_seed
 
     rand_case = RandomCase(agent_number=2, task_number=16, condition_number=8)
-    
 
-    
     for case in range(1, 9):
         print(f"case: {case}")
         for method in methods:
@@ -237,10 +241,16 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
             # seed_iter = product(range(10), range(10), range(10))
             seed_iter = exp_settings.get_iter()
             for seeds_tpl in seed_iter:
-                settings = dict(zip(exp_settings.variation_int_var_lst + exp_settings.variation_list_var_lst, seeds_tpl))
+                settings = dict(
+                    zip(
+                        exp_settings.variation_int_var_lst
+                        + exp_settings.variation_list_var_lst,
+                        seeds_tpl,
+                    )
+                )
                 settings["answer_seed"] = settings["sim_seed"]
                 # job = Job(case, seed=dist_seed)
-                #TODO: make sure that names are sorted
+                # TODO: make sure that names are sorted
                 fname = f"sched_case_{case}_method_{method.name()}"
                 for name, seed in settings.items():
                     fname += f"_{name}_{seed}"
@@ -252,7 +262,7 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
                 settings["random_case"] = rand_case.dict()
 
                 # settings = ExperimentRun(**settings)
-                
+
                 # fname = f"sched_case_{case}_method_{method.name()}_dist_{dist_seed}_sim_{sim_seed}_schedule_{schedule_seed}.json"
                 if exp_folder.joinpath(fname).is_file():
                     continue
@@ -262,7 +272,9 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
                 res: Future = client.submit(run_exp2, **settings)
 
                 settings = ExperimentRun(**settings)
-                future_saving = client.submit(save_data, exp_folder, fname, res, settings.dict())
+                future_saving = client.submit(
+                    save_data, exp_folder, fname, res, settings.dict()
+                )
 
                 # res: Future = client.submit(run_exp, method, case, dist_seed, schedule_seed, sim_seed, answer_seed)
                 futures[fname] = future_saving
@@ -271,7 +283,7 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
             print("progress")
             # progress(futures.values())
             batch_completion = 0
-            done, not_done = wait(list(futures.values()), return_when='FIRST_COMPLETED')
+            done, not_done = wait(list(futures.values()), return_when="FIRST_COMPLETED")
             # for fn, future in futures.items():
             batch_size = len(done) + len(not_done)
             batch_completion += len(done)
@@ -280,20 +292,14 @@ def run_exps(client: Client, exp_settings: ExperimentSettings):
             del run_settings
             with tqdm.tqdm(total=batch_size) as pbar:
                 while len(not_done) > 0:
-                    done, not_done = wait(not_done, return_when='FIRST_COMPLETED')
+                    done, not_done = wait(not_done, return_when="FIRST_COMPLETED")
                     batch_completion += len(done)
                     # cur_perc = batch_completion / batch_size
 
                     pbar.update(len(done))
                     # print(f"completed work: {batch_completion} / {batch_size}")
-                
-            
+
             print(f"batch: case {case}, method {method} completed.")
-
-           
-
-
-
 
             # for fname, res in futures.items():
             #     schedule, stats = res.result()

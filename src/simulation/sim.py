@@ -4,6 +4,7 @@
     @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
     @contact: marina.ionova@cvut.cz
 """
+
 import copy
 from control.jobs import Job
 from control.agent_and_task_states import AgentState
@@ -12,7 +13,7 @@ import numpy as np
 import logging
 import time
 
-SIM_MODE = 'NORMAL'  # OVERFIT, UNDERFIT, NORMAL
+SIM_MODE = "NORMAL"  # OVERFIT, UNDERFIT, NORMAL
 
 
 class Sim:
@@ -25,18 +26,21 @@ class Sim:
     def __init__(self, agent_name: str, job: Job, seed: int, **kwargs):
         self.agent_name = agent_name
         self.job: Job = copy.deepcopy(job)
-        self.agent_list: list[str] = ['Human', 'Robot']
+        self.agent_list: list[str] = ["Human", "Robot"]
         self.task_duration = {agent: {} for agent in self.agent_list}
         self.prob = None
         self.seed = seed
         self.rand = np.random.default_rng(seed=self.seed)
         self.fail_probability = []
-        self.task_execution = {agent: {'Start': 0, 'id': -1, 'Duration': [0, 0, 0, 0]} for agent in self.agent_list}
+        self.task_execution = {
+            agent: {"Start": 0, "id": -1, "Duration": [0, 0, 0, 0]}
+            for agent in self.agent_list
+        }
         self.start_time = time.time()
 
         self.set_tasks_duration(**kwargs)
 
-        answer_seed = kwargs.get('answer_seed', None)
+        answer_seed = kwargs.get("answer_seed", None)
         self.human_answer = self.sample_human_response(answer_seed)
         self.task_acceptance: dict[int, bool] = dict(
             zip(
@@ -55,7 +59,7 @@ class Sim:
         return False
 
     def _get_deterministic_job(self) -> Job:
-        """returns a deterministic version of the job. All universal tasks that are rejected 
+        """returns a deterministic version of the job. All universal tasks that are rejected
         will be converted to tasks for the other agent(s).
         Task durations are fixed.
 
@@ -85,31 +89,48 @@ class Sim:
 
     def set_tasks_duration(self, **kwargs):
         for task in self.job.task_sequence:
-            if SIM_MODE == 'NORMAL':
-                self.task_duration["Robot"][task.id] = task.get_duration(rand_gen=self.rand)
-                self.task_duration["Human"][task.id] = task.get_duration(rand_gen=self.rand)
-            elif SIM_MODE == 'OVERFIT':
+            if SIM_MODE == "NORMAL":
+                self.task_duration["Robot"][task.id] = task.get_duration(
+                    rand_gen=self.rand
+                )
+                self.task_duration["Human"][task.id] = task.get_duration(
+                    rand_gen=self.rand
+                )
+            elif SIM_MODE == "OVERFIT":
                 new_distribution_param = []
                 for phase_param in task.distribution:
                     mean = [phase_param[0][0] + 2, phase_param[0][1] + 2]
-                    new_distribution_param.append([mean, phase_param[1], phase_param[2]])
-                self.task_duration["Human"][task.id] = task.get_duration(rand_gen=self.rand,
-                                                                         distribution_param=new_distribution_param)
-                self.task_duration["Robot"][task.id] = task.get_duration(rand_gen=self.rand,
-                                                                         distribution_param=new_distribution_param)
-            elif SIM_MODE == 'UNDERFIT':
+                    new_distribution_param.append(
+                        [mean, phase_param[1], phase_param[2]]
+                    )
+                self.task_duration["Human"][task.id] = task.get_duration(
+                    rand_gen=self.rand, distribution_param=new_distribution_param
+                )
+                self.task_duration["Robot"][task.id] = task.get_duration(
+                    rand_gen=self.rand, distribution_param=new_distribution_param
+                )
+            elif SIM_MODE == "UNDERFIT":
                 new_distribution_param = []
                 for phase_param in task.distribution:
-                    mean = [phase_param[0][0] - 2 if phase_param[0][0] > 2 else 1, phase_param[0][1] - 2]
-                    new_distribution_param.append([mean, phase_param[1], phase_param[2]])
-                self.task_duration["Human"][task.id] = task.get_duration(rand_gen=self.rand,
-                                                                         distribution_param=new_distribution_param)
-                self.task_duration["Robot"][task.id] = task.get_duration(rand_gen=self.rand,
-                                                                         distribution_param=new_distribution_param)
+                    mean = [
+                        phase_param[0][0] - 2 if phase_param[0][0] > 2 else 1,
+                        phase_param[0][1] - 2,
+                    ]
+                    new_distribution_param.append(
+                        [mean, phase_param[1], phase_param[2]]
+                    )
+                self.task_duration["Human"][task.id] = task.get_duration(
+                    rand_gen=self.rand, distribution_param=new_distribution_param
+                )
+                self.task_duration["Robot"][task.id] = task.get_duration(
+                    rand_gen=self.rand, distribution_param=new_distribution_param
+                )
 
     def set_response_time(self):
         n = self.job.get_universal_task_number()
-        self.response_time = self.rand.integers(response_time_min, response_time_max, size=n)
+        self.response_time = self.rand.integers(
+            response_time_min, response_time_max, size=n
+        )
 
     def set_task_end(self, agent, current_time):
         """
@@ -125,32 +146,48 @@ class Sim:
         :return: task completion time
         :rtype: int
         """
-        self.task_execution[agent.name]['Start'] = current_time
-        self.task_execution[agent.name]['id'] = agent.current_task.id
-        self.task_execution[agent.name]['Duration'] = self.task_duration[agent.name][agent.current_task.id]
+        self.task_execution[agent.name]["Start"] = current_time
+        self.task_execution[agent.name]["id"] = agent.current_task.id
+        self.task_execution[agent.name]["Duration"] = self.task_duration[agent.name][
+            agent.current_task.id
+        ]
 
         coworker_name = self.agent_list[self.agent_list.index(agent.name) - 1]
-        if self.task_execution[coworker_name]['Duration'][0] != 0:
-            coworker_preparation = self.task_execution[coworker_name]['Duration'][0] - \
-                                   sum(self.task_execution[coworker_name]['Duration'][2:4])
+        if self.task_execution[coworker_name]["Duration"][0] != 0:
+            coworker_preparation = self.task_execution[coworker_name]["Duration"][
+                0
+            ] - sum(self.task_execution[coworker_name]["Duration"][2:4])
 
-            overlapping = self.task_execution[coworker_name]['Start'] + \
-                          self.task_execution[coworker_name]['Duration'][0] - \
-                          self.task_execution[coworker_name]['Duration'][3] - current_time
+            overlapping = (
+                self.task_execution[coworker_name]["Start"]
+                + self.task_execution[coworker_name]["Duration"][0]
+                - self.task_execution[coworker_name]["Duration"][3]
+                - current_time
+            )
             if overlapping < 0:
                 overlapping = 0
-            if self.task_execution[coworker_name]['Start'] + coworker_preparation >= \
-                    current_time + sum(self.task_execution[agent.name]['Duration'][1:3]):
-                if self.waiting_for_dependent_task(agent.current_task.id, self.task_execution[coworker_name]['id']):
-                    self.task_execution[agent.name]['Duration'][0] += overlapping - \
-                                                                      self.task_execution[agent.name]['Duration'][1]
+            if self.task_execution[coworker_name][
+                "Start"
+            ] + coworker_preparation >= current_time + sum(
+                self.task_execution[agent.name]["Duration"][1:3]
+            ):
+                if self.waiting_for_dependent_task(
+                    agent.current_task.id, self.task_execution[coworker_name]["id"]
+                ):
+                    self.task_execution[agent.name]["Duration"][0] += (
+                        overlapping - self.task_execution[agent.name]["Duration"][1]
+                    )
                 else:
                     pass
-            elif self.task_execution[coworker_name]['Start'] + self.task_execution[coworker_name]['Duration'][0] - \
-                    self.task_execution[coworker_name]['Duration'][3] > current_time + \
-                    self.task_execution[agent.name]['Duration'][1]:
-                self.task_execution[agent.name]['Duration'][0] += overlapping - \
-                                                                  self.task_execution[agent.name]['Duration'][1]
+            elif (
+                self.task_execution[coworker_name]["Start"]
+                + self.task_execution[coworker_name]["Duration"][0]
+                - self.task_execution[coworker_name]["Duration"][3]
+                > current_time + self.task_execution[agent.name]["Duration"][1]
+            ):
+                self.task_execution[agent.name]["Duration"][0] += (
+                    overlapping - self.task_execution[agent.name]["Duration"][1]
+                )
             else:
                 pass
 
@@ -181,33 +218,62 @@ class Sim:
         :return: Status of task and time information.
         :rtype: tuple
         """
-        if self.task_execution[task.agent[0]]['Duration'][0] != 0:
+        if self.task_execution[task.agent[0]]["Duration"][0] != 0:
             logging.debug(
-                f'{task.agent[0]}: start: {self.task_execution}')  # ["Robot"]["Start"]}, duration :{self.task_execution["Robot"]["Duration"]}')
-            if current_time < (self.task_execution[task.agent[0]]['Start'] + self.task_execution[task.agent[0]]['Duration'][1]):
+                f"{task.agent[0]}: start: {self.task_execution}"
+            )  # ["Robot"]["Start"]}, duration :{self.task_execution["Robot"]["Duration"]}')
+            if current_time < (
+                self.task_execution[task.agent[0]]["Start"]
+                + self.task_execution[task.agent[0]]["Duration"][1]
+            ):
                 return AgentState.PREPARATION, -1
-            elif current_time < (self.task_execution[task.agent[0]]['Start'] + self.task_execution[task.agent[0]]['Duration'][0] -
-                                 self.task_execution[task.agent[0]]['Duration'][3]):
-                coworker_name = self.agent_list[self.agent_list.index(task.agent[0]) - 1]
+            elif current_time < (
+                self.task_execution[task.agent[0]]["Start"]
+                + self.task_execution[task.agent[0]]["Duration"][0]
+                - self.task_execution[task.agent[0]]["Duration"][3]
+            ):
+                coworker_name = self.agent_list[
+                    self.agent_list.index(task.agent[0]) - 1
+                ]
 
-                if self.task_execution[coworker_name]['Duration'] != [0, 0, 0, 0] and \
-                        current_time < (self.task_execution[task.agent[0]]['Start'] +
-                                        (self.task_execution[task.agent[0]]['Duration'][0] -
-                                         self.task_execution[task.agent[0]]['Duration'][2] -
-                                         self.task_execution[task.agent[0]]['Duration'][3])):
-                    return AgentState.WAITING, current_time - (self.task_execution[task.agent[0]]['Start'] +
-                                                               self.task_execution[task.agent[0]]['Duration'][1])
+                if self.task_execution[coworker_name]["Duration"] != [
+                    0,
+                    0,
+                    0,
+                    0,
+                ] and current_time < (
+                    self.task_execution[task.agent[0]]["Start"]
+                    + (
+                        self.task_execution[task.agent[0]]["Duration"][0]
+                        - self.task_execution[task.agent[0]]["Duration"][2]
+                        - self.task_execution[task.agent[0]]["Duration"][3]
+                    )
+                ):
+                    return AgentState.WAITING, current_time - (
+                        self.task_execution[task.agent[0]]["Start"]
+                        + self.task_execution[task.agent[0]]["Duration"][1]
+                    )
                 else:
-                    return AgentState.EXECUTION, self.task_execution[task.agent[0]]['Start'] - \
-                           self.task_execution[task.agent[0]]['Duration'][2] - self.task_execution[task.agent[0]]['Duration'][3]
+                    return (
+                        AgentState.EXECUTION,
+                        self.task_execution[task.agent[0]]["Start"]
+                        - self.task_execution[task.agent[0]]["Duration"][2]
+                        - self.task_execution[task.agent[0]]["Duration"][3],
+                    )
 
-            elif current_time < (self.task_execution[task.agent[0]]['Start'] + self.task_execution[task.agent[0]]['Duration'][0]):
-                return AgentState.COMPLETION, self.task_execution[task.agent[0]]['Duration'][2]
+            elif current_time < (
+                self.task_execution[task.agent[0]]["Start"]
+                + self.task_execution[task.agent[0]]["Duration"][0]
+            ):
+                return (
+                    AgentState.COMPLETION,
+                    self.task_execution[task.agent[0]]["Duration"][2],
+                )
             else:
-                time_info = self.task_execution[task.agent[0]]['Duration']
-                time_info[0] += self.task_execution[task.agent[0]]['Start']
-                self.task_execution[task.agent[0]]['Start'] = 0
-                self.task_execution[task.agent[0]]['Duration'] = [0, 0, 0, 0]
+                time_info = self.task_execution[task.agent[0]]["Duration"]
+                time_info[0] += self.task_execution[task.agent[0]]["Start"]
+                self.task_execution[task.agent[0]]["Start"] = 0
+                self.task_execution[task.agent[0]]["Duration"] = [0, 0, 0, 0]
                 return AgentState.DONE, time_info
         return AgentState.IDLE, -1
 
@@ -224,34 +290,38 @@ class Sim:
         :return: Status of task and time information.
         :rtype: tuple
         """
-        if self.task_execution['Human']['Duration'] != 0:
+        if self.task_execution["Human"]["Duration"] != 0:
             logging.debug(
-                f'Human: start: {self.task_execution}')  # ["Human"]["Start"]}, duration :{self.task_execution["Human"]["Duration"]}')
+                f"Human: start: {self.task_execution}"
+            )  # ["Human"]["Start"]}, duration :{self.task_execution["Human"]["Duration"]}')
 
-            if (self.task_execution['Human']['Start'] + self.task_execution['Human']['Duration'][0]) \
-                    > current_time:
+            if (
+                self.task_execution["Human"]["Start"]
+                + self.task_execution["Human"]["Duration"][0]
+            ) > current_time:
                 return AgentState.InPROGRESS, -1
             else:
-                time_info = self.task_execution['Human']['Duration']
-                time_info[0] += self.task_execution['Human']['Start']
-                self.task_execution['Human']['Start'] = 0
-                self.task_execution['Human']['Duration'] = [0, 0, 0, 0]
+                time_info = self.task_execution["Human"]["Duration"]
+                time_info[0] += self.task_execution["Human"]["Start"]
+                self.task_execution["Human"]["Start"] = 0
+                self.task_execution["Human"]["Duration"] = [0, 0, 0, 0]
                 return AgentState.DONE, time_info
         else:
             raise NotImplementedError("is this case relevant? DO we ever go here?")
 
     def sample_human_response(self, seed=None):
         nameList = [True, False]
-        answer = {'execute_task': {}}
+        answer = {"execute_task": {}}
         if seed:
             rand = np.random.default_rng(seed=seed)
             for task in self.job.task_sequence:
-                answer['execute_task'][task.id] = rand.choice(nameList,
-                                                              p=(1 - task.rejection_prob, task.rejection_prob), size=1)
+                answer["execute_task"][task.id] = rand.choice(
+                    nameList, p=(1 - task.rejection_prob, task.rejection_prob), size=1
+                )
         else:
             nameList = [True, False]
             for task in self.job.task_sequence:
-                answer['execute_task'][task.id] = self.rand.choice(nameList,
-                                                                   p=(1 - task.rejection_prob, task.rejection_prob),
-                                                                   size=1)
+                answer["execute_task"][task.id] = self.rand.choice(
+                    nameList, p=(1 - task.rejection_prob, task.rejection_prob), size=1
+                )
         return answer

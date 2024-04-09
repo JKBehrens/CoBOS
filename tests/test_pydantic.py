@@ -2,11 +2,13 @@ from datetime import datetime
 from pydantic import BaseModel
 import json
 
+
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, datetime):
             return o.__str__()
         return super().default(o)
+
 
 class User(BaseModel):
     id: int

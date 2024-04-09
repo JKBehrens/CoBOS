@@ -5,7 +5,8 @@
     @author: Marina Ionova, student of Cybernetics and Robotics at the CTU in Prague
     @contact: marina.ionova@cvut.cz
 """
-from control.representation import JobDescription, Task, Action 
+
+from control.representation import JobDescription, Task, Action
 from inputs import RandomCase
 from control.agent_and_task_states import TaskState
 import numpy as np
@@ -20,13 +21,21 @@ class Job:
     :type case: str
     """
 
-    def __init__(self, case: int, seed: int, random_case_param: RandomCase | dict[str,int] |None= None):
+    def __init__(
+        self,
+        case: int,
+        seed: int,
+        random_case_param: RandomCase | dict[str, int] | None = None,
+    ):
         self.case = case
         self.seed = seed
         from inputs import case_generator
-        self.job_description: JobDescription = JobDescription(tasks=case_generator.set_input(self.case, self.seed,random_case_param))
+
+        self.job_description: JobDescription = JobDescription(
+            tasks=case_generator.set_input(self.case, self.seed, random_case_param)
+        )
         self.task_sequence: list[Task] = self.job_description.tasks
-        self.in_progress_tasks:list[int] = []
+        self.in_progress_tasks: list[int] = []
         self.completed_tasks: list[int] = []
         self.agents: list[str] = ["Human", "Robot"]
         self.task_number = len(self.task_sequence)
@@ -54,7 +63,9 @@ class Job:
         """
         Returns the percentage of completed tasks in the job.
         """
-        completed_tasks = sum( 1 for task in self.task_sequence if task.state == TaskState.COMPLETED)
+        completed_tasks = sum(
+            1 for task in self.task_sequence if task.state == TaskState.COMPLETED
+        )
         return round((completed_tasks / self.task_number) * 100, 2)
 
     def get_current_makespan(self) -> int:
@@ -70,19 +81,21 @@ class Job:
                 output.append(task.id)
         return output
 
-    def task_duration(self,  rand_gen: np.random.Generator | None = None,  seed: int | None =None):
+    def task_duration(
+        self, rand_gen: np.random.Generator | None = None, seed: int | None = None
+    ):
         if rand_gen is None:
             rand_gen = np.random.default_rng(seed)
         assert isinstance(rand_gen, np.random.Generator)
 
-        task_duration = {0: {}, 1: {}, 'Robot': {}, 'Human': {}}
+        task_duration = {0: {}, 1: {}, "Robot": {}, "Human": {}}
         for task in self.task_sequence:
             robot = task.get_duration(rand_gen=rand_gen)
-            task_duration['Robot'][task.id] = robot
+            task_duration["Robot"][task.id] = robot
             task_duration[0][task.id] = robot
             human = task.get_duration(rand_gen=rand_gen)
             task_duration[1][task.id] = human
-            task_duration['Human'][task.id] = human
+            task_duration["Human"][task.id] = human
 
         return task_duration
 
@@ -98,7 +111,7 @@ class Job:
         assert task.id == self.task_sequence.index(task)
         return task.id
 
-    def refresh_completed_task_list(self, task_id:int):
+    def refresh_completed_task_list(self, task_id: int):
         """
         Adds a completed task to the job's completed task list and removes it from the in-progress task list.
 
@@ -113,7 +126,9 @@ class Job:
 
     def change_agent(self, task_id: int, new_agent_name: str):
         # Find the task with the given task_id
-        matching_task = next((task for task in self.task_sequence if task.id == task_id), None)
+        matching_task = next(
+            (task for task in self.task_sequence if task.id == task_id), None
+        )
 
         if matching_task:
             matching_task.agent = [new_agent_name]
@@ -124,23 +139,27 @@ class Job:
         for task in self.task_sequence:
             if not isinstance(task.finish, list) or not len(task.finish) == 4:
                 messages.append(f"Task {task.id} has no timing")
-                valid =False
+                valid = False
             else:
                 start: int = task.finish[0] - task.finish[2] - task.finish[3]
-                if not isinstance(task.start, int) or task.start > task.finish[0]- sum(task.finish[1:]):
-                    messages.append(f"Task {task.id} has inconsistent timing. task.tart: {task.start} and task.finish: {task.finish}.")
+                if not isinstance(task.start, int) or task.start > task.finish[0] - sum(
+                    task.finish[1:]
+                ):
+                    messages.append(
+                        f"Task {task.id} has inconsistent timing. task.tart: {task.start} and task.finish: {task.finish}."
+                    )
                     valid = False
                 ends: list[int] = []
                 for dep in task.conditions:
                     assert self.task_sequence[dep].id == dep
-                    assert isinstance(self.task_sequence[dep].finish, list) 
+                    assert isinstance(self.task_sequence[dep].finish, list)
                     assert len(self.task_sequence[dep].finish) == 4
-                    ends.append(self.task_sequence[dep].finish[0] - self.task_sequence[dep].finish[3]) # type: ignore
+                    ends.append(self.task_sequence[dep].finish[0] - self.task_sequence[dep].finish[3])  # type: ignore
 
                 if len(ends) == 0:
                     continue
                 if not start >= max(ends):
-                    valid =False
+                    valid = False
                     messages.append(f"dependency graph violation for task {task.id}.")
         if valid:
             logging.info("The solution is valid. No dependency violation")
@@ -149,4 +168,3 @@ class Job:
             for msg in messages:
                 logging.error(msg)
         return valid
-

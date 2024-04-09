@@ -1,7 +1,6 @@
 import os
 
 from visualization.graphs import Vis
-from visualization.json_2_video import video_parser
 from visualization.web_visualization import Web_vis
 
 initial_and_final_schedule_save_file_name = os.path.join(os.path.dirname(os.path.abspath(__file__)),
