@@ -184,3 +184,4 @@ profile.json
 src/exp_scripts/experiments/*
 .pdm-python
 sim_2_video.json
+src/visualization/data_for_visualization/*
