@@ -2,7 +2,12 @@
 
 The code presented in this repository is designed for scheduling tasks between a human and a robot and adapting it in case of changes triggered by uncertainties. 
 
-Relevant publication (in submission):
+## Relevant publication
+
+[preprint](https://doi.org/10.48550/arXiv.2403.18459) accepted at IEEE IROS24:
+Marina Ionova and Jan Kristof Behrens, “CoBOS: Constraint-Based Online Scheduler for Human-Robot Collaboration,” Mar. 27, 2024, arXiv: arXiv:2403.18459. Accessed: Mar. 28, 2024. [Online]. Available: http://arxiv.org/abs/2403.18459
+[video](https://youtu.be/aX_0C9owQNA?si=eCfEqFG9tMnbSZNR)
+
 
 **CoBOS: Constraint-Based Online Scheduler for Human-Robot Collaboration**
 by Marina Ionova and [Jan Kristof Behrens](http://www.behrens-jan.de).
