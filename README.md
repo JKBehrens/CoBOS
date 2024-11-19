@@ -5,7 +5,7 @@ The code presented in this repository is designed for scheduling tasks between a
 Relevant publication (in submission):
 
 **CoBOS: Constraint-Based Online Scheduler for Human-Robot Collaboration**
-by Marina Ionova and [Jan Kristof Behrens](www.behrens-jan.de).
+by Marina Ionova and [Jan Kristof Behrens](http://www.behrens-jan.de).
 
 
 ## About scheduling 
